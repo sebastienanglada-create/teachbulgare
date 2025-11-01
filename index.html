@@ -3,35 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apprendre le Cyrillique (Cartes & Quiz)</title>
+    <title>Alphabet Cyrillique (Format Standard)</title>
     <!-- Chargement de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Configuration des polices et du thème sombre global (Style Apple) */
+        /* Configuration des polices et du thème sombre global */
         :root {
             font-family: 'Inter', sans-serif;
         }
 
-        /* Styles spécifiques pour les cartes 3D */
-        .flip-card-container {
-            perspective: 1000px;
-            height: 100%;
+        /* Conteneur de la carte: plus flexible/rectangulaire */
+        .card-wrapper {
+            position: relative;
             width: 100%;
+            /* Nous laissons la hauteur être définie par les classes Tailwind (h-48) */
+            perspective: 1000px;
         }
 
         .flip-card-inner {
-            position: relative;
+            position: absolute;
             width: 100%;
             height: 100%;
             text-align: center;
             transition: transform 0.6s;
             transform-style: preserve-3d;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Ombre plus marquée pour le mode sombre */
-            border-radius: 0.75rem; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); 
+            border-radius: 1rem; 
         }
 
-        .flip-card-container.flipped .flip-card-inner {
+        .card-wrapper.flipped .flip-card-inner {
             transform: rotateY(180deg);
         }
 
@@ -45,61 +46,77 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: 0.75rem;
+            border-radius: 1rem;
             padding: 1rem;
         }
         
-        /* COULEURS DARK MODE POUR LE FRONT DE LA CARTE */
+        /* Côté Cyrillique (Face avant) */
         .flip-card-front {
             background-color: #1f2937; /* bg-gray-800 */
             color: #d1d5db; /* text-gray-300 */
-            font-size: 5rem;
+            font-size: 5.5rem; /* Taille standard pour cette carte rectangulaire */
             font-weight: 700;
-            border: 1px solid #4b5563; /* Bordure subtile */
+            border: 2px solid #374151;
             cursor: pointer;
             user-select: none;
         }
         
-        @media (max-width: 640px) {
+        @media (min-width: 640px) {
              .flip-card-front {
-                font-size: 4rem; 
+                font-size: 6.5rem; 
             }
         }
 
-        /* COULEURS DARK MODE POUR LE DOS DE LA CARTE */
+        /* Côté Latin et Prononciation (Dos) */
         .flip-card-back {
             background-color: #374151; /* bg-gray-700 */
             color: #f3f4f6; /* text-gray-50 */
             transform: rotateY(180deg);
-            border: 1px solid #4b5563;
+            border: 2px solid #4b5563;
             cursor: pointer;
-            text-align: center; /* Centrer le contenu du dos */
-            padding: 1.5rem;
-            overflow-y: auto; 
-            position: relative; /* Nécessaire pour positionner le bouton audio */
+            padding: 1rem;
+            overflow: hidden; 
         }
 
-        /* Ajustements de style pour le dos de la carte */
+        /* Styles spécifiques pour le contenu du dos */
         .cyrillic-char {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
+            font-size: 2.5rem; /* Caractère au dos */
+            margin-bottom: 0.25rem;
             color: #60a5fa; /* Bleu clair d'accent */
         }
 
         .latin-transcription {
-            font-size: 1.5rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #10b981; /* Vert d'accent */
         }
 
         .pronunciation-hint {
-            font-size: 1rem;
-            color: #9ca3af; /* Gris clair */
+            font-size: 0.8rem;
+            color: #9ca3af; 
             margin-top: 0.5rem;
-            line-height: 1.4;
+            line-height: 1.3;
             font-style: italic;
         }
-
+        
+        .audio-btn {
+            background-color: #3b82f6; 
+            color: white;
+            padding: 0.5rem;
+            border-radius: 9999px;
+            transition: background-color 0.2s;
+            z-index: 10;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        .audio-btn:hover:not(:disabled) {
+            background-color: #2563eb; 
+        }
+        .audio-btn:disabled {
+            background-color: #6b7280; 
+            cursor: not-allowed;
+        }
+        
         /* Styles spécifiques au Quiz */
         .quiz-card {
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
@@ -108,14 +125,13 @@
             transition: all 0.2s;
             border: 1px solid #4b5563;
         }
-        /* Couleurs pour les boutons de réponse en mode sombre */
         .correct {
-            background-color: #059669 !important; /* bg-emerald-600 */
+            background-color: #059669 !important; 
             color: white !important;
             animation: pulse-correct 0.5s 2;
         }
         .incorrect {
-            background-color: #dc2626 !important; /* bg-red-600 */
+            background-color: #dc2626 !important; 
             color: white !important;
             animation: shake 0.5s;
         }
@@ -130,55 +146,33 @@
             40%, 80% { transform: translateX(5px); }
         }
 
-        /* Styles pour le bouton Audio */
-        .audio-btn {
-            background-color: #3b82f6; /* bg-blue-500 */
-            color: white;
-            padding: 0.5rem;
-            border-radius: 9999px;
-            transition: background-color 0.2s;
-            z-index: 10;
-            flex-shrink: 0;
-        }
-        .audio-btn:hover:not(:disabled) {
-            background-color: #2563eb; /* bg-blue-600 */
-        }
-        .audio-btn:disabled {
-            background-color: #6b7280; /* bg-gray-500 */
-            cursor: not-allowed;
-        }
-
-        .card-audio-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-        }
-
-        @media (min-width: 640px) {
-            .vocab-item {
-                flex-wrap: nowrap;
-            }
+        /* NOUVEAU STYLE POUR LE MODULE DE TEST COMPACT */
+        #audio-debug-compact {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
         }
     </style>
 </head>
 <!-- COULEURS DARK MODE POUR LE BODY -->
 <body class="bg-gray-900 min-h-screen p-4 sm:p-8 text-gray-100 flex flex-col items-center">
     
-    <!-- En-tête (Amélioré) -->
+    <!-- En-tête -->
     <header class="text-center mb-12 w-full max-w-4xl">
         <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-4 
                    bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-teal-400 
                    drop-shadow-lg leading-tight">
-            🇧🇬 Maîtriser l'Alphabet Cyrillique Bulgare
+            🇧🇬 Alphabet Cyrillique (Bulgare)
         </h1>
         <p class="text-xl text-gray-400 font-medium tracking-wide">
-            Étude par cartes flash et auto-évaluation par quiz.
+            Apprentissage par cartes flash, quiz et vocabulaire essentiel.
         </p>
         <!-- Ligne décorative -->
         <div class="h-1 w-24 mx-auto bg-blue-500/50 rounded-full mt-6"></div>
     </header>
 
-    <!-- 1. SECTION CARTES FLASH (Encadrée) -->
+    <!-- 1. SECTION CARTES FLASH -->
     <section class="mb-16 w-full max-w-7xl bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
         <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2 flex justify-between items-center">
             <span>1. Cartes Flash (Révision)</span>
@@ -190,7 +184,7 @@
                 Montrer l'Alphabet
             </button>
         </h2>
-        <!-- Zone d'affichage des cartes -->
+        <!-- Grille : 3 colonnes sur mobile, 4 sur tablette, 6 sur desktop, 8 sur large -->
         <div id="card-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mx-auto">
             <!-- Les cartes seront insérées ici par JavaScript -->
         </div>
@@ -200,7 +194,7 @@
         </div>
     </section>
 
-    <!-- 2. SECTION QUIZ (Encadrée) -->
+    <!-- 2. SECTION QUIZ -->
     <section class="w-full max-w-xl mb-16 bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
         <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2">2. Quiz d'Auto-Évaluation</h2>
         
@@ -221,30 +215,35 @@
         </div>
     </section>
     
-    <!-- 3. SECTION VOCABULAIRE ESSENTIEL (Encadrée) -->
+    <!-- 3. SECTION VOCABULAIRE ESSENTIEL -->
     <section class="w-full max-w-xl mb-16 bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
         <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2">3. Vocabulaire Essentiel</h2>
         <div id="vocabulary-list" class="bg-gray-900 rounded-xl p-6 md:p-8 shadow-inner">
             <!-- Vocabulaire inséré ici par JS -->
         </div>
     </section>
-    
-    <!-- 4. PANNEAU DE DÉBOGAGE AUDIO (Amélioré) -->
-    <footer class="w-full max-w-4xl bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-xl mb-8">
-        <h3 class="text-xl font-bold text-gray-200 mb-3">🛠️ Test Audio Natif (Dépannage)</h3>
-        <p class="text-sm text-gray-400 mb-4">
-            Cette application utilise le moteur de synthèse vocale natif de votre navigateur. La qualité de la prononciation bulgare (`bg-BG`) dépend fortement de la voix installée sur votre système. Si l'audio est médiocre ou absent, veuillez tester avec la voix française ci-dessous.
-        </p>
-        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <button 
-                id="test-native-audio-btn" 
-                class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-full transition duration-150 shadow-lg"
-                onclick="testNativeAudioFallback()"
-                title="Testez si la synthèse vocale de votre navigateur fonctionne en Français"
-            >
-                Tester la voix en Français (fr-FR)
-            </button>
-            <p id="audio-status" class="text-sm font-medium text-gray-300">Statut : Prêt</p>
+
+    <!-- FOOTER : PANNEAU DE DÉBOGAGE AUDIO -->
+    <footer class="w-full max-w-4xl bg-gray-800 rounded-xl border border-gray-700 shadow-xl mb-8">
+        <div id="audio-debug-compact" class="p-4 sm:p-4">
+            <div class="flex items-center space-x-3">
+                <span class="text-lg font-bold text-yellow-400">🛠️ Audio</span>
+                <p class="text-sm text-gray-400 hidden sm:block">
+                    Testez le moteur vocal natif (Français) :
+                </p>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button 
+                    id="test-native-audio-btn" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-1 px-3 text-sm rounded-full transition duration-150 shadow-md flex-shrink-0"
+                    onclick="testNativeAudioFallback()"
+                    title="Testez si la synthèse vocale de votre navigateur fonctionne en Français (fr-FR)"
+                >
+                    Test (fr-FR)
+                </button>
+                <p id="audio-status" class="text-sm font-medium text-gray-300 flex-shrink-0">Prêt</p>
+            </div>
         </div>
     </footer>
 
@@ -284,19 +283,18 @@
             const cleanup = () => {
                 button.disabled = false;
                 button.innerHTML = originalContent;
-                clearInterval(timer); // S'assurer que le timer est nettoyé
+                clearInterval(timer); 
                 if (timer) {
                     timer = null;
                 }
             };
 
-            // 4. Fallback check for onend failure (check if speaking stops after a brief period)
-            // This ensures the button is re-enabled even if onend doesn't fire.
+            // 4. Fallback check for onend failure
             timer = setInterval(() => {
                 if (!window.speechSynthesis.speaking) {
                     cleanup();
                 }
-            }, 500); // Vérifie toutes les 500ms
+            }, 500); 
 
             // 5. Native event handlers
             utterance.onend = cleanup;
@@ -307,7 +305,6 @@
             
             // 6. Speak
             window.speechSynthesis.speak(utterance);
-            console.log(`Tentative de lecture native du texte en ${langCode}: "${text.substring(0, 30)}..."`);
         }
         
         /**
@@ -316,10 +313,9 @@
         function testNativeAudioFallback() {
             const button = document.getElementById('test-native-audio-btn');
             const statusDiv = document.getElementById('audio-status');
-            const originalText = button.textContent;
             
             if (!('speechSynthesis' in window)) {
-                statusDiv.textContent = "Statut : ❌ Échec. La synthèse vocale native est indisponible.";
+                statusDiv.textContent = "❌ Échec";
                 statusDiv.classList.remove('text-gray-300');
                 statusDiv.classList.add('text-red-400');
                 return;
@@ -327,32 +323,33 @@
 
             // Préparation de la parole
             window.speechSynthesis.cancel();
-            const text = "Ceci est un test pour vérifier si la synthèse vocale de votre navigateur fonctionne.";
+            const text = "Ceci est un test audio.";
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'fr-FR'; 
 
-            statusDiv.textContent = "Statut : Test en cours (Français)...";
+            // Rendre l'interface plus discrète : ne pas modifier le texte du bouton, juste le désactiver.
+            statusDiv.textContent = "Test...";
             button.disabled = true;
             
             const resetStatus = (success) => {
                 button.disabled = false;
-                button.textContent = originalText;
                 
                 if (success) {
-                    statusDiv.textContent = "Statut : ✅ Succès ! Le moteur natif fonctionne.";
+                    statusDiv.textContent = "✅ OK";
                     statusDiv.classList.remove('text-gray-300', 'text-red-400');
                     statusDiv.classList.add('text-teal-400');
                 } else {
-                    statusDiv.textContent = "Statut : ❌ Échec. Veuillez vérifier vos paramètres audio.";
+                    statusDiv.textContent = "❌ Échec";
                     statusDiv.classList.remove('text-gray-300', 'text-teal-400');
                     statusDiv.classList.add('text-red-400');
                 }
 
+                // Réinitialisation rapide du statut après 3 secondes (plus discret)
                 setTimeout(() => {
-                    statusDiv.textContent = "Statut : Prêt";
+                    statusDiv.textContent = "Prêt";
                     statusDiv.classList.remove('text-teal-400', 'text-red-400');
                     statusDiv.classList.add('text-gray-300');
-                }, 5000);
+                }, 3000); 
             };
 
             utterance.onend = () => resetStatus(true);
@@ -362,13 +359,10 @@
             
             // Fallback pour les navigateurs avec un onend peu fiable
             setTimeout(() => {
-                if (window.speechSynthesis.speaking) {
-                    // Si toujours en cours après 8s (long), on le laisse finir son job
-                } else if (button.disabled) {
-                    // Si onend/onerror n'a pas été déclenché
+                if (button.disabled) {
                     resetStatus(true); 
                 }
-            }, 8000);
+            }, 5000); 
         }
 
         // --- DATA (Alphabet Cyrillique Bulgare - 30 lettres) ---
@@ -378,7 +372,7 @@
             { cyr: 'В в', lat: 'V', pron: 'Comme dans "voiture"' },
             { cyr: 'Г г', lat: 'G', pron: 'Comme dans "garçon"' },
             { cyr: 'Д д', lat: 'D', pron: 'Comme dans "domino"' },
-            { cyr: 'Е е', lat: 'É', pron: 'Comme dans "été" (jamais "ye" ou "ié")' }, // Spécificité bulgare
+            { cyr: 'Е е', lat: 'É', pron: 'Comme dans "été" (jamais "ye" ou "ié")' }, 
             { cyr: 'Ж ж', lat: 'J', pron: 'Comme dans "jupe"' },
             { cyr: 'З з', lat: 'Z', pron: 'Comme dans "zèbre"' },
             { cyr: 'И и', lat: 'I', pron: 'Comme dans "île"' },
@@ -398,9 +392,9 @@
             { cyr: 'Ц ц', lat: 'Ts', pron: 'Comme dans "tsar"' },
             { cyr: 'Ч ч', lat: 'Tch', pron: 'Comme dans "tchèque"' },
             { cyr: 'Ш ш', lat: 'Ch', pron: 'Comme dans "chat"' },
-            { cyr: 'Щ щ', lat: 'Sht', pron: 'Comme "cht" dans "post-scriptum"' }, // Spécificité bulgare
-            { cyr: 'Ъ ъ', lat: 'A (dur)', pron: 'Voyelle très fermée, comme le "a" dans "the" en anglais' }, // Spécificité bulgare
-            { cyr: 'Ь ь', lat: 'Y (mou)', pron: 'Seulement utilisé avant O pour le son "yo"' }, // Spécificité bulgare
+            { cyr: 'Щ щ', lat: 'Sht', pron: 'Comme "cht" dans "post-scriptum"' }, 
+            { cyr: 'Ъ ъ', lat: 'A (dur)', pron: 'Voyelle très fermée, comme le "a" dans "the" en anglais' }, 
+            { cyr: 'Ь ь', lat: 'Y (mou)', pron: 'Seulement utilisé avant O pour le son "yo" (e.g. "шофьор")' },
             { cyr: 'Ю ю', lat: 'You', pron: 'Comme dans "yougourt"' },
             { cyr: 'Я я', lat: 'Ya', pron: 'Comme dans "yacht"' },
         ];
@@ -424,7 +418,6 @@
             { bulgarian: 'Аз съм...', french: 'Je suis...', pronunciation: '(az sam)' },
             { bulgarian: 'Колко струва?', french: 'Combien ça coûte ?', pronunciation: '(kól-ko strú-va)' },
             { bulgarian: 'Помощ!', french: 'À l\'aide !', pronunciation: '(pó-mocht)' },
-            // Nombres 1-10
             { bulgarian: 'Едно', french: '1 (Un)', pronunciation: '(e-nó)' },
             { bulgarian: 'Две', french: '2 (Deux)', pronunciation: '(dvé)' },
             { bulgarian: 'Три', french: '3 (Trois)', pronunciation: '(tri)' },
@@ -461,41 +454,46 @@
         // ===================================
 
         /**
-         * Fonction pour créer le HTML d'une carte
+         * Fonction pour créer le HTML d'une carte (format standard/rectangulaire)
          */
         function createCardHtml(data) {
-            // cyrillicLetter prend la majuscule pour l'affichage de face
-            const cyrillicLetter = data.cyr.split(' ')[0]; 
+            const cyrillicParts = data.cyr.split(' ');
+            const lowercaseLetter = cyrillicParts.length > 1 ? cyrillicParts[1] : cyrillicParts[0]; 
             const fullCyrillic = data.cyr; 
-            
-            // Texte à prononcer : la lettre cyrillique
             const textToSpeak = fullCyrillic;
 
+            // Utilisation des classes h-48 et h-64 pour définir la hauteur
             return `
-                <div class="flip-card-container h-48 sm:h-56" onclick="flipCard(this)">
+                <div class="card-wrapper h-48 md:h-64" onclick="flipCard(this)"> 
                     <div class="flip-card-inner">
-                        <!-- Côté Cyrillique (Face) -->
+                        <!-- Côté Cyrillique (Face) : Affiche la minuscule -->
                         <div class="flip-card-front">
-                            ${cyrillicLetter}
+                            ${lowercaseLetter}
                         </div>
                         
                         <!-- Côté Latin et Prononciation (Dos) -->
                         <div class="flip-card-back flex justify-center items-center p-4">
-                            <!-- Bouton Audio -->
-                            <button 
-                                class="audio-btn card-audio-btn" 
-                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this);"
-                                title="Écouter la prononciation"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V9a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0111 3v18a1 1 0 01-1.707.707L5.586 15z"></path>
-                                </svg>
-                            </button>
                             <!-- Contenu de la carte -->
                             <div class="w-full text-center">
-                                <div class="cyrillic-char font-bold text-4xl">${fullCyrillic}</div>
-                                <div class="latin-transcription text-xl mt-2">→ ${data.lat}</div>
-                                <p class="pronunciation-hint text-base mt-4">(${data.pron})</p>
+                                <!-- 1. La lettre (Majuscule + Minuscule) -->
+                                <div class="cyrillic-char font-bold">${fullCyrillic}</div>
+                                
+                                <!-- 2. Bouton Audio -->
+                                <button 
+                                    class="audio-btn mx-auto mt-2 flex items-center justify-center p-2" 
+                                    onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this);"
+                                    title="Écouter la prononciation"
+                                >
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V9a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0111 3v18a1 1 0 01-1.707.707L5.586 15z"></path>
+                                    </svg>
+                                </button>
+                                
+                                <!-- 3. Transcription -->
+                                <div class="latin-transcription mt-3">→ ${data.lat}</div>
+                                
+                                <!-- 4. Prononciation -->
+                                <p class="pronunciation-hint mt-2">(${data.pron})</p>
                             </div>
                         </div>
                     </div>
@@ -522,14 +520,12 @@
          * Fonction pour retourner toutes les cartes vers le côté cyrillique (face avant).
          */
         function resetAllCardsToCyrillic() {
-            const allCards = document.querySelectorAll('.flip-card-container');
+            const allCards = document.querySelectorAll('.card-wrapper');
             allCards.forEach(card => {
-                // Seulement retirer la classe 'flipped' si elle est présente
                 if (card.classList.contains('flipped')) {
                     card.classList.remove('flipped');
                 }
             });
-            // Réinitialiser l'état des cartes retournées
             flippedCards = 0;
             updateStats();
         }
@@ -564,21 +560,18 @@
          * Génère un tableau de questions aléatoires.
          */
         function generateQuizQuestions() {
-            // Version simplifiée de l'alphabet pour la logique du quiz (prend seulement la majuscule)
-            // Filtre les lettres non pertinentes pour le QCM simple (e.g., les signes mous/durs)
+            // Exclure les lettres sans transcription latine directe pour simplifier le quiz
             const simpleAlphabet = alphabet.map(l => ({ 
                 cyr: l.cyr.split(' ')[0], 
                 lat: l.lat 
             })).filter(l => l.cyr !== 'Ъ' && l.cyr !== 'Ь');
 
-            // Sélectionne 10 lettres aléatoires sans répétition
             const selectedLetters = shuffle([...simpleAlphabet]).slice(0, totalQuestions);
             
-            quizQuestions.length = 0; // Réinitialise les questions
+            quizQuestions.length = 0; 
 
             selectedLetters.forEach(correctLetter => {
                 const distractors = [];
-                // S'assure que les mauvaises réponses sont différentes
                 const availableDistractors = simpleAlphabet.filter(l => l.lat !== correctLetter.lat);
                 const randomDistractors = shuffle(availableDistractors).slice(0, 3);
                 
@@ -673,7 +666,7 @@
 
             // Mettre en évidence la bonne réponse
             allButtons.forEach(btn => {
-                btn.disabled = true; // Désactiver tous les boutons
+                btn.disabled = true; 
                 if (btn.dataset.option === currentQuestion.correctAnswer && !isCorrect) {
                     btn.classList.add('correct');
                 }
@@ -710,7 +703,7 @@
         }
         
         // ===================================
-        // LOGIQUE DU VOCABULAIRE
+        // LOGIQUE DU VOCABULAIRE ESSENTIEL
         // ===================================
         
         /**
@@ -722,12 +715,11 @@
             vocabulary.forEach(item => {
                 const textToSpeak = item.bulgarian;
 
-                // Structure mise à jour pour inclure le bouton Audio 
                 html += `
                     <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0 flex-wrap vocab-item">
                         <div class="flex flex-col w-full sm:w-auto sm:flex-row sm:items-center mb-2 sm:mb-0">
                             <div class="text-xl font-bold text-blue-400 sm:mr-4">${item.bulgarian}</div>
-                            <div class="text-md text-gray-400 italic font-medium mt-1 sm:mt-0">${item.pronunciation}</div>
+                            <div class="text-md text-gray-400 italic font-medium mt-1 sm:mt-0">(${item.pronunciation})</div>
                         </div>
                         <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
                             <div class="text-lg text-gray-300">${item.french}</div>
@@ -758,8 +750,11 @@
             cardGrid.innerHTML = allCardsHtml;
             updateStats(); 
 
-            // 2. Afficher le vocabulaire
+            // 2. Afficher le vocabulaire essentiel
             displayVocabulary();
+            
+            // 3. Initialiser le quiz
+            // Pas d'appel ici, on laisse le bouton "Démarrer" le gérer.
         }
 
         window.onload = initializeApp;
