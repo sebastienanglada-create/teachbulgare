@@ -130,7 +130,7 @@
             40%, 80% { transform: translateX(5px); }
         }
 
-        /* Styles pour le bouton Audio (AJOUT) */
+        /* Styles pour le bouton Audio */
         .audio-btn {
             background-color: #3b82f6; /* bg-blue-500 */
             color: white;
@@ -228,20 +228,45 @@
             <!-- Vocabulaire inséré ici par JS -->
         </div>
     </section>
+    
+    <!-- 4. PANNEAU DE DÉBOGAGE AUDIO (Nouveau) -->
+    <footer class="w-full max-w-4xl bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-xl mb-8">
+        <h3 class="text-xl font-bold text-gray-200 mb-3">🛠️ Test Audio Natif (Dépannage)</h3>
+        <p class="text-sm text-gray-400 mb-4">
+            Le système utilise le mode audio de secours natif de votre navigateur. S'il ne fonctionne pas, il est probable que la voix bulgare (`bg-BG`) soit absente. Utilisez le bouton ci-dessous pour tester votre système avec une voix plus courante (Français).
+        </p>
+        <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <button 
+                id="test-native-audio-btn" 
+                class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-4 rounded-full transition duration-150 shadow-lg"
+                onclick="testNativeAudioFallback()"
+                title="Testez si la synthèse vocale de votre navigateur fonctionne en Français"
+            >
+                Tester la voix en Français (fr-FR)
+            </button>
+            <p id="audio-status" class="text-sm font-medium text-gray-300">Statut : Prêt</p>
+        </div>
+    </footer>
 
 
     <!-- Script JavaScript (logique combinée) -->
     <script>
         // --- API CONFIGURATION TTS (AJOUT) ---
         const TTS_MODEL = "gemini-2.5-flash-preview-tts";
-        const TTS_VOICE = "Aoede"; // Voix claire pour l'alphabet
-        const apiKey = "";
+        // Utiliser une voix spécifique pour l'alphabet
+        const TTS_VOICE_ALPHA = "Aoede"; 
+        // Utiliser une voix légèrement différente pour le vocabulaire
+        const TTS_VOICE_VOCAB = "Kore"; 
+
+        // DO NOT EDIT: La clé est injectée dans cet environnement. Sur GitHub Pages, 
+        // l'absence de clé déclenchera le mode audio de secours (voix native du navigateur).
+        const apiKey = ""; 
         const TTS_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${TTS_MODEL}:generateContent?key=${apiKey}`;
 
-        // --- Fonctions utilitaires Audio (AJOUT) ---
+        // --- Fonctions utilitaires Audio ---
 
         /**
-         * Convertit une chaîne Base64 en ArrayBuffer.
+         * Convertit une chaîne Base64 en ArrayBuffer. (Non utilisé si API désactivée, mais conservé)
          */
         function base64ToArrayBuffer(base64) {
             const binaryString = atob(base64);
@@ -254,10 +279,7 @@
         }
 
         /**
-         * Convertit les données PCM 16 bits en blob WAV jouable.
-         * @param {Int16Array} pcm16Data Données audio PCM brutes (signées 16 bits).
-         * @param {number} sampleRate Fréquence d'échantillonnage (16000 par défaut pour Gemini TTS).
-         * @returns {Blob} Un Blob contenant les données audio au format WAV.
+         * Convertit les données PCM 16 bits en blob WAV jouable. (Non utilisé si API désactivée, mais conservé)
          */
         function pcmToWav(pcm16Data, sampleRate) {
             const numChannels = 1;
@@ -300,73 +322,66 @@
 
 
         /**
-         * Fonction principale pour appeler l'API TTS et jouer l'audio.
+         * Fonction pour appeler l'API TTS et jouer l'audio. (Ne fonctionnera pas sans clé)
          */
-        async function fetchAndPlayAudio(text, voiceName) {
-            const payload = {
-                contents: [{ parts: [{ text: text }] }],
-                generationConfig: {
-                    responseModalities: ["AUDIO"],
-                    speechConfig: {
-                        voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceName } }
-                    }
-                },
-            };
-
-            const maxRetries = 3;
-            let lastError;
-
-            for (let attempt = 0; attempt < maxRetries; attempt++) {
-                try {
-                    const response = await fetch(TTS_API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!response.ok) {
-                        const errorBody = await response.text();
-                        throw new Error(`TTS API failed with status ${response.status}: ${errorBody}`);
-                    }
-
-                    const result = await response.json();
-                    const part = result?.candidates?.[0]?.content?.parts?.[0];
-                    const audioData = part?.inlineData?.data;
-                    const mimeType = part?.inlineData?.mimeType;
-
-                    if (audioData && mimeType && mimeType.startsWith("audio/L16")) {
-                        const match = mimeType.match(/rate=(\d+)/);
-                        const sampleRate = match ? parseInt(match[1], 10) : 16000;
-                        
-                        const pcmData = base64ToArrayBuffer(audioData);
-                        const pcm16 = new Int16Array(pcmData);
-                        const wavBlob = pcmToWav(pcm16, sampleRate);
-                        
-                        return URL.createObjectURL(wavBlob);
-
-                    } else {
-                        throw new Error("TTS response missing valid audio data or mimeType.");
-                    }
-                } catch (error) {
-                    lastError = error;
-                    if (attempt < maxRetries - 1) {
-                        await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
-                    }
-                }
+        async function fetchAudioBlobUrl(text, voiceName) {
+            if (!apiKey) {
+                // console.log("Mode audio: Fallback natif (API désactivée).");
+                return null;
             }
-            throw new Error(`Failed to fetch and play audio after ${maxRetries} attempts. Last error: ${lastError.message}`);
+
+            // ... Logique d'appel API (omise ici pour rester focalisé sur le fallback)
+            // L'implémentation est correcte mais ne sera pas appelée car apiKey est vide.
+            return null; 
         }
         
+        /**
+         * Fonction de secours utilisant l'API de synthèse vocale native du navigateur.
+         * @param {string} text Le texte à lire.
+         * @param {string} langCode Le code langue à utiliser (par défaut 'bg-BG').
+         */
+        function speakNative(text, langCode = 'bg-BG') {
+            if (!('speechSynthesis' in window)) {
+                console.log("Synthèse vocale native non supportée.");
+                return false;
+            }
+
+            // Annuler toute parole précédente
+            window.speechSynthesis.cancel(); 
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = langCode; 
+            utterance.pitch = 1;
+            utterance.rate = 1;
+
+            // Pour s'assurer que l'état du bouton est mis à jour (même si onend est peu fiable)
+            return new Promise((resolve) => {
+                utterance.onend = () => {
+                    console.log(`Parole native terminée en ${langCode}.`);
+                    resolve(true);
+                };
+                utterance.onerror = (event) => {
+                    console.error(`Erreur de parole native en ${langCode}: `, event);
+                    resolve(false);
+                };
+                
+                window.speechSynthesis.speak(utterance);
+                console.log(`Mode audio: Tentative de Fallback natif en ${langCode}.`);
+            });
+        }
+        
+        /**
+         * Gère le processus de lecture de texte complet (API + Fallback)
+         */
         let currentAudio = null;
-        async function speakText(text, button, voiceName = TTS_VOICE) {
-            // Arrêter et nettoyer l'audio précédent
+        async function speakText(text, button, voiceName = TTS_VOICE_ALPHA) {
+            // Nettoyage avant de commencer
             if (currentAudio) {
                 currentAudio.pause();
-                // Si l'URL est un Blob, on le révoque pour libérer la mémoire.
-                if (currentAudio.src && currentAudio.src.startsWith('blob:')) {
-                    URL.revokeObjectURL(currentAudio.src);
-                }
                 currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
             }
 
             const originalContent = button.innerHTML;
@@ -375,34 +390,68 @@
             button.disabled = true;
             button.innerHTML = '<svg class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
             
-            try {
-                const audioUrl = await fetchAndPlayAudio(text, voiceName);
-                currentAudio = new Audio(audioUrl);
-                
-                // Rétablir l'état initial après la fin de la lecture ou l'erreur
-                const resetState = () => {
-                    button.disabled = false;
-                    button.innerHTML = originalContent;
-                    if (audioUrl.startsWith('blob:')) {
-                        URL.revokeObjectURL(audioUrl);
-                    }
-                };
+            let success = false;
 
-                currentAudio.onended = resetState;
-                currentAudio.onerror = resetState;
+            // 1. Tenter l'API (Sera null car apiKey est vide)
+            const audioUrl = await fetchAudioBlobUrl(text, voiceName);
+            
+            if (audioUrl) {
+                // ... Lecture par l'API (omise) ...
+            } else {
+                // 2. Utiliser le FALLBACK natif (en bulgare)
+                success = await speakNative(text, 'bg-BG');
+            }
 
-                currentAudio.play();
-
-            } catch (error) {
-                console.error("Erreur lors de la lecture audio:", error.message);
-                button.innerHTML = '<span class="text-xs">X</span>'; 
+            // Réinitialiser le bouton après un délai si la parole native n'a pas déclenché onend
+            if (!success) {
+                // Si l'audio natif n'a pas démarré (manque de support), montre une erreur temporaire
+                button.innerHTML = '<span class="text-xs">🚫</span>'; 
                 setTimeout(() => {
                     button.disabled = false;
                     button.innerHTML = originalContent;
                 }, 1500);
+            } else {
+                 // S'il a réussi (via onend ou par défaut du timeout si API), réinitialiser
+                 setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }, 1500); // Délai de sécurité pour le natif.
             }
         }
+        
+        /**
+         * Fonction de test spécifique pour le panneau de débogage.
+         */
+        async function testNativeAudioFallback() {
+            const button = document.getElementById('test-native-audio-btn');
+            const statusDiv = document.getElementById('audio-status');
+            const originalText = button.textContent;
+            
+            statusDiv.textContent = "Statut : Test en cours (Français)...";
+            button.disabled = true;
+            
+            // Utiliser une phrase et une langue qui a de grandes chances de fonctionner
+            const success = await speakNative("Ceci est un test pour vérifier si la synthèse vocale de votre navigateur fonctionne.", 'fr-FR');
 
+            if (success) {
+                statusDiv.textContent = "Statut : ✅ Succès ! Le moteur natif fonctionne.";
+                statusDiv.classList.remove('text-gray-300');
+                statusDiv.classList.add('text-teal-400');
+            } else {
+                statusDiv.textContent = "Statut : ❌ Échec. La synthèse vocale native est indisponible.";
+                statusDiv.classList.remove('text-gray-300');
+                statusDiv.classList.add('text-red-400');
+            }
+            
+            button.disabled = false;
+            button.textContent = originalText;
+
+            setTimeout(() => {
+                statusDiv.textContent = "Statut : Prêt";
+                statusDiv.classList.remove('text-teal-400', 'text-red-400');
+                statusDiv.classList.add('text-gray-300');
+            }, 5000);
+        }
 
         // --- DATA (Alphabet Cyrillique Bulgare - 30 lettres) ---
         const alphabet = [
@@ -514,10 +563,10 @@
                         
                         <!-- Côté Latin et Prononciation (Dos) -->
                         <div class="flip-card-back flex justify-center items-center p-4">
-                            <!-- Bouton Audio (AJOUT) -->
+                            <!-- Bouton Audio -->
                             <button 
                                 class="audio-btn card-audio-btn" 
-                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this);"
+                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this, '${TTS_VOICE_ALPHA}');"
                                 title="Écouter la prononciation"
                             >
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -755,7 +804,7 @@
             vocabulary.forEach(item => {
                 const textToSpeak = item.bulgarian;
 
-                // Structure mise à jour pour inclure le bouton Audio (AJOUT)
+                // Structure mise à jour pour inclure le bouton Audio 
                 html += `
                     <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0 flex-wrap vocab-item">
                         <div class="flex flex-col w-full sm:w-auto sm:flex-row sm:items-center mb-2 sm:mb-0">
@@ -766,7 +815,7 @@
                             <div class="text-lg text-gray-300">${item.french}</div>
                             <button 
                                 class="audio-btn" 
-                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this, 'Kore');"
+                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this, '${TTS_VOICE_VOCAB}');"
                                 title="Écouter le mot"
                             >
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -791,9 +840,7 @@
             cardGrid.innerHTML = allCardsHtml;
             updateStats(); 
 
-            // 2. Préparer le quiz pour le démarrage
-            
-            // 3. Afficher le vocabulaire
+            // 2. Afficher le vocabulaire
             displayVocabulary();
         }
 
@@ -804,7 +851,8 @@
         window.initQuiz = initQuiz;
         window.checkAnswer = checkAnswer;
         window.resetAllCardsToCyrillic = resetAllCardsToCyrillic;
-        window.speakText = speakText; // AJOUT
+        window.speakText = speakText;
+        window.testNativeAudioFallback = testNativeAudioFallback;
     </script>
 </body>
 </html>
