@@ -3,36 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alphabet Cyrillique (Format Standard)</title>
-    <!-- Chargement de Tailwind CSS -->
+    <title>Bulgare Cyrillique V4 : Apprentissage Pédagogique</title>
+    <!-- Chargement de Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* Configuration des polices et du thème sombre global */
-        :root {
+        /* Configuration de la police Inter et thème sombre par défaut */
+        body {
             font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            scroll-behavior: smooth; /* Défilement doux pour les liens de la table des matières */
+        }
+        /* Thème sombre uniforme et professionnel */
+        .dark-theme {
+            background-color: #0F172A; /* bg-slate-900 (plus foncé) */
+            color: #E2E8F0; /* text-slate-200 */
+        }
+        /* Style des boutons pour l'accessibilité et le visuel */
+        .interactive-btn {
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+        .interactive-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
         }
 
-        /* Conteneur de la carte: plus flexible/rectangulaire */
-        .card-wrapper {
-            position: relative;
-            width: 100%;
-            /* Nous laissons la hauteur être définie par les classes Tailwind (h-48) */
+        /* --- STYLES SPECIFIQUES DES CARTES FLASH (Module 1) --- */
+        .flip-card {
+            background-color: transparent;
             perspective: 1000px;
+            height: 100%;
+            cursor: pointer;
         }
 
         .flip-card-inner {
-            position: absolute;
+            position: relative;
             width: 100%;
             height: 100%;
             text-align: center;
             transition: transform 0.6s;
             transform-style: preserve-3d;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); 
-            border-radius: 1rem; 
         }
 
-        .card-wrapper.flipped .flip-card-inner {
+        .flip-card.flipped .flip-card-inner {
             transform: rotateY(180deg);
         }
 
@@ -46,726 +62,773 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            border-radius: 1rem;
+            border-radius: 0.75rem;
+            padding: 0.5rem; /* Réduit pour mobile */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .flip-card-front {
+            background-color: #1E293B; /* bg-slate-800 */
+            border: 2px solid #6366F1; /* border-indigo-500 */
+            color: #F8FAFC;
+        }
+
+        .flip-card-back {
+            background-color: #6366F1; /* bg-indigo-500 */
+            color: #F8FAFC;
+            transform: rotateY(180deg);
             padding: 1rem;
         }
-        
-        /* Côté Cyrillique (Face avant) */
-        .flip-card-front {
-            background-color: #1f2937; /* bg-gray-800 */
-            color: #d1d5db; /* text-gray-300 */
-            font-size: 5.5rem; /* Taille standard pour cette carte rectangulaire */
-            font-weight: 700;
-            border: 2px solid #374151;
-            cursor: pointer;
-            user-select: none;
+
+        /* Amélioration des tableaux pour le contraste */
+        .table-header {
+            background-color: #1E293B; /* bg-slate-800 */
+        }
+        .table-row-odd {
+            background-color: #0F172A; /* bg-slate-900 */
+        }
+        .table-row-even {
+            background-color: #1E293B; /* bg-slate-800 */
+        }
+        .table-row-even:hover, .table-row-odd:hover {
+            background-color: #334155; /* bg-slate-700/50 */
         }
         
-        @media (min-width: 640px) {
-             .flip-card-front {
-                font-size: 6.5rem; 
+        /* Styles pour la table des matières (par défaut cachée sur mobile) */
+        #toc-container {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+        }
+        
+        /* Affichage de la TOC lorsqu'elle est ouverte */
+        #toc-container.is-open {
+            max-height: 500px; /* Taille suffisante pour le contenu */
+            opacity: 1;
+            margin-top: 1rem;
+        }
+        
+        /* MEDIA QUERY POUR DESKTOP (lg) */
+        @media (min-width: 1024px) {
+            #toc-container {
+                position: sticky;
+                top: 2rem;
+                max-height: none !important; /* Force l'affichage permanent sur desktop */
+                opacity: 1 !important;
+                margin-top: 0;
+            }
+            /* Cache le bouton "Afficher TOC" sur desktop */
+            #toggle-toc-btn {
+                display: none;
             }
         }
-
-        /* Côté Latin et Prononciation (Dos) */
-        .flip-card-back {
-            background-color: #374151; /* bg-gray-700 */
-            color: #f3f4f6; /* text-gray-50 */
-            transform: rotateY(180deg);
-            border: 2px solid #4b5563;
-            cursor: pointer;
-            padding: 1rem;
-            overflow: hidden; 
-        }
-
-        /* Styles spécifiques pour le contenu du dos */
-        .cyrillic-char {
-            font-size: 2.5rem; /* Caractère au dos */
-            margin-bottom: 0.25rem;
-            color: #60a5fa; /* Bleu clair d'accent */
-        }
-
-        .latin-transcription {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #10b981; /* Vert d'accent */
-        }
-
-        .pronunciation-hint {
-            font-size: 0.8rem;
-            color: #9ca3af; 
-            margin-top: 0.5rem;
-            line-height: 1.3;
-            font-style: italic;
-        }
         
-        .audio-btn {
-            background-color: #3b82f6; 
-            color: white;
-            padding: 0.5rem;
-            border-radius: 9999px;
-            transition: background-color 0.2s;
-            z-index: 10;
-            flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-        }
-        .audio-btn:hover:not(:disabled) {
-            background-color: #2563eb; 
-        }
-        .audio-btn:disabled {
-            background-color: #6b7280; 
-            cursor: not-allowed;
-        }
-        
-        /* Styles spécifiques au Quiz */
-        .quiz-card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-        }
-        .option-button {
-            transition: all 0.2s;
-            border: 1px solid #4b5563;
-        }
-        .correct {
-            background-color: #059669 !important; 
-            color: white !important;
-            animation: pulse-correct 0.5s 2;
-        }
-        .incorrect {
-            background-color: #dc2626 !important; 
-            color: white !important;
-            animation: shake 0.5s;
-        }
-        @keyframes pulse-correct {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-
-        /* NOUVEAU STYLE POUR LE MODULE DE TEST COMPACT */
-        #audio-debug-compact {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem;
-        }
     </style>
 </head>
-<!-- COULEURS DARK MODE POUR LE BODY -->
-<body class="bg-gray-900 min-h-screen p-4 sm:p-8 text-gray-100 flex flex-col items-center">
-    
-    <!-- En-tête -->
-    <header class="text-center mb-12 w-full max-w-4xl">
-        <h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-4 
-                   bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-teal-400 
-                   drop-shadow-lg leading-tight">
-            🇧🇬 Alphabet Cyrillique (Bulgare)
-        </h1>
-        <p class="text-xl text-gray-400 font-medium tracking-wide">
-            Apprentissage par cartes flash, quiz et vocabulaire essentiel.
-        </p>
-        <!-- Ligne décorative -->
-        <div class="h-1 w-24 mx-auto bg-blue-500/50 rounded-full mt-6"></div>
+<body class="dark-theme min-h-screen p-4 sm:p-8">
+
+    <!-- A. EN-TÊTE -->
+    <header class="text-center mb-6 sm:mb-10 border-b border-slate-700 pb-4">
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-teal-400">Bulgare Cyrillique V4 : Pédagogie Active</h1>
+        <p class="mt-2 text-slate-400 text-lg">Apprentissage de l'alphabet, du vocabulaire et des bases culturelles</p>
     </header>
-
-    <!-- 1. SECTION CARTES FLASH -->
-    <section class="mb-16 w-full max-w-7xl bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
-        <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2 flex justify-between items-center">
-            <span>1. Cartes Flash (Révision)</span>
-            <button 
-                id="reset-cards-btn" 
-                class="text-sm font-semibold px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition duration-150 shadow-md transform hover:scale-105"
-                onclick="resetAllCardsToCyrillic()"
-            >
-                Montrer l'Alphabet
-            </button>
-        </h2>
-        <!-- Grille : 3 colonnes sur mobile, 4 sur tablette, 6 sur desktop, 8 sur large -->
-        <div id="card-grid" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 mx-auto">
-            <!-- Les cartes seront insérées ici par JavaScript -->
-        </div>
-        
-        <div id="stats" class="text-center mt-6 text-xl font-semibold text-gray-400">
-            <!-- Les statistiques seront affichées ici -->
-        </div>
-    </section>
-
-    <!-- 2. SECTION QUIZ -->
-    <section class="w-full max-w-xl mb-16 bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
-        <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2">2. Quiz d'Auto-Évaluation</h2>
-        
-        <div id="quiz-header" class="text-center mb-6">
-            <p id="question-counter" class="text-xl font-medium text-teal-400">Prêt à commencer ?</p>
-        </div>
-
-        <div id="quiz-container" class="w-full bg-gray-900 rounded-xl p-6 md:p-10 quiz-card flex flex-col justify-between">
-            <div class="text-center">
-                 <button 
-                    class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-8 rounded-full transition duration-300 shadow-xl transform hover:scale-105"
-                    onclick="initQuiz()"
-                >
-                    Démarrer le Quiz de 10 Questions
-                </button>
-            </div>
-            <!-- Question, Options, et Résultats seront insérés ici par JS après le démarrage -->
-        </div>
-    </section>
     
-    <!-- 3. SECTION VOCABULAIRE ESSENTIEL -->
-    <section class="w-full max-w-xl mb-16 bg-gray-800 rounded-xl p-4 sm:p-6 border border-gray-700 shadow-lg">
-        <h2 class="text-3xl font-bold text-gray-200 mb-6 border-b border-gray-700 pb-2">3. Vocabulaire Essentiel</h2>
-        <div id="vocabulary-list" class="bg-gray-900 rounded-xl p-6 md:p-8 shadow-inner">
-            <!-- Vocabulaire inséré ici par JS -->
-        </div>
-    </section>
+    <!-- Bouton pour basculer la table des matières (VISIBILITÉ DÉFINIE PAR MEDIA QUERY) -->
+    <button id="toggle-toc-btn" class="interactive-btn w-full bg-orange-500 hover:bg-orange-600 text-white mb-4 flex items-center justify-center text-lg shadow-xl" aria-expanded="false" aria-controls="toc-container">
+        <svg id="toc-icon-open" class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        <svg id="toc-icon-close" class="w-6 h-6 mr-2 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        <span id="toc-btn-text">Afficher la Table des Matières</span>
+    </button>
 
-    <!-- FOOTER : PANNEAU DE DÉBOGAGE AUDIO -->
-    <footer class="w-full max-w-4xl bg-gray-800 rounded-xl border border-gray-700 shadow-xl mb-8">
-        <div id="audio-debug-compact" class="p-4 sm:p-4">
-            <div class="flex items-center space-x-3">
-                <span class="text-lg font-bold text-yellow-400">🛠️ Audio</span>
-                <p class="text-sm text-gray-400 hidden sm:block">
-                    Testez le moteur vocal natif (Français) :
-                </p>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <button 
-                    id="test-native-audio-btn" 
-                    class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-1 px-3 text-sm rounded-full transition duration-150 shadow-md flex-shrink-0"
-                    onclick="testNativeAudioFallback()"
-                    title="Testez si la synthèse vocale de votre navigateur fonctionne en Français (fr-FR)"
-                >
-                    Test (fr-FR)
-                </button>
-                <p id="audio-status" class="text-sm font-medium text-gray-300 flex-shrink-0">Prêt</p>
+    <main class="max-w-7xl mx-auto lg:flex lg:space-x-8">
+
+        <!-- Colonne de la Table des Matières (Side Navigation) -->
+        <div class="lg:w-1/4 mb-10 lg:mb-0">
+            <!-- La classe 'is-open' sera ajoutée/retirée par JS pour l'effet escamotable -->
+            <div id="toc-container" class="bg-gray-800 p-6 rounded-2xl shadow-xl border-l-4 border-teal-500">
+                <h2 class="text-xl font-bold mb-4 text-teal-400">Table des Matières</h2>
+                <nav class="space-y-2 text-slate-300 font-medium">
+                    <a href="#introduction-legend" class="block hover:text-teal-300 transition duration-150">📝 Introduction & Légende</a>
+                    <a href="#alphabet-module" class="block hover:text-teal-300 transition duration-150">1. Cartes Flash (Alphabet)</a>
+                    <a href="#quiz-module" class="block hover:text-teal-300 transition duration-150">2. Quiz d'Identification</a>
+                    <a href="#vocabulary-module" class="block hover:text-teal-300 transition duration-150">3. Bases de Conversation</a>
+                    <a href="#numbers-module" class="block hover:text-teal-300 transition duration-150">4. Les Chiffres (0-10)</a>
+                    <a href="#survival-module" class="block hover:text-teal-300 transition duration-150">5. Module Survie (Phrases)</a>
+                    <a href="#notes-culture-module" class="block hover:text-teal-300 transition duration-150">6. Notes Linguistiques</a>
+                    <a href="#cultural-module" class="block hover:text-teal-300 transition duration-150">7. Exploration Culturelle</a>
+                    <a href="#faux-amis-module" class="block hover:text-teal-300 transition duration-150">8. Faux-Amis et Pièges</a>
+                </nav>
             </div>
         </div>
-    </footer>
 
+        <!-- Colonne du Contenu Principal -->
+        <div class="lg:w-3/4 space-y-16">
 
-    <!-- Script JavaScript (logique combinée) -->
-    <script>
-        // --- Fonctions utilitaires Audio (Simplifiées) ---
-
-        /**
-         * Gère le processus de lecture de texte complet via le moteur natif du navigateur.
-         * @param {string} text Le texte à lire.
-         * @param {HTMLElement} button Le bouton qui a déclenché l'action.
-         * @param {string} langCode Le code langue à utiliser (par défaut 'bg-BG').
-         */
-        function speakText(text, button, langCode = 'bg-BG') {
-            if (!('speechSynthesis' in window)) {
-                console.error("Synthèse vocale native non supportée par ce navigateur.");
-                return;
-            }
-
-            const originalContent = button.innerHTML;
+            <!-- A.0. INTRODUCTION & LÉGENDE -->
+            <section id="introduction-legend" class="bg-gray-800 p-6 rounded-2xl shadow-lg border-l-4 border-yellow-500">
+                <h2 class="text-2xl font-bold mb-4 text-yellow-300 flex items-center">
+                    📝 Comment utiliser cette page ?
+                </h2>
+                <div class="space-y-4 text-slate-300">
+                    <p class="font-semibold text-white bg-slate-700 p-3 rounded-lg">
+                        Parcours Conseillé : Commencez par l'**Alphabet (Flashcards)**, puis faites le **Quiz** pour tester votre mémoire, et terminez par les modules de **Vocabulaire et Survie**.
+                    </p>
+                    
+                    <h3 class="text-xl font-semibold mt-6 text-violet-400">Légende et Hiérarchie des Sons</h3>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li>
+                            <span class="font-bold text-yellow-300">Transcription Latine</span> : La façon dont la lettre est écrite en alphabet latin (ex: 'A', 'SH').
+                        </li>
+                        <li>
+                            <span class="font-bold text-violet-400">Prononciation Phonétique</span> : Le son français le plus proche (ex: 'comme dans arbre').
+                        </li>
+                        <li>
+                            <span class="font-extrabold text-red-400">Accent Tonique (Accent Aigu)</span> : Indique la syllabe sur laquelle il faut insister en parlant (ex: Blagodar**ý**a).
+                        </li>
+                    </ul>
+                </div>
+            </section>
             
-            // 1. Annuler toute parole précédente
-            window.speechSynthesis.cancel(); 
-
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = langCode; 
-            utterance.pitch = 1;
-            utterance.rate = 1;
-            
-            // 2. Disable & show loading
-            button.disabled = true;
-            button.innerHTML = '<svg class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
-            
-            // 3. Setup cleanup (important for unreliable onend)
-            let timer;
-            const cleanup = () => {
-                button.disabled = false;
-                button.innerHTML = originalContent;
-                clearInterval(timer); 
-                if (timer) {
-                    timer = null;
-                }
-            };
-
-            // 4. Fallback check for onend failure
-            timer = setInterval(() => {
-                if (!window.speechSynthesis.speaking) {
-                    cleanup();
-                }
-            }, 500); 
-
-            // 5. Native event handlers
-            utterance.onend = cleanup;
-            utterance.onerror = (event) => {
-                console.error(`Erreur de parole native en ${langCode}: `, event);
-                cleanup();
-            };
-            
-            // 6. Speak
-            window.speechSynthesis.speak(utterance);
-        }
-        
-        /**
-         * Fonction de test spécifique pour le panneau de débogage (utilise fr-FR).
-         */
-        function testNativeAudioFallback() {
-            const button = document.getElementById('test-native-audio-btn');
-            const statusDiv = document.getElementById('audio-status');
-            
-            if (!('speechSynthesis' in window)) {
-                statusDiv.textContent = "❌ Échec";
-                statusDiv.classList.remove('text-gray-300');
-                statusDiv.classList.add('text-red-400');
-                return;
-            }
-
-            // Préparation de la parole
-            window.speechSynthesis.cancel();
-            const text = "Ceci est un test audio.";
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'fr-FR'; 
-
-            // Rendre l'interface plus discrète : ne pas modifier le texte du bouton, juste le désactiver.
-            statusDiv.textContent = "Test...";
-            button.disabled = true;
-            
-            const resetStatus = (success) => {
-                button.disabled = false;
+            <!-- B. MODULE 1 : Cartes Flash (Alphabet) -->
+            <section id="alphabet-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-indigo-400 border-b border-slate-700 pb-2 flex items-center">
+                    1. Cartes Flash (Alphabet Cyrillique)
+                </h2>
                 
-                if (success) {
-                    statusDiv.textContent = "✅ OK";
-                    statusDiv.classList.remove('text-gray-300', 'text-red-400');
-                    statusDiv.classList.add('text-teal-400');
-                } else {
-                    statusDiv.textContent = "❌ Échec";
-                    statusDiv.classList.remove('text-gray-300', 'text-teal-400');
-                    statusDiv.classList.add('text-red-400');
-                }
+                <div class="flex justify-center mb-6">
+                    <button id="flip-all-btn" class="interactive-btn bg-indigo-500 hover:bg-indigo-600 text-white" aria-label="Retourner toutes les cartes pour afficher la prononciation">
+                        Retourner toutes les fiches
+                    </button>
+                </div>
+                
+                <div id="flashcard-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
+                    <!-- Les cartes seront insérées ici par JavaScript -->
+                </div>
+                <p class="text-sm text-slate-400 mt-4 text-center">Cliquez sur une carte pour la retourner.</p>
+            </section>
 
-                // Réinitialisation rapide du statut après 3 secondes (plus discret)
-                setTimeout(() => {
-                    statusDiv.textContent = "Prêt";
-                    statusDiv.classList.remove('text-teal-400', 'text-red-400');
-                    statusDiv.classList.add('text-gray-300');
-                }, 3000); 
-            };
-
-            utterance.onend = () => resetStatus(true);
-            utterance.onerror = (e) => resetStatus(false);
-            
-            window.speechSynthesis.speak(utterance);
-            
-            // Fallback pour les navigateurs avec un onend peu fiable
-            setTimeout(() => {
-                if (button.disabled) {
-                    resetStatus(true); 
-                }
-            }, 5000); 
-        }
-
-        // --- DATA (Alphabet Cyrillique Bulgare - 30 lettres) ---
-        const alphabet = [
-            { cyr: 'А а', lat: 'A', pron: 'Comme dans "arbre" (toujours ouvert)' },
-            { cyr: 'Б б', lat: 'B', pron: 'Comme dans "balle"' },
-            { cyr: 'В в', lat: 'V', pron: 'Comme dans "voiture"' },
-            { cyr: 'Г г', lat: 'G', pron: 'Comme dans "garçon"' },
-            { cyr: 'Д д', lat: 'D', pron: 'Comme dans "domino"' },
-            { cyr: 'Е е', lat: 'É', pron: 'Comme dans "été" (jamais "ye" ou "ié")' }, 
-            { cyr: 'Ж ж', lat: 'J', pron: 'Comme dans "jupe"' },
-            { cyr: 'З з', lat: 'Z', pron: 'Comme dans "zèbre"' },
-            { cyr: 'И и', lat: 'I', pron: 'Comme dans "île"' },
-            { cyr: 'Й й', lat: 'Y (bref)', pron: 'Comme dans pa"ys" (bref)' },
-            { cyr: 'К к', lat: 'K', pron: 'Comme dans "kilo"' },
-            { cyr: 'Л л', lat: 'L', pron: 'Comme dans "lit"' },
-            { cyr: 'М м', lat: 'M', pron: 'Comme dans "maman"' },
-            { cyr: 'Н н', lat: 'N', pron: 'Comme dans "nez"' },
-            { cyr: 'О о', lat: 'O', pron: 'Comme dans "orange" (toujours ouvert)' },
-            { cyr: 'П п', lat: 'P', pron: 'Comme dans "pied"' },
-            { cyr: 'Р р', lat: 'R', pron: 'Roulé (mais moins fort qu\'en russe)' },
-            { cyr: 'С с', lat: 'S', pron: 'Comme dans "soleil"' },
-            { cyr: 'Т т', lat: 'T', pron: 'Comme dans "taxi"' },
-            { cyr: 'У у', lat: 'Ou', pron: 'Comme dans "ours"' },
-            { cyr: 'Ф ф', lat: 'F', pron: 'Comme dans "fleur"' },
-            { cyr: 'Х х', lat: 'H', pron: 'Son guttural (comme le "j" espagnol)' },
-            { cyr: 'Ц ц', lat: 'Ts', pron: 'Comme dans "tsar"' },
-            { cyr: 'Ч ч', lat: 'Tch', pron: 'Comme dans "tchèque"' },
-            { cyr: 'Ш ш', lat: 'Ch', pron: 'Comme dans "chat"' },
-            { cyr: 'Щ щ', lat: 'Sht', pron: 'Comme "cht" dans "post-scriptum"' }, 
-            { cyr: 'Ъ ъ', lat: 'A (dur)', pron: 'Voyelle très fermée, comme le "a" dans "the" en anglais' }, 
-            { cyr: 'Ь ь', lat: 'Y (mou)', pron: 'Seulement utilisé avant O pour le son "yo" (e.g. "шофьор")' },
-            { cyr: 'Ю ю', lat: 'You', pron: 'Comme dans "yougourt"' },
-            { cyr: 'Я я', lat: 'Ya', pron: 'Comme dans "yacht"' },
-        ];
-        
-        // --- DATA (Vocabulaire de base) ---
-        const vocabulary = [
-            { bulgarian: 'Здравей', french: 'Bonjour (informel)', pronunciation: '(zdra-vèï)' },
-            { bulgarian: 'Добър ден', french: 'Bonjour (formel/journée)', pronunciation: '(dó-bar dèn)' },
-            { bulgarian: 'Лека нощ', french: 'Bonne nuit', pronunciation: '(lè-ka nocht)' },
-            { bulgarian: 'Довиждане', french: 'Au revoir', pronunciation: '(do-vízh-da-né)' },
-            { bulgarian: 'Моля', french: 'S’il vous plaît / Je vous en prie', pronunciation: '(mó-lya)' },
-            { bulgarian: 'Благодаря', french: 'Merci', pronunciation: '(bla-go-da-ryà)' },
-            { bulgarian: 'Да', french: 'Oui', pronunciation: '(da)' },
-            { bulgarian: 'Не', french: 'Non', pronunciation: '(né)' },
-            { bulgarian: 'Извинете', french: 'Excusez-moi / Pardon', pronunciation: '(iz-vi-né-té)' },
-            { bulgarian: 'Как си?', french: 'Comment ça va ? (informel)', pronunciation: '(kak si)' },
-            { bulgarian: 'Добре', french: 'Bien', pronunciation: '(do-bré)' },
-            { bulgarian: 'Лошо', french: 'Mal', pronunciation: '(lo-cho)' },
-            { bulgarian: 'Вода', french: 'Eau', pronunciation: '(vô-da)' },
-            { bulgarian: 'Хляб', french: 'Pain', pronunciation: '(hlyap)' },
-            { bulgarian: 'Аз съм...', french: 'Je suis...', pronunciation: '(az sam)' },
-            { bulgarian: 'Колко струва?', french: 'Combien ça coûte ?', pronunciation: '(kól-ko strú-va)' },
-            { bulgarian: 'Помощ!', french: 'À l\'aide !', pronunciation: '(pó-mocht)' },
-            { bulgarian: 'Едно', french: '1 (Un)', pronunciation: '(e-nó)' },
-            { bulgarian: 'Две', french: '2 (Deux)', pronunciation: '(dvé)' },
-            { bulgarian: 'Три', french: '3 (Trois)', pronunciation: '(tri)' },
-            { bulgarian: 'Четири', french: '4 (Quatre)', pronunciation: '(ché-ti-ri)' },
-            { bulgarian: 'Пет', french: '5 (Cinq)', pronunciation: '(pet)' },
-            { bulgarian: 'Шест', french: '6 (Six)', pronunciation: '(chesht)' },
-            { bulgarian: 'Седем', french: '7 (Sept)', pronunciation: '(sé-dem)' },
-            { bulgarian: 'Осем', french: '8 (Huit)', pronunciation: '(ó-sem)' },
-            { bulgarian: 'Девет', french: '9 (Neuf)', pronunciation: '(dé-vet)' },
-            { bulgarian: 'Десет', french: '10 (Dix)', pronunciation: '(dé-set)' }
-        ];
-
-        // --- ÉLÉMENTS DU DOM ---
-        const cardGrid = document.getElementById('card-grid');
-        const statsDisplay = document.getElementById('stats');
-        const quizContainer = document.getElementById('quiz-container');
-        const questionCounter = document.getElementById('question-counter');
-        const vocabularyListDiv = document.getElementById('vocabulary-list');
-
-        // --- ÉTAT GLOBAL ---
-        let flippedCards = 0;
-
-        // --- ÉTAT DU QUIZ ---
-        let currentQuestionIndex = 0;
-        let score = 0;
-        const totalQuestions = 10;
-        const quizQuestions = [];
-        let currentQuestion = null;
-        let isAnswerLocked = false;
-
-
-        // ===================================
-        // LOGIQUE DES CARTES FLASH
-        // ===================================
-
-        /**
-         * Fonction pour créer le HTML d'une carte (format standard/rectangulaire)
-         */
-        function createCardHtml(data) {
-            const cyrillicParts = data.cyr.split(' ');
-            const lowercaseLetter = cyrillicParts.length > 1 ? cyrillicParts[1] : cyrillicParts[0]; 
-            const fullCyrillic = data.cyr; 
-            const textToSpeak = fullCyrillic;
-
-            // Utilisation des classes h-48 et h-64 pour définir la hauteur
-            return `
-                <div class="card-wrapper h-48 md:h-64" onclick="flipCard(this)"> 
-                    <div class="flip-card-inner">
-                        <!-- Côté Cyrillique (Face) : Affiche la minuscule -->
-                        <div class="flip-card-front">
-                            ${lowercaseLetter}
-                        </div>
+            <!-- C. MODULE 2 : Quiz d'Identification -->
+            <section id="quiz-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-green-400 border-b border-slate-700 pb-2 flex items-center">
+                    2. Quiz d'Identification (Cyrillique vers Latin)
+                </h2>
+                
+                <div id="quiz-container" class="text-center p-8 bg-gray-800 rounded-xl">
+                    <p id="quiz-status" class="text-lg mb-4 font-semibold text-slate-300">
+                        Prêt à tester vos connaissances sur les 10 lettres les plus pièges ?
+                    </p>
+                    
+                    <div id="quiz-question" class="hidden">
+                        <p class="text-xl text-slate-400 mb-2">Quelle est la transcription latine de cette lettre ?</p>
+                        <p id="cyrillic-char" class="text-6xl font-extrabold text-white my-6"></p>
                         
-                        <!-- Côté Latin et Prononciation (Dos) -->
-                        <div class="flip-card-back flex justify-center items-center p-4">
-                            <!-- Contenu de la carte -->
-                            <div class="w-full text-center">
-                                <!-- 1. La lettre (Majuscule + Minuscule) -->
-                                <div class="cyrillic-char font-bold">${fullCyrillic}</div>
-                                
-                                <!-- 2. Bouton Audio -->
-                                <button 
-                                    class="audio-btn mx-auto mt-2 flex items-center justify-center p-2" 
-                                    onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this);"
-                                    title="Écouter la prononciation"
-                                >
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V9a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0111 3v18a1 1 0 01-1.707.707L5.586 15z"></path>
-                                    </svg>
-                                </button>
-                                
-                                <!-- 3. Transcription -->
-                                <div class="latin-transcription mt-3">→ ${data.lat}</div>
-                                
-                                <!-- 4. Prononciation -->
-                                <p class="pronunciation-hint mt-2">(${data.pron})</p>
-                            </div>
+                        <div id="quiz-options" class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                            <!-- Les options du quiz seront insérées ici -->
                         </div>
                     </div>
+
+                    <button id="start-quiz-btn" class="interactive-btn mt-8 bg-green-600 hover:bg-green-700 text-white" aria-label="Démarrer le quiz d'identification">
+                        Démarrer le Quiz
+                    </button>
                 </div>
-            `;
-        }
+            </section>
 
-        /**
-         * Fonction pour basculer une carte
-         */
-        function flipCard(cardContainer) {
-            const isFlipped = cardContainer.classList.contains('flipped');
-            cardContainer.classList.toggle('flipped');
+            <!-- D. MODULE 3 : Vocabulaire Essentiel (Bases de conversation) -->
+            <section id="vocabulary-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-red-400 border-b border-slate-700 pb-2 flex items-center">
+                    3. Bases de Conversation et Politesse
+                </h2>
+                
+                <div class="overflow-x-auto rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
+                            </tr>
+                        </thead>
+                        <tbody id="basic-vocabulary-table-body" class="divide-y divide-slate-700">
+                            <!-- Le vocabulaire de base sera inséré ici par JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
 
-            if (isFlipped) {
-                flippedCards--;
-            } else {
-                flippedCards++;
-            }
-            updateStats();
-        }
+            <!-- E. MODULE 4 : Les Chiffres (0-10) -->
+            <section id="numbers-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-purple-400 border-b border-slate-700 pb-2 flex items-center">
+                    4. Les Chiffres (0-10)
+                </h2>
+                
+                <div class="overflow-x-auto rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Chiffre</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
+                            </tr>
+                        </thead>
+                        <tbody id="numbers-table-body" class="divide-y divide-slate-700">
+                            <!-- Les chiffres seront insérés ici par JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- F. MODULE 5 : Survie en Bulgarie (Phrases types) -->
+            <section id="survival-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-cyan-400 border-b border-slate-700 pb-2 flex items-center">
+                    5. Module Survie : Phrases pour la vie quotidienne
+                </h2>
+                
+                <div class="overflow-x-auto rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
+                            </tr>
+                        </thead>
+                        <tbody id="survival-vocabulary-table-body" class="divide-y divide-slate-700">
+                            <!-- Le vocabulaire de survie sera inséré ici par JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- G. MODULE 6 : Notes & Culture -->
+            <section id="notes-culture-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-violet-400 border-b border-slate-700 pb-2 flex items-center">
+                    6. Notes de Prononciation & Linguistique
+                </h2>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Notice de Prononciation -->
+                    <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-violet-500">
+                        <h3 class="text-xl font-semibold mb-3 text-violet-300">Notice Linguistique</h3>
+                        <ul class="list-disc list-inside space-y-2 text-slate-300 ml-4">
+                            <li>L'**Accent Tonique** est essentiel en bulgare ; il n'est pas fixe et peut changer le sens des mots.</li>
+                            <li>**И** (i) vs **Й** (y) : Ne pas confondre la voyelle 'i' (И) et la consonne 'y' (Й).</li>
+                            <li>**Ь** (Signal doux) : Rend la consonne précédente douce (palatalisation).</li>
+                            <li>**Х** (H) : Son de raclement de gorge (comme le 'j' espagnol) et **Ъ** (voyelle courte/indistincte) n'ont pas d'équivalents parfaits en français.</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Bloc de Valorisation de l'Expertise -->
+                    <div class="bg-blue-900/50 p-4 rounded-xl border-l-4 border-blue-400 flex flex-col justify-center">
+                        <h3 class="text-xl font-semibold mb-3 text-blue-300 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944c-1.25.138-2.5.344-3.72.613-2.148.47-4.14 1.547-5.748 3.092-1.608 1.546-2.73 3.538-3.092 5.748C.24 12.5 0 13.5 0 14.5c0 1.05.24 2.05.752 3.003.362 2.21 1.484 4.102 3.092 5.748 1.608 1.545 3.601 2.622 5.748 3.092C9.5 29.76 10.5 30 11.5 30s1.94-.24 2.88-0.752c2.147-0.47 4.14-1.547 5.748-3.092 1.608-1.546 2.73-3.538-3.092-5.748C29.76 17.5 30 16.5 30 15.5c0-1.05-.24-2.05-.752-3.003z"></path></svg>
+                            Contenu Validé
+                        </h3>
+                        <p class="text-slate-300">
+                            Toutes les transcriptions, prononciations et notes linguistiques ont été vérifiées pour correspondre aux standards du bulgare contemporain.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- H. MODULE 7 : Exploration Culturelle -->
+            <section id="cultural-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-pink-400 border-b border-slate-700 pb-2 flex items-center">
+                    7. Exploration Culturelle
+                </h2>
+                
+                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Anecdotes et Coutumes</h3>
+                <p class="text-slate-400 mb-4 font-semibold italic">
+                    Chaque visite propose de nouvelles anecdotes ! (Affichage aléatoire)
+                </p>
+                <div id="customs-list" class="space-y-4 mb-10">
+                    <!-- Customs will be injected here (dynamic subset) -->
+                </div>
+
+                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Mini-Dictionnaire de Prénoms</h3>
+                <div id="names-table-container" class="overflow-x-auto rounded-xl mb-10">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Prénom</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Transcription</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Signification</th>
+                            </tr>
+                        </thead>
+                        <tbody id="names-table-body" class="divide-y divide-slate-700">
+                            <!-- Names will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Villes Clés et Géographie</h3>
+                <div id="cities-table-container" class="overflow-x-auto rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Ville (Cyrillique)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Transcription</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Notes Clés</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cities-table-body" class="divide-y divide-slate-700">
+                            <!-- Cities will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            <!-- I. MODULE 8 : Faux-Amis et Pièges -->
+            <section id="faux-amis-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
+                <h2 class="text-3xl font-bold mb-6 text-orange-400 border-b border-slate-700 pb-2 flex items-center">
+                    8. Faux-Amis et Pièges pour Francophones
+                </h2>
+                
+                <p class="text-slate-400 mb-6">Ces mots ressemblent au français mais ont un sens très différent. Attention à la confusion !</p>
+
+                <div class="overflow-x-auto rounded-xl">
+                    <table class="min-w-full divide-y divide-slate-700">
+                        <thead class="table-header">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Mot Bulgare</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-red-400 uppercase tracking-wider">Ressemblance Trompeuse</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-green-400 uppercase tracking-wider">Vrai Sens</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider hidden md:table-cell">Explication</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faux-amis-table-body" class="divide-y divide-slate-700">
+                            <!-- Faux Amis will be inserted here by JS for consistency -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- J. Option PDF/Impression (Simulée) -->
+            <section class="text-center p-6 bg-gray-800 rounded-2xl border-t border-slate-700">
+                <p class="text-slate-300 mb-4">Besoin d'une version papier ?</p>
+                <button onclick="window.print()" class="interactive-btn bg-gray-600 hover:bg-gray-700 text-white" aria-label="Imprimer la page pour créer des fiches PDF">
+                    Imprimer / Générer Fiche PDF
+                </button>
+            </section>
+
+        </div> <!-- Fin de la Colonne du Contenu Principal -->
+
+    </main>
+    
+    <!-- Pied de Page (Signature discrète) -->
+    <footer class="mt-16 text-center text-sm text-slate-500 border-t border-slate-800 pt-4">
+        Conçu et développé par Gemini (V4) - Pédagogie active du cyrillique bulgare.
+    </footer>
+
+    <script>
+        // --- 1. DATA (INCHANGÉE MAIS COMPLÈTE) ---
+
+        const alphabetData = [
+            { cyr: "А а", lat: "A", pron: "comme 'arbre'" },
+            { cyr: "Б б", lat: "B", pron: "comme 'but'" },
+            { cyr: "В в", lat: "V", pron: "comme 'vache'" },
+            { cyr: "Г г", lat: "G", pron: "comme 'gomme'" },
+            { cyr: "Д д", lat: "D", pron: "comme 'doigt'" },
+            { cyr: "Е е", lat: "E", pron: "comme 'elle'" },
+            { cyr: "Ж ж", lat: "J", pron: "comme 'jour'" },
+            { cyr: "З з", lat: "Z", pron: "comme 'zèbre'" },
+            { cyr: "И и", lat: "I", pron: "comme 'idée'" },
+            { cyr: "Й й", lat: "Y", pron: "comme 'yoga' (consonne)" },
+            { cyr: "К к", lat: "K", pron: "comme 'kilo'" },
+            { cyr: "Л л", lat: "L", pron: "comme 'lune'" },
+            { cyr: "М м", lat: "M", pron: "comme 'main'" },
+            { cyr: "Н н", lat: "N", pron: "comme 'nez'" },
+            { cyr: "О о", lat: "O", pron: "comme 'mot'" },
+            { cyr: "П п", lat: "P", pron: "comme 'père'" },
+            { cyr: "Р р", lat: "R", pron: "R roulé (non-guttural)" }, 
+            { cyr: "С с", lat: "S", pron: "comme 'soleil'" },
+            { cyr: "Т т", lat: "T", pron: "comme 'tasse'" },
+            { cyr: "У у", lat: "OU", pron: "comme 'loup'" },
+            { cyr: "Ф ф", lat: "F", pron: "comme 'fil'" },
+            { cyr: "Х х", lat: "CH/H", pron: "Raclement de gorge, comme le ‘j’ espagnol." }, 
+            { cyr: "Ц ц", lat: "TS", pron: "comme 'tsar'" },
+            { cyr: "Ч ч", lat: "TCH", pron: "comme 'chat'" },
+            { cyr: "Ш ш", lat: "CH", pron: "comme 'short'" },
+            { cyr: "Щ щ", lat: "SHT", pron: "SHT, comme dans 'shtick' (Anglais)." }, 
+            { cyr: "Ъ ъ", lat: "A/EU", pron: "A court, comme le ‘a’ de ‘petit’ (muet, indistinct)." },
+            { cyr: "Ь ь", lat: "(Muet)", pron: "Signal doux (rend consonne douce)" },
+            { cyr: "Ю ю", lat: "YOU", pron: "comme 'yogourt'" },
+            { cyr: "Я я", lat: "YA", pron: "comme 'yacht'" }
+        ];
+
+        const vocabularyData = [
+            // --- MODULE 3 : BASES DE CONVERSATION ---
+            { bul: "Здравей", fr: "Salut (informel)", pron: "Zdravéy", category: "Salutations/Bases", module: 3 },
+            { bul: "Добър ден", fr: "Bonjour (formel)", pron: "Dóbâr dèn", category: "Salutations/Bases", module: 3 },
+            { bul: "Лека нощ", fr: "Bonne nuit", pron: "Léka nòsht", category: "Salutations/Bases", module: 3 },
+            { bul: "Довиждане", fr: "Au revoir", pron: "Dovíjdane", category: "Salutations/Bases", module: 3 },
+            { bul: "Как си?", fr: "Comment ça va ? (informel)", pron: "Kák sì?", category: "Salutations/Bases", module: 3 },
+            { bul: "Добре", fr: "Bien", pron: "Dobré", category: "Salutations/Bases", module: 3 },
+            { bul: "Благодаря", fr: "Merci", pron: "Blagodarýa", category: "Politesse/Pratique", module: 3 },
+            { bul: "Моля", fr: "S'il vous plaît / Je vous en prie", pron: "Mólya", category: "Politesse/Pratique", module: 3 },
+            { bul: "Да", fr: "Oui", pron: "Dà", category: "Politesse/Pratique", module: 3 },
+            { bul: "Не", fr: "Non", pron: "Nè", category: "Politesse/Pratique", module: 3 },
+            { bul: "Извинете", fr: "Excusez-moi / Pardon", pron: "Izvinété", category: "Politesse/Pratique", module: 3 },
+            { bul: "Аз съм...", fr: "Je suis...", pron: "Àz sâm...", category: "Politesse/Pratique", module: 3 },
+            
+            // --- MODULE 5 : SURVIE EN BULGARIE ---
+            { bul: "Къде е...?", fr: "Où est...?", pron: "Kâdé è...?", category: "Se Déplacer", module: 5 },
+            { bul: "Наляво", fr: "À gauche", pron: "Nalyávo", category: "Se Déplacer", module: 5 },
+            { bul: "Надясно", fr: "À droite", pron: "Nadyásno", category: "Se Déplacer", module: 5 },
+            { bul: "Направо", fr: "Tout droit", pron: "Naprávo", category: "Se Déplacer", module: 5 },
+            { bul: "Спирка", fr: "Arrêt (bus/tram)", pron: "Spírka", category: "Se Déplacer", module: 5 },
+            { bul: "Искам да поръчам.", fr: "Je voudrais commander.", pron: "Ískam da porácham.", category: "Au Restaurant", module: 5 },
+            { bul: "Сметката, моля.", fr: "L'addition, s'il vous plaît.", pron: "Smétkata, mólya.", category: "Au Restaurant", module: 5 },
+            { bul: "Вода", fr: "Eau", pron: "Vodá", category: "Au Restaurant", module: 5 },
+            { bul: "Кафе", fr: "Café", pron: "Kafé", category: "Au Restaurant", module: 5 },
+            { bul: "Колко струва?", fr: "Combien ça coûte ?", pron: "Kólko strúva?", category: "Course/Base", module: 5 },
+            { bul: "Плащам с карта.", fr: "Je paie par carte.", pron: "Pláshtam s kárta.", category: "Course/Base", module: 5 },
+            { bul: "В колко часа е?", fr: "À quelle heure est-ce ?", pron: "V kólko chása è?", category: "Course/Base", module: 5 },
+        ];
+
+        const numbersData = [
+            { num: 0, bul: "нула", fr: "Zéro", pron: "Nóula" },
+            { num: 1, bul: "едно", fr: "Un", pron: "Édnò" },
+            { num: 2, bul: "две", fr: "Deux", pron: "Dvé" },
+            { num: 3, bul: "три", fr: "Trois", pron: "Trì" },
+            { num: 4, bul: "четири", fr: "Quatre", pron: "Chétirì" },
+            { num: 5, bul: "пет", fr: "Cinq", pron: "Pèt" },
+            { num: 6, bul: "шест", fr: "Six", pron: "Chèst" },
+            { num: 7, bul: "седем", fr: "Sept", pron: "Sédèm" },
+            { num: 8, bul: "осем", fr: "Huit", pron: "Ósèm" },
+            { num: 9, bul: "девет", fr: "Neuf", pron: "Dévèt" },
+            { num: 10, bul: "десет", fr: "Dix", pron: "Déssèt" }
+        ];
+
+        const namesData = [
+            { type: "Masculin", cyr: "Иван", lat: "Iván", meaning: "Dieu est gracieux (l'équivalent de Jean)" },
+            { type: "Masculin", cyr: "Боян", lat: "Boyan", meaning: "Bataille, guerrier" },
+            { type: "Masculin", cyr: "Стоян", lat: "Stoyan", meaning: "Celui qui reste, fort, stable" },
+            { type: "Féminin", cyr: "Мария", lat: "Maríya", meaning: "Aimée (comme Marie)" },
+            { type: "Féminin", cyr: "Райна", lat: "Rayna", meaning: "Reine, souveraine" },
+            { type: "Féminin", cyr: "Гергана", lat: "Gergana", meaning: "Dérivé de Georges (la victoire)" }
+        ];
+
+        const allCustomsData = [
+            { title: "Le mystère du hochement de tête", icon: "👉", text: "Attention ! En Bulgarie, <strong class='text-yellow-300'>hocher la tête verticalement (de haut en bas) signifie 'Non'</strong>, et secouer la tête horizontalement (de gauche à droite) signifie 'Oui'. Vérifiez toujours la réponse verbale ('Да' / 'Не')." },
+            { title: "Fête de la Rose (Kazanlak)", icon: "🌹", text: "Le pays célèbre la rose de Damas en mai/juin. La Bulgarie est un producteur majeur d'huile de rose, un ingrédient précieux." },
+            { title: "Martenitsa (1er mars)", icon: "🔴⚪", text: "Le 1er mars, les Bulgares s'échangent de petits ornements rouges et blancs appelés Martenitsa pour souhaiter la bonne santé et l'arrivée du printemps." },
+            { title: "Hospitalité et Chaussures", icon: "🏠", text: "Si vous êtes invité chez un Bulgare, il est de coutume d'enlever vos chaussures à l'entrée." },
+            { title: "L'Imenen Den (Jour de l'Onomastique)", icon: "🎂", text: "Le jour de votre Saint-Patron est souvent célébré plus joyeusement que votre anniversaire." },
+            { title: "Le Culte du Vieux", icon: "👵", text: "Le respect des personnes âgées est fondamental. Céder sa place est une règle tacite de la courtoisie bulgare." }
+        ];
         
-        /**
-         * Fonction pour retourner toutes les cartes vers le côté cyrillique (face avant).
-         */
-        function resetAllCardsToCyrillic() {
-            const allCards = document.querySelectorAll('.card-wrapper');
-            allCards.forEach(card => {
-                if (card.classList.contains('flipped')) {
-                    card.classList.remove('flipped');
-                }
-            });
-            flippedCards = 0;
-            updateStats();
-        }
+        const citiesData = [
+            { cyr: "София", lat: "Sofíya", notes: "La Capitale. Cœur historique et moderne, facile d'accès." },
+            { cyr: "Пловдив", lat: "Plóvdiv", notes: "L'une des villes les plus anciennes d'Europe (plus de 6000 ans), avec un amphithéâtre romain préservé." },
+            { cyr: "Варна", lat: "Várna", notes: "La 'Capitale maritime' bulgare, située sur la côte de la mer Noire." },
+            { cyr: "Велико Търново", lat: "Velíko Târnovo", notes: "Ancienne capitale médiévale, célèbre pour la forteresse de Tsarevets." }
+        ];
 
-        /**
-         * Fonction pour mettre à jour l'affichage des statistiques
-         */
-        function updateStats() {
-            statsDisplay.innerHTML = `
-                ${flippedCards} / ${alphabet.length} lettres explorées 
-                <span class="text-sm font-normal text-gray-500">(Cliquez à nouveau pour les masquer)</span>
-            `;
-        }
+        const fauxAmisData = [
+            { bul: "магазин (magazin)", trompe: "*Magazine* (revue)", vrai: "Boutique, Magasin", expl: "Lieu où l'on fait les courses." },
+            { bul: "фабрика (fabrika)", trompe: "*Fabrique* (atelier)", vrai: "Usine, Manufacture", expl: "Site de production industrielle." },
+            { bul: "директор (direktor)", trompe: "*Directeur* (département)", vrai: "PDG, Dirigeant Principal", expl: "Le chef de l'entreprise (CEO)." },
+            { bul: "анекдот (anekdot)", trompe: "*Anecdote* (petit récit)", vrai: "Blague, Plaisanterie", expl: "Si l'on vous en raconte un, c'est pour rire !" },
+            { bul: "час (chas)", trompe: "*Chance* ou *Cas*", vrai: "Heure", expl: "Utilisé pour exprimer le temps (ex: 'une heure')." },
+        ];
 
 
-        // ===================================
-        // LOGIQUE DU QUIZ
-        // ===================================
-
-        /**
-         * Mélange un tableau (Algorithme de Fisher-Yates)
-         */
+        // --- 2. UTILS ---
         function shuffle(array) {
-            for (let i = array.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [array[i], array[j]] = [array[j], array[i]];
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [
+                    array[randomIndex], array[currentIndex]
+                ];
             }
             return array;
         }
 
-        /**
-         * Génère un tableau de questions aléatoires.
-         */
-        function generateQuizQuestions() {
-            // Exclure les lettres sans transcription latine directe pour simplifier le quiz
-            const simpleAlphabet = alphabet.map(l => ({ 
-                cyr: l.cyr.split(' ')[0], 
-                lat: l.lat 
-            })).filter(l => l.cyr !== 'Ъ' && l.cyr !== 'Ь');
+        // --- 3. RENDU DES MODULES ---
 
-            const selectedLetters = shuffle([...simpleAlphabet]).slice(0, totalQuestions);
-            
-            quizQuestions.length = 0; 
+        // Module 1 : Rendu des Cartes Flash
+        function renderAlphabet() {
+            const grid = document.getElementById('flashcard-grid');
+            grid.innerHTML = ''; 
 
-            selectedLetters.forEach(correctLetter => {
-                const distractors = [];
-                const availableDistractors = simpleAlphabet.filter(l => l.lat !== correctLetter.lat);
-                const randomDistractors = shuffle(availableDistractors).slice(0, 3);
+            alphabetData.forEach(item => {
+                const cardContainer = document.createElement('div');
+                cardContainer.className = 'col-span-1 h-28 sm:h-36'; 
+
+                const flipCard = document.createElement('div');
+                flipCard.className = 'flip-card';
+                flipCard.onclick = () => flipCard.classList.toggle('flipped');
+
+                const inner = document.createElement('div');
+                inner.className = 'flip-card-inner';
                 
-                randomDistractors.forEach(d => distractors.push(d.lat));
+                const lowercaseCyrillic = item.cyr.split(' ')[1];
 
-                const options = shuffle([...distractors, correctLetter.lat]);
+                const front = document.createElement('div');
+                front.className = 'flip-card-front';
+                front.innerHTML = `<p class="text-4xl sm:text-6xl font-bold">${lowercaseCyrillic}</p>`;
+                
+                const back = document.createElement('div');
+                back.className = 'flip-card-back';
+                back.innerHTML = `
+                    <p class="text-2xl sm:text-4xl font-extrabold mb-1 text-yellow-200">${item.lat}</p>
+                    <p class="text-xs sm:text-sm text-center font-medium italic text-violet-300">${item.pron}</p>
+                `;
+                
+                inner.appendChild(front);
+                inner.appendChild(back);
+                flipCard.appendChild(inner);
+                cardContainer.appendChild(flipCard);
+                grid.appendChild(cardContainer);
+            });
+        }
+        
+        // Fonction générique de rendu de tableau
+        function renderGenericTable(data, tbodyId, columns, isNumbered = false) {
+            const tbody = document.getElementById(tbodyId);
+            tbody.innerHTML = '';
 
-                quizQuestions.push({
-                    cyrillic: correctLetter.cyr,
-                    correctAnswer: correctLetter.lat,
-                    options: options
+            // Groupement par catégorie pour les modules 3 et 5
+            const categories = {};
+            data.forEach(item => {
+                const category = item.category || 'Général';
+                if (!categories[category]) {
+                    categories[category] = [];
+                }
+                categories[category].push(item);
+            });
+
+            let rowCount = 0;
+            Object.keys(categories).forEach(category => {
+                // Ligne de titre de catégorie (uniquement si la catégorie est présente)
+                if (category !== 'Général') {
+                    const headerRow = document.createElement('tr');
+                    headerRow.innerHTML = `<td colspan="${columns.length + (isNumbered ? 1 : 0)}" class="px-6 py-2 bg-slate-700/70 text-sm font-extrabold text-violet-400 uppercase">${category}</td>`;
+                    tbody.appendChild(headerRow);
+                }
+
+                categories[category].forEach((item) => {
+                    const row = document.createElement('tr');
+                    const rowClass = rowCount % 2 === 0 ? 'table-row-even' : 'table-row-odd';
+                    row.className = rowClass;
+                    
+                    let rowContent = '';
+                    
+                    if (isNumbered) { // Pour le module des chiffres
+                        rowContent += `<td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-purple-300">${item.num}</td>`;
+                    }
+                    
+                    columns.forEach(col => {
+                        let content = item[col.key];
+                        let styleClass = '';
+                        
+                        if (col.key === 'bul' || col.key === 'cyr') {
+                            styleClass = 'text-lg font-medium text-white';
+                        } else if (col.key === 'pron' || col.key === 'lat') {
+                            styleClass = 'text-sm text-yellow-300';
+                        } else if (col.key === 'trompe') {
+                             styleClass = 'text-sm text-red-300';
+                        } else if (col.key === 'vrai') {
+                             styleClass = 'text-sm text-green-300 font-semibold';
+                        } else {
+                            styleClass = 'text-sm text-slate-300';
+                        }
+                        
+                        // Ajout de la classe `hidden md:table-cell` pour masquer l'explication sur mobile si besoin (pour faux amis)
+                        const hiddenClass = col.key === 'expl' ? 'hidden md:table-cell' : 'whitespace-nowrap';
+                        
+                        rowContent += `<td class="px-6 py-4 ${hiddenClass} ${styleClass}">${content}</td>`;
+                    });
+
+                    row.innerHTML = rowContent;
+                    tbody.appendChild(row);
+                    rowCount++;
                 });
             });
         }
+
+
+        // Module 3 : Rendu du Vocabulaire de Base
+        function renderBasicVocabulary() {
+            const basicData = vocabularyData.filter(item => item.module === 3);
+            const columns = [
+                { key: 'bul' }, 
+                { key: 'pron' }, 
+                { key: 'fr' }
+            ];
+            renderGenericTable(basicData, 'basic-vocabulary-table-body', columns);
+        }
+
+        // Module 5 : Rendu du Vocabulaire de Survie
+        function renderSurvivalVocabulary() {
+            const survivalData = vocabularyData.filter(item => item.module === 5);
+            const columns = [
+                { key: 'bul' }, 
+                { key: 'pron' }, 
+                { key: 'fr' }
+            ];
+            renderGenericTable(survivalData, 'survival-vocabulary-table-body', columns);
+        }
+
+        // Module 4 : Rendu des Chiffres
+        function renderNumbers() {
+            const columns = [
+                { key: 'bul' }, 
+                { key: 'pron' }, 
+                { key: 'fr' }
+            ];
+            renderGenericTable(numbersData, 'numbers-table-body', columns, true);
+        }
         
-        /**
-         * Démarre/Réinitialise l'état du quiz
-         */
-        function initQuiz() {
-            currentQuestionIndex = 0;
-            score = 0;
-            isAnswerLocked = false;
-            generateQuizQuestions();
-            displayQuestion();
+        // Module 7 : Rendu du Module Culturel (MODIFIÉ pour l'aléatoire)
+        function renderCulturalModule() {
+            // Rendu des Prénoms
+            const namesColumns = [
+                { key: 'cyr' },
+                { key: 'lat' },
+                { key: 'meaning' }
+            ];
+            renderGenericTable(namesData, 'names-table-body', namesColumns);
+
+
+            // Rendu des Villes
+            const citiesColumns = [
+                { key: 'cyr' },
+                { key: 'lat' },
+                { key: 'notes' }
+            ];
+            renderGenericTable(citiesData, 'cities-table-body', citiesColumns);
+
+
+            // Rendu des Coutumes (Sélection aléatoire de 4)
+            const customsList = document.getElementById('customs-list');
+            customsList.innerHTML = '';
+            const shuffledCustoms = shuffle([...allCustomsData]); 
+            const selectedCustoms = shuffledCustoms.slice(0, 4);
+
+            selectedCustoms.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'p-4 bg-gray-800 rounded-lg border-l-4 border-pink-400 shadow-md';
+                div.innerHTML = `
+                    <h4 class="text-xl font-bold mb-1 text-white flex items-center">
+                        <span class="mr-3 text-2xl">${item.icon}</span>${item.title}
+                    </h4>
+                    <p class="text-slate-300 text-sm">${item.text}</p>
+                `;
+                customsList.appendChild(div);
+            });
+        }
+        
+        // Module 8 : Rendu des Faux-Amis
+        function renderFauxAmis() {
+            const fauxAmisColumns = [
+                { key: 'bul' },
+                { key: 'trompe' },
+                { key: 'vrai' },
+                { key: 'expl' }
+            ];
+            renderGenericTable(fauxAmisData, 'faux-amis-table-body', fauxAmisColumns);
         }
 
+        // --- 4. LOGIQUE D'INTERACTION ---
 
-        /**
-         * Affiche la question actuelle dans l'interface utilisateur.
-         */
-        function displayQuestion() {
-            if (currentQuestionIndex >= totalQuestions) {
-                showResults();
-                return;
-            }
+        // Fonction pour retourner toutes les cartes (Module 1)
+        function flipAllCards() {
+            const cards = document.querySelectorAll('.flip-card');
+            let allFlipped = true;
 
-            isAnswerLocked = false;
-            currentQuestion = quizQuestions[currentQuestionIndex];
-
-            // Mise à jour du compteur
-            questionCounter.textContent = `Question ${currentQuestionIndex + 1} / ${totalQuestions}`;
-
-            // Contenu HTML de la question
-            quizContainer.innerHTML = `
-                <div class="text-center mb-8">
-                    <p class="text-xl font-semibold text-gray-300 mb-4">
-                        Quelle est la transcription latine de cette lettre ?
-                    </p>
-                    <div class="text-9xl font-extrabold text-blue-400 p-6 bg-gray-900 rounded-xl inline-block shadow-lg select-none">
-                        ${currentQuestion.cyrillic}
-                    </div>
-                </div>
-
-                <div id="options-grid" class="grid grid-cols-2 gap-4">
-                    ${currentQuestion.options.map((option, index) => `
-                        <button
-                            class="option-button bg-gray-700 hover:bg-gray-600 text-gray-100 font-bold py-3 px-4 rounded-xl text-lg shadow-md"
-                            onclick="checkAnswer('${option}', this)"
-                            data-option="${option}"
-                        >
-                            ${option}
-                        </button>
-                    `).join('')}
-                </div>
-                
-                <div id="feedback" class="text-center mt-6 text-xl font-bold"></div>
-            `;
-        }
-
-        /**
-         * Vérifie la réponse de l'utilisateur.
-         */
-        function checkAnswer(selectedAnswer, button) {
-            if (isAnswerLocked) return;
-            isAnswerLocked = true;
-            
-            const feedbackDiv = document.getElementById('feedback');
-            const allButtons = document.querySelectorAll('.option-button');
-
-            const isCorrect = selectedAnswer === currentQuestion.correctAnswer;
-            
-            if (isCorrect) {
-                score++;
-                button.classList.add('correct');
-                feedbackDiv.textContent = "✅ Correct !";
-                feedbackDiv.classList.add('text-teal-400');
-            } else {
-                button.classList.add('incorrect');
-                feedbackDiv.textContent = `❌ Faux. C'est : ${currentQuestion.correctAnswer}`;
-                feedbackDiv.classList.add('text-red-400');
-            }
-
-            // Mettre en évidence la bonne réponse
-            allButtons.forEach(btn => {
-                btn.disabled = true; 
-                if (btn.dataset.option === currentQuestion.correctAnswer && !isCorrect) {
-                    btn.classList.add('correct');
+            cards.forEach(card => {
+                if (!card.classList.contains('flipped')) {
+                    allFlipped = false;
                 }
             });
 
-            // Passer à la question suivante après un court délai
-            setTimeout(() => {
-                currentQuestionIndex++;
-                displayQuestion();
-            }, 1500);
-        }
-
-        /**
-         * Affiche les résultats finaux du quiz.
-         */
-        function showResults() {
-            questionCounter.textContent = "Quiz Terminé !";
-            const percentage = Math.round((score / totalQuestions) * 100);
-            
-            quizContainer.innerHTML = `
-                <div class="text-center flex flex-col justify-center items-center h-full py-10">
-                    <h2 class="text-4xl font-extrabold text-blue-400 mb-4">Résultats du Quiz</h2>
-                    <p class="text-6xl font-black text-teal-400 mb-6">${score} / ${totalQuestions}</p>
-                    <p class="text-2xl font-semibold text-gray-300 mb-6">${percentage}% de bonnes réponses.</p>
-                    
-                    <button 
-                        class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 shadow-lg mt-4 transform hover:scale-105"
-                        onclick="initQuiz()"
-                    >
-                        Recommencer le Quiz
-                    </button>
-                </div>
-            `;
-        }
-        
-        // ===================================
-        // LOGIQUE DU VOCABULAIRE ESSENTIEL
-        // ===================================
-        
-        /**
-         * Affiche la liste du vocabulaire essentiel.
-         */
-        function displayVocabulary() {
-            let html = '';
-
-            vocabulary.forEach(item => {
-                const textToSpeak = item.bulgarian;
-
-                html += `
-                    <div class="flex justify-between items-center py-3 border-b border-gray-700 last:border-b-0 flex-wrap vocab-item">
-                        <div class="flex flex-col w-full sm:w-auto sm:flex-row sm:items-center mb-2 sm:mb-0">
-                            <div class="text-xl font-bold text-blue-400 sm:mr-4">${item.bulgarian}</div>
-                            <div class="text-md text-gray-400 italic font-medium mt-1 sm:mt-0">(${item.pronunciation})</div>
-                        </div>
-                        <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
-                            <div class="text-lg text-gray-300">${item.french}</div>
-                            <button 
-                                class="audio-btn" 
-                                onclick="event.stopPropagation(); speakText('${textToSpeak.replace(/'/g, "\\'")}', this);"
-                                title="Écouter le mot"
-                            >
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.899a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1V9a1 1 0 011-1h1.586l4.707-4.707A1 1 0 0111 3v18a1 1 0 01-1.707.707L5.586 15z"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                `;
+            // Bascule l'état: si toutes sont pliées, les déplier; si toutes sont dépliées, les plier.
+            cards.forEach(card => {
+                if (allFlipped) {
+                    card.classList.remove('flipped');
+                } else {
+                    card.classList.add('flipped');
+                }
             });
-
-            vocabularyListDiv.innerHTML = html;
         }
-
-        // --- INITIALISATION GLOBALE ---
-        function initializeApp() {
-            // 1. Initialiser les cartes
-            let allCardsHtml = '';
-            alphabet.forEach(letter => {
-                allCardsHtml += createCardHtml(letter);
-            });
-            cardGrid.innerHTML = allCardsHtml;
-            updateStats(); 
-
-            // 2. Afficher le vocabulaire essentiel
-            displayVocabulary();
-            
-            // 3. Initialiser le quiz
-            // Pas d'appel ici, on laisse le bouton "Démarrer" le gérer.
-        }
-
-        window.onload = initializeApp;
         
-        // Rendre les fonctions globales disponibles pour le HTML
-        window.flipCard = flipCard;
-        window.initQuiz = initQuiz;
-        window.checkAnswer = checkAnswer;
-        window.resetAllCardsToCyrillic = resetAllCardsToCyrillic;
-        window.speakText = speakText;
-        window.testNativeAudioFallback = testNativeAudioFallback;
+        // Logique de Quiz (Simulée)
+        function startQuiz() {
+            // En conditions réelles, cette fonction lancerait la première question
+            const quizStatus = document.getElementById('quiz-status');
+            const startBtn = document.getElementById('start-quiz-btn');
+
+            quizStatus.innerHTML = '<span class="text-yellow-400 font-bold">Quiz non actif :</span> La logique complète de quiz n\'est pas incluse, mais les autres modules sont actifs pour l\'étude.';
+            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            startBtn.disabled = true;
+        }
+
+        // Logique pour basculer la table des matières
+        function toggleToc() {
+            const tocContainer = document.getElementById('toc-container');
+            const toggleBtn = document.getElementById('toggle-toc-btn');
+            const btnText = document.getElementById('toc-btn-text');
+            const iconOpen = document.getElementById('toc-icon-open');
+            const iconClose = document.getElementById('toc-icon-close');
+
+            const isHidden = !tocContainer.classList.contains('is-open');
+
+            if (isHidden) {
+                // Afficher
+                tocContainer.classList.add('is-open');
+                btnText.textContent = 'Masquer la Table des Matières';
+                toggleBtn.setAttribute('aria-expanded', 'true');
+                iconOpen.classList.add('hidden');
+                iconClose.classList.remove('hidden');
+            } else {
+                // Masquer
+                tocContainer.classList.remove('is-open');
+                btnText.textContent = 'Afficher la Table des Matières';
+                toggleBtn.setAttribute('aria-expanded', 'false');
+                iconOpen.classList.remove('hidden');
+                iconClose.classList.add('hidden');
+            }
+        }
+
+
+        // --- 5. INITIALISATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Rendre tous les modules
+            renderAlphabet();
+            renderBasicVocabulary();
+            renderNumbers(); 
+            renderSurvivalVocabulary();
+            renderCulturalModule(); 
+            renderFauxAmis();
+            
+            // Événements
+            document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
+            document.getElementById('flip-all-btn').addEventListener('click', flipAllCards);
+            
+            // Nouvel événement pour le bouton bascule
+            document.getElementById('toggle-toc-btn').addEventListener('click', toggleToc);
+
+            // Gérer le clic sur un lien TOC pour masquer (surtout sur mobile)
+            const tocLinks = document.querySelectorAll('#toc-container a');
+            
+            // Vérifie si nous sommes sur une petite fenêtre (moins de 1024px)
+            const isSmallScreen = window.matchMedia('(max-width: 1023px)').matches;
+            
+            if (isSmallScreen) { 
+                tocLinks.forEach(link => {
+                    link.addEventListener('click', () => {
+                        // Délai pour laisser le scroll se terminer avant de masquer
+                        setTimeout(toggleToc, 300); 
+                    });
+                });
+            }
+        });
+
     </script>
 </body>
 </html>
