@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulgare Cyrillique V4 : Apprentissage Pédagogique</title>
+    <title>Bulgare Cyrillique V5 : Apprentissage Pédagogique (Quiz Actif)</title>
     <!-- Chargement de Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -30,6 +30,46 @@
             transform: scale(1.03);
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
         }
+        
+        /* Style spécifique pour les options du quiz */
+        .quiz-option-btn {
+            display: block;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 0.5rem;
+            background-color: #334155; /* bg-slate-700 */
+            color: #E2E8F0;
+            transition: background-color 0.15s, transform 0.1s;
+        }
+        .quiz-option-btn:not(.correct):not(.incorrect):hover {
+            background-color: #475569; /* bg-slate-600 */
+            transform: translateY(-2px);
+        }
+        .quiz-option-btn.correct {
+            background-color: #10B981; /* bg-emerald-500 */
+            color: white;
+            animation: pulse-green 0.3s ease-in-out;
+        }
+        .quiz-option-btn.incorrect {
+            background-color: #EF4444; /* bg-red-500 */
+            color: white;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        /* Animations pour le quiz */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
 
         /* --- STYLES SPECIFIQUES DES CARTES FLASH (Module 1) --- */
         .flip-card {
@@ -130,7 +170,7 @@
 
     <!-- A. EN-TÊTE -->
     <header class="text-center mb-6 sm:mb-10 border-b border-slate-700 pb-4">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-teal-400">Bulgare Cyrillique V4 : Pédagogie Active</h1>
+        <h1 class="text-4xl sm:text-5xl font-extrabold text-teal-400">Bulgare Cyrillique V5 : Pédagogie Active</h1>
         <p class="mt-2 text-slate-400 text-lg">Apprentissage de l'alphabet, du vocabulaire et des bases culturelles</p>
     </header>
     
@@ -215,21 +255,39 @@
                 </h2>
                 
                 <div id="quiz-container" class="text-center p-8 bg-gray-800 rounded-xl">
-                    <p id="quiz-status" class="text-lg mb-4 font-semibold text-slate-300">
-                        Prêt à tester vos connaissances sur les 10 lettres les plus pièges ?
-                    </p>
+                    <div id="quiz-header">
+                        <p id="quiz-status" class="text-lg mb-4 font-semibold text-slate-300">
+                            Prêt à tester vos connaissances sur les 10 lettres les plus pièges ?
+                        </p>
+                        <p id="quiz-score" class="text-sm font-medium text-green-300 mb-6 hidden">
+                            Score actuel : 0/10
+                        </p>
+                    </div>
                     
-                    <div id="quiz-question" class="hidden">
+                    <div id="quiz-main-content" class="hidden">
                         <p class="text-xl text-slate-400 mb-2">Quelle est la transcription latine de cette lettre ?</p>
                         <p id="cyrillic-char" class="text-6xl font-extrabold text-white my-6"></p>
                         
                         <div id="quiz-options" class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
                             <!-- Les options du quiz seront insérées ici -->
                         </div>
+                        <p id="quiz-feedback" class="text-lg font-bold mt-4 h-6"></p>
+                    </div>
+                    
+                    <div id="quiz-result" class="hidden">
+                        <h3 class="text-3xl font-bold text-teal-400 mb-4">Quiz Terminé !</h3>
+                        <p id="final-score" class="text-2xl font-extrabold text-white mb-6"></p>
+                        <p id="result-message" class="text-lg text-slate-300 mb-6"></p>
                     </div>
 
                     <button id="start-quiz-btn" class="interactive-btn mt-8 bg-green-600 hover:bg-green-700 text-white" aria-label="Démarrer le quiz d'identification">
-                        Démarrer le Quiz
+                        Démarrer le Quiz (10 Questions)
+                    </button>
+                    <button id="next-question-btn" class="interactive-btn mt-8 bg-indigo-500 hover:bg-indigo-600 text-white hidden" aria-label="Question suivante">
+                        Question Suivante
+                    </button>
+                    <button id="restart-quiz-btn" class="interactive-btn mt-8 bg-red-600 hover:bg-red-700 text-white hidden" aria-label="Redémarrer le quiz">
+                        Recommencer le Quiz
                     </button>
                 </div>
             </section>
@@ -418,7 +476,7 @@
     
     <!-- Pied de Page (Signature discrète) -->
     <footer class="mt-16 text-center text-sm text-slate-500 border-t border-slate-800 pt-4">
-        Conçu et développé par Gemini (V4) - Pédagogie active du cyrillique bulgare.
+        Conçu et développé par Gemini (V5) - Pédagogie active du cyrillique bulgare.
     </footer>
 
     <script>
@@ -456,6 +514,20 @@
             { cyr: "Ю ю", lat: "YOU", pron: "comme 'yogourt'" },
             { cyr: "Я я", lat: "YA", pron: "comme 'yacht'" }
         ];
+        
+        // Liste des 10 lettres qui ressemblent ou dont le son est trompeur pour les francophones
+        const trickyLetters = ["В в", "Н н", "Р р", "С с", "У у", "Х х", "Я я", "Ю ю", "Ж ж", "Ц ц"];
+        const quizLettersData = alphabetData.filter(item => trickyLetters.includes(item.cyr));
+        const allLatinTranscriptions = alphabetData.map(item => item.lat);
+        
+        let quizState = {
+            currentQuestionIndex: 0,
+            score: 0,
+            questions: [], 
+            totalQuestions: 10,
+            isAnswered: false, // Empêche de cliquer deux fois sur une option
+        };
+
 
         const vocabularyData = [
             // --- MODULE 3 : BASES DE CONVERSATION ---
@@ -757,16 +829,164 @@
             });
         }
         
-        // Logique de Quiz (Simulée)
-        function startQuiz() {
-            // En conditions réelles, cette fonction lancerait la première question
-            const quizStatus = document.getElementById('quiz-status');
-            const startBtn = document.getElementById('start-quiz-btn');
-
-            quizStatus.innerHTML = '<span class="text-yellow-400 font-bold">Quiz non actif :</span> La logique complète de quiz n\'est pas incluse, mais les autres modules sont actifs pour l\'étude.';
-            startBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            startBtn.disabled = true;
+        // Logique de Quiz (ACTIVÉE)
+        
+        function resetQuiz() {
+            quizState.currentQuestionIndex = 0;
+            quizState.score = 0;
+            quizState.isAnswered = false;
+            quizState.questions = shuffle([...quizLettersData]); // Mélange les questions
+            
+            // Masque les résultats et le contenu principal
+            document.getElementById('quiz-result').classList.add('hidden');
+            document.getElementById('quiz-main-content').classList.add('hidden');
+            document.getElementById('next-question-btn').classList.add('hidden');
+            document.getElementById('restart-quiz-btn').classList.add('hidden');
+            document.getElementById('quiz-score').classList.add('hidden');
+            
+            // Affiche le bouton de démarrage et le statut initial
+            document.getElementById('start-quiz-btn').classList.remove('hidden');
+            document.getElementById('quiz-status').textContent = `Prêt à tester vos connaissances sur les ${quizState.totalQuestions} lettres les plus pièges ?`;
         }
+
+        function startQuiz() {
+            document.getElementById('start-quiz-btn').classList.add('hidden');
+            document.getElementById('quiz-status').textContent = `Question 1 sur ${quizState.totalQuestions}`;
+            document.getElementById('quiz-main-content').classList.remove('hidden');
+            document.getElementById('quiz-score').classList.remove('hidden');
+            document.getElementById('quiz-feedback').textContent = '';
+            
+            // Le reset est appelé dans la fonction d'initialisation, donc on commence directement
+            displayQuestion();
+        }
+        
+        function getIncorrectOptions(correctAnswer) {
+            // Sélectionne toutes les transcriptions sauf la bonne
+            const incorrectOptions = allLatinTranscriptions.filter(lat => lat !== correctAnswer);
+            
+            // Mélange et prend 3 options (ou moins si l'alphabet est petit, mais ici c'est ok)
+            const shuffledIncorrect = shuffle(incorrectOptions);
+            
+            // Utilise un ensemble de 3 options statiques pour assurer la diversité et éviter les doublons accidentels
+            // J'ai besoin de 3 réponses qui sont des lettres latines (R, B, U, H, C, etc.)
+            const staticIncorrects = ["P", "B", "E", "X", "Y"].filter(opt => opt !== correctAnswer).slice(0, 3);
+            
+            // On mélange un peu pour obtenir 3 options distinctes
+            let options = [...new Set([...staticIncorrects, ...shuffledIncorrect])].filter(opt => opt !== correctAnswer).slice(0, 3);
+            
+            // Si l'option correcte est 'A', et que 'A' n'est pas dans l'alphabet data, on filtre
+            // Ici, on est sûr que la transcription est dans l'alphabet data, donc on prend 3 autres lettres au hasard
+            while(options.length < 3) {
+                 const randomLat = allLatinTranscriptions[Math.floor(Math.random() * allLatinTranscriptions.length)];
+                 if (randomLat !== correctAnswer && !options.includes(randomLat)) {
+                     options.push(randomLat);
+                 }
+            }
+            
+            return options;
+        }
+
+        function displayQuestion() {
+            const currentItem = quizState.questions[quizState.currentQuestionIndex];
+            const cyrillicCharEl = document.getElementById('cyrillic-char');
+            const optionsContainer = document.getElementById('quiz-options');
+            const scoreEl = document.getElementById('quiz-score');
+            const statusEl = document.getElementById('quiz-status');
+            
+            cyrillicCharEl.textContent = currentItem.cyr.split(' ')[0]; // Affiche seulement la majuscule
+            optionsContainer.innerHTML = '';
+            document.getElementById('quiz-feedback').textContent = '';
+            document.getElementById('next-question-btn').classList.add('hidden');
+            quizState.isAnswered = false;
+            
+            scoreEl.textContent = `Score actuel : ${quizState.score}/${quizState.totalQuestions}`;
+            statusEl.textContent = `Question ${quizState.currentQuestionIndex + 1} sur ${quizState.totalQuestions}`;
+
+            // Générer les options
+            const correctOption = currentItem.lat;
+            let options = [correctOption, ...getIncorrectOptions(correctOption)];
+            options = shuffle(options); // Mélange les 4 options
+            
+            options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'quiz-option-btn';
+                button.textContent = option;
+                button.dataset.answer = option;
+                button.onclick = () => handleAnswer(button, correctOption);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function handleAnswer(selectedButton, correctAnswer) {
+            if (quizState.isAnswered) return;
+            quizState.isAnswered = true;
+            
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const optionButtons = document.querySelectorAll('.quiz-option-btn');
+            const nextBtn = document.getElementById('next-question-btn');
+            
+            let isCorrect = selectedButton.dataset.answer === correctAnswer;
+
+            // Mettre en évidence la bonne et la mauvaise réponse
+            optionButtons.forEach(btn => {
+                btn.disabled = true; // Désactive tous les boutons
+                if (btn.dataset.answer === correctAnswer) {
+                    btn.classList.add('correct');
+                } else if (btn.dataset.answer === selectedButton.dataset.answer) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (isCorrect) {
+                quizState.score++;
+                feedbackEl.textContent = "Correct ! 🎉";
+                feedbackEl.classList.remove('text-red-400');
+                feedbackEl.classList.add('text-green-400');
+            } else {
+                feedbackEl.textContent = `Faux. La bonne réponse était ${correctAnswer}.`;
+                feedbackEl.classList.remove('text-green-400');
+                feedbackEl.classList.add('text-red-400');
+            }
+
+            document.getElementById('quiz-score').textContent = `Score actuel : ${quizState.score}/${quizState.totalQuestions}`;
+            nextBtn.classList.remove('hidden');
+            nextBtn.onclick = () => {
+                quizState.currentQuestionIndex++;
+                if (quizState.currentQuestionIndex < quizState.totalQuestions) {
+                    displayQuestion();
+                } else {
+                    showResults();
+                }
+            };
+        }
+        
+        function showResults() {
+            const resultEl = document.getElementById('quiz-result');
+            const finalScoreEl = document.getElementById('final-score');
+            const messageEl = document.getElementById('result-message');
+            const restartBtn = document.getElementById('restart-quiz-btn');
+            
+            document.getElementById('quiz-main-content').classList.add('hidden');
+            document.getElementById('quiz-score').classList.add('hidden');
+            document.getElementById('next-question-btn').classList.add('hidden');
+            document.getElementById('quiz-status').textContent = "Quiz terminé !";
+            
+            resultEl.classList.remove('hidden');
+            restartBtn.classList.remove('hidden');
+            
+            finalScoreEl.textContent = `${quizState.score} / ${quizState.totalQuestions}`;
+            
+            let resultMessage;
+            if (quizState.score >= 9) {
+                resultMessage = "Magnifique ! Vous maîtrisez parfaitement les lettres cyrilliques pièges. Votre voyage en Bulgarie sera facile.";
+            } else if (quizState.score >= 6) {
+                resultMessage = "Pas mal ! Un bon début. Révisez les cartes flash pour vous attaquer aux dernières lettres complexes.";
+            } else {
+                resultMessage = "C'est un excellent point de départ ! Retournez au Module 1 pour réviser et tentez à nouveau votre chance.";
+            }
+            messageEl.textContent = resultMessage;
+        }
+
 
         // Logique pour basculer la table des matières
         function toggleToc() {
@@ -806,11 +1026,15 @@
             renderCulturalModule(); 
             renderFauxAmis();
             
+            // Initialiser l'état du quiz
+            resetQuiz();
+            
             // Événements
             document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
+            document.getElementById('restart-quiz-btn').addEventListener('click', resetQuiz);
             document.getElementById('flip-all-btn').addEventListener('click', flipAllCards);
             
-            // Nouvel événement pour le bouton bascule
+            // Nouvel événement pour le bouton bascule TOC
             document.getElementById('toggle-toc-btn').addEventListener('click', toggleToc);
 
             // Gérer le clic sur un lien TOC pour masquer (surtout sur mobile)
