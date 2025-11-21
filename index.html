@@ -18,6 +18,22 @@
         .card {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
+        /* Style pour la modale */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body class="p-4 sm:p-8">
@@ -57,6 +73,7 @@
             <p id="message-erreur" class="text-red-500 mt-2 hidden"></p>
         </section>
 
+
         <!-- Section des Paramètres et Coûts -->
         <section class="card bg-white p-6 rounded-xl mb-8 border border-green-200">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -82,6 +99,39 @@
             </div>
         </section>
         
+        <!-- Section de Synthèse Globale -->
+        <section class="card bg-white p-6 rounded-xl mb-8 border border-yellow-300">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Synthèse Globale (Depuis le premier relevé)
+            </h2>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+                <!-- Total Relevés -->
+                <div class="p-3 bg-indigo-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Relevés Enregistrés</p>
+                    <p id="total-releves" class="text-2xl font-bold text-indigo-700 mt-1">0</p>
+                </div>
+                <!-- Total m³ -->
+                <div class="p-3 bg-blue-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Conso Totale (m³)</p>
+                    <p id="total-m3" class="text-2xl font-bold text-blue-700 mt-1">0.00</p>
+                </div>
+                <!-- Total kWh -->
+                <div class="p-3 bg-purple-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Conso Totale (kWh)</p>
+                    <p id="total-kwh" class="text-2xl font-bold text-purple-700 mt-1">0.00</p>
+                </div>
+                <!-- Total Coût HT -->
+                <div class="p-3 bg-green-50 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Coût Tot. Conso (HT)</p>
+                    <p id="total-cout-ht" class="text-2xl font-bold text-green-700 mt-1">0.00 €</p>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 mt-4 p-2 bg-yellow-50 rounded-lg">
+                * Le coût total représente l'accumulation des coûts HT des kWh consommés entre le premier et le dernier relevé.
+            </p>
+        </section>
+        
         <!-- Section du Graphique de Consommation -->
         <section class="card bg-white p-6 rounded-xl mb-8 border border-purple-200">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
@@ -94,7 +144,7 @@
         </section>
 
         <!-- Section de l'Historique Détaillé -->
-        <section class="card bg-white p-6 rounded-xl mb-8 border border-red-200">
+        <section class="card bg-white p-6 rounded-xl mb-12 border border-red-200">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Historique des Relevés et Coûts Réels
@@ -120,6 +170,35 @@
                 * Le coût HT est calculé pour la consommation (kWh) réalisée entre ce relevé et le précédent, hors abonnement.
             </p>
         </section>
+
+        <!-- Bouton de Réinitialisation (Déplacé en bas) -->
+        <div class="flex justify-center mb-10 mt-6">
+            <button onclick="showResetConfirmation()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition duration-200 ease-in-out transform hover:scale-[1.02] shadow-xl flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Réinitialiser l'Historique COMPLET
+            </button>
+        </div>
+    </div>
+    
+    <!-- MODALE DE CONFIRMATION DE RÉINITIALISATION -->
+    <div id="reset-modal" class="modal-overlay hidden">
+        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transform transition-all">
+            <h3 class="text-xl font-bold text-red-600 mb-4 flex items-center">
+                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Confirmation Requise
+            </h3>
+            <p class="text-gray-700 mb-6">
+                Êtes-vous sûr de vouloir **réinitialiser l'intégralité** de l'historique de consommation ? Cette action est irréversible et effacera toutes les données enregistrées.
+            </p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideResetConfirmation()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150">
+                    Annuler
+                </button>
+                <button onclick="resetData()" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150">
+                    Oui, Tout Effacer
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -203,6 +282,45 @@
             return calculatedHistory;
         }
 
+        // --- Fonctions de Synthèse Globale ---
+
+        /**
+         * Calcule et affiche les totaux de l'historique.
+         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
+         */
+        function renderGlobalTotals(calculatedHistory) {
+            const numReleves = calculatedHistory.length;
+            let totalM3 = 0;
+            let totalKwh = 0;
+            let totalCoutHT = 0;
+            
+            document.getElementById('total-releves').textContent = numReleves;
+
+            if (numReleves > 1) {
+                // Consommation totale m³ = Dernier Index - Premier Index
+                const indexDebut = calculatedHistory[0].indexM3;
+                const indexFin = calculatedHistory[numReleves - 1].indexM3;
+                
+                // Calcul de la consommation totale en m³
+                totalM3 = indexFin - indexDebut;
+                
+                // Le total kWh et Coût HT sont la somme de toutes les consommations calculées
+                for (let i = 1; i < numReleves; i++) {
+                    totalKwh += calculatedHistory[i].consoKWh;
+                    totalCoutHT += calculatedHistory[i].coutHT;
+                }
+                
+                document.getElementById('total-m3').textContent = totalM3.toFixed(2);
+                document.getElementById('total-kwh').textContent = totalKwh.toFixed(2);
+                document.getElementById('total-cout-ht').textContent = totalCoutHT.toFixed(2) + ' €';
+            } else {
+                document.getElementById('total-m3').textContent = '0.00';
+                document.getElementById('total-kwh').textContent = '0.00';
+                document.getElementById('total-cout-ht').textContent = '0.00 €';
+            }
+        }
+
+
         // --- Fonctions d'Interface Utilisateur ---
 
         /**
@@ -227,7 +345,7 @@
             // Vérification anti-doublon plus stricte
             const existingEntry = history.find(r => r.dateTime === dateTime);
             if (existingEntry) {
-                errorMessage.textContent = `Un relevé existe déjà pour la date et heure exactes du ${new Date(dateTime).toLocaleString('fr-FR')}.`;
+                errorMessage.textContent = `Un relevé existe déjà pour la date et heure exactes du ${new Date(dateTime).toLocaleDateString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}.`;
                 errorMessage.classList.remove('hidden');
                 return;
             }
@@ -239,7 +357,7 @@
                 const newIndex = parseFloat(indexM3);
                 
                 if (newIndex < lastReleve.indexM3) {
-                     errorMessage.textContent = `L'index (${newIndex}) est inférieur au dernier index enregistré (${lastReleve.indexM3}). Veuillez corriger ou le supprimer.`;
+                     errorMessage.textContent = `L'index (${newIndex.toFixed(2)}) est inférieur au dernier index enregistré (${lastReleve.indexM3.toFixed(2)}). Veuillez corriger ou le supprimer.`;
                      errorMessage.classList.remove('hidden');
                      return;
                 }
@@ -257,7 +375,7 @@
             
             // Réinitialiser les champs et masquer l'erreur
             // On ne réinitialise que l'index, la date/heure passe à l'instant présent
-            dateTimeInput.value = new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            setInitialDateTime();
             indexInput.value = '';
             errorMessage.classList.add('hidden');
 
@@ -281,6 +399,33 @@
                 updateUI();
             }
         }
+
+        /**
+         * Affiche la modale de confirmation pour la réinitialisation.
+         */
+        function showResetConfirmation() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.remove('hidden');
+        }
+
+        /**
+         * Cache la modale de confirmation.
+         */
+        function hideResetConfirmation() {
+            const modal = document.getElementById('reset-modal');
+            modal.classList.add('hidden');
+        }
+
+        /**
+         * Efface toutes les données de l'historique et met à jour l'interface.
+         */
+        function resetData() {
+            localStorage.removeItem(STORAGE_KEY);
+            hideResetConfirmation(); // Cacher la modale
+            updateUI(); // Mettre à jour l'interface (qui sera vide)
+            console.log("Historique de consommation de gaz réinitialisé.");
+        }
+
 
         /**
          * Met à jour le tableau d'historique.
@@ -453,10 +598,9 @@
             const calculatedHistory = calculateConsumptions(history);
             
             // 2. Afficher les données
+            renderGlobalTotals(calculatedHistory); // Mise à jour des totaux
             renderHistoryTable(calculatedHistory);
             renderChart(calculatedHistory);
-            
-            // Note: La projection a été retirée.
         }
 
         // --- Événements et Initialisation ---
@@ -466,7 +610,9 @@
         document.getElementById('prix-kwh').addEventListener('change', updateUI);
         document.getElementById('prix-abonnement').addEventListener('change', updateUI); 
         
-        // Assurer que la date par défaut est l'instant présent
+        /**
+         * Définit la valeur de l'input date/heure à l'instant présent.
+         */
         function setInitialDateTime() {
             // Obtient la date/heure locale et la formate pour l'input datetime-local (YYYY-MM-DDTHH:mm)
             const now = new Date();
