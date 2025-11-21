@@ -3,1056 +3,485 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bulgare Cyrillique V5 : Apprentissage Pédagogique (Quiz Actif)</title>
-    <!-- Chargement de Tailwind CSS via CDN -->
+    <title>Suivi Consommation de Gaz Naturel - Réel</title>
+    <!-- Chargement de Tailwind CSS pour un style moderne et responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chargement de Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
     <style>
-        /* Configuration de la police Inter et thème sombre par défaut */
+        /* Configuration de la police Inter et du style général */
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            scroll-behavior: smooth; /* Défilement doux pour les liens de la table des matières */
+            background-color: #f7f9fc;
         }
-        /* Thème sombre uniforme et professionnel */
-        .dark-theme {
-            background-color: #0F172A; /* bg-slate-900 (plus foncé) */
-            color: #E2E8F0; /* text-slate-200 */
+        /* Style des cartes */
+        .card {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
         }
-        /* Style des boutons pour l'accessibilité et le visuel */
-        .interactive-btn {
-            padding: 0.75rem 1.5rem;
-            font-weight: 700;
-            border-radius: 0.75rem;
-            transition: all 0.2s ease-in-out;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-        }
-        .interactive-btn:hover {
-            transform: scale(1.03);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
-        }
-        
-        /* Style spécifique pour les options du quiz */
-        .quiz-option-btn {
-            display: block;
-            width: 100%;
-            padding: 1rem;
-            font-size: 1.5rem;
-            font-weight: bold;
-            border-radius: 0.5rem;
-            background-color: #334155; /* bg-slate-700 */
-            color: #E2E8F0;
-            transition: background-color 0.15s, transform 0.1s;
-        }
-        .quiz-option-btn:not(.correct):not(.incorrect):hover {
-            background-color: #475569; /* bg-slate-600 */
-            transform: translateY(-2px);
-        }
-        .quiz-option-btn.correct {
-            background-color: #10B981; /* bg-emerald-500 */
-            color: white;
-            animation: pulse-green 0.3s ease-in-out;
-        }
-        .quiz-option-btn.incorrect {
-            background-color: #EF4444; /* bg-red-500 */
-            color: white;
-            animation: shake 0.3s ease-in-out;
-        }
-
-        /* Animations pour le quiz */
-        @keyframes pulse-green {
-            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            20%, 60% { transform: translateX(-5px); }
-            40%, 80% { transform: translateX(5px); }
-        }
-
-
-        /* --- STYLES SPECIFIQUES DES CARTES FLASH (Module 1) --- */
-        .flip-card {
-            background-color: transparent;
-            perspective: 1000px;
-            height: 100%;
-            cursor: pointer;
-        }
-
-        .flip-card-inner {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.6s;
-            transform-style: preserve-3d;
-        }
-
-        .flip-card.flipped .flip-card-inner {
-            transform: rotateY(180deg);
-        }
-
-        .flip-card-front, .flip-card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            -webkit-backface-visibility: hidden;
-            backface-visibility: hidden;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            border-radius: 0.75rem;
-            padding: 0.5rem; /* Réduit pour mobile */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5);
-        }
-        
-        .flip-card-front {
-            background-color: #1E293B; /* bg-slate-800 */
-            border: 2px solid #6366F1; /* border-indigo-500 */
-            color: #F8FAFC;
-        }
-
-        .flip-card-back {
-            background-color: #6366F1; /* bg-indigo-500 */
-            color: #F8FAFC;
-            transform: rotateY(180deg);
-            padding: 1rem;
-        }
-
-        /* Amélioration des tableaux pour le contraste */
-        .table-header {
-            background-color: #1E293B; /* bg-slate-800 */
-        }
-        .table-row-odd {
-            background-color: #0F172A; /* bg-slate-900 */
-        }
-        .table-row-even {
-            background-color: #1E293B; /* bg-slate-800 */
-        }
-        .table-row-even:hover, .table-row-odd:hover {
-            background-color: #334155; /* bg-slate-700/50 */
-        }
-        
-        /* Styles pour la table des matières (par défaut cachée sur mobile) */
-        #toc-container {
-            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
-            overflow: hidden;
-            max-height: 0;
-            opacity: 0;
-        }
-        
-        /* Affichage de la TOC lorsqu'elle est ouverte */
-        #toc-container.is-open {
-            max-height: 500px; /* Taille suffisante pour le contenu */
-            opacity: 1;
-            margin-top: 1rem;
-        }
-        
-        /* MEDIA QUERY POUR DESKTOP (lg) */
-        @media (min-width: 1024px) {
-            #toc-container {
-                position: sticky;
-                top: 2rem;
-                max-height: none !important; /* Force l'affichage permanent sur desktop */
-                opacity: 1 !important;
-                margin-top: 0;
-            }
-            /* Cache le bouton "Afficher TOC" sur desktop */
-            #toggle-toc-btn {
-                display: none;
-            }
-        }
-        
     </style>
 </head>
-<body class="dark-theme min-h-screen p-4 sm:p-8">
+<body class="p-4 sm:p-8">
 
-    <!-- A. EN-TÊTE -->
-    <header class="text-center mb-6 sm:mb-10 border-b border-slate-700 pb-4">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-teal-400">Bulgare Cyrillique V5 : Pédagogie Active</h1>
-        <p class="mt-2 text-slate-400 text-lg">Apprentissage de l'alphabet, du vocabulaire et des bases culturelles</p>
-    </header>
-    
-    <!-- Bouton pour basculer la table des matières (VISIBILITÉ DÉFINIE PAR MEDIA QUERY) -->
-    <button id="toggle-toc-btn" class="interactive-btn w-full bg-orange-500 hover:bg-orange-600 text-white mb-4 flex items-center justify-center text-lg shadow-xl" aria-expanded="false" aria-controls="toc-container">
-        <svg id="toc-icon-open" class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        <svg id="toc-icon-close" class="w-6 h-6 mr-2 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        <span id="toc-btn-text">Afficher la Table des Matières</span>
-    </button>
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-extrabold text-blue-800 sm:text-4xl">
+                Suivi Factual de Consommation de Gaz Naturel
+            </h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Entrez vos relevés de compteur (en m³) pour calculer la consommation **réelle** et les coûts entre deux dates.
+            </p>
+        </header>
 
-    <main class="max-w-7xl mx-auto lg:flex lg:space-x-8">
-
-        <!-- Colonne de la Table des Matières (Side Navigation) -->
-        <div class="lg:w-1/4 mb-10 lg:mb-0">
-            <!-- La classe 'is-open' sera ajoutée/retirée par JS pour l'effet escamotable -->
-            <div id="toc-container" class="bg-gray-800 p-6 rounded-2xl shadow-xl border-l-4 border-teal-500">
-                <h2 class="text-xl font-bold mb-4 text-teal-400">Table des Matières</h2>
-                <nav class="space-y-2 text-slate-300 font-medium">
-                    <a href="#introduction-legend" class="block hover:text-teal-300 transition duration-150">📝 Introduction & Légende</a>
-                    <a href="#alphabet-module" class="block hover:text-teal-300 transition duration-150">1. Cartes Flash (Alphabet)</a>
-                    <a href="#quiz-module" class="block hover:text-teal-300 transition duration-150">2. Quiz d'Identification</a>
-                    <a href="#vocabulary-module" class="block hover:text-teal-300 transition duration-150">3. Bases de Conversation</a>
-                    <a href="#numbers-module" class="block hover:text-teal-300 transition duration-150">4. Les Chiffres (0-10)</a>
-                    <a href="#survival-module" class="block hover:text-teal-300 transition duration-150">5. Module Survie (Phrases)</a>
-                    <a href="#notes-culture-module" class="block hover:text-teal-300 transition duration-150">6. Notes Linguistiques</a>
-                    <a href="#cultural-module" class="block hover:text-teal-300 transition duration-150">7. Exploration Culturelle</a>
-                    <a href="#faux-amis-module" class="block hover:text-teal-300 transition duration-150">8. Faux-Amis et Pièges</a>
-                </nav>
+        <!-- Section de Saisie des Index -->
+        <section id="input-section" class="card bg-white p-6 rounded-xl mb-8 border border-blue-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2a3.175 3.175 0 01-2.581-1.234l-4.242 4.242A9.914 9.914 0 0015.5 17H18v-2.5a2.5 2.5 0 11-5 0V17H9.5a7.5 7.5 0 01-5.657-2.543l4.242-4.242A3.175 3.175 0 0112 8z"></path></svg>
+                Nouveau Relevé
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="col-span-1">
+                    <!-- Utilisation de datetime-local pour la date et l'heure -->
+                    <label for="date-releve" class="block text-sm font-medium text-gray-700">Date & Heure du Relevé</label>
+                    <input type="datetime-local" id="date-releve" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="col-span-1">
+                    <label for="index-m3" class="block text-sm font-medium text-gray-700">Index Compteur (m³)</label>
+                    <input type="number" id="index-m3" placeholder="Ex: 5352.9" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" required>
+                </div>
+                <div class="col-span-1 flex items-end">
+                    <button onclick="ajouterReleve()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out transform hover:scale-[1.01]">
+                        Ajouter le Relevé
+                    </button>
+                </div>
             </div>
-        </div>
+            <p id="message-erreur" class="text-red-500 mt-2 hidden"></p>
+        </section>
 
-        <!-- Colonne du Contenu Principal -->
-        <div class="lg:w-3/4 space-y-16">
-
-            <!-- A.0. INTRODUCTION & LÉGENDE -->
-            <section id="introduction-legend" class="bg-gray-800 p-6 rounded-2xl shadow-lg border-l-4 border-yellow-500">
-                <h2 class="text-2xl font-bold mb-4 text-yellow-300 flex items-center">
-                    📝 Comment utiliser cette page ?
-                </h2>
-                <div class="space-y-4 text-slate-300">
-                    <p class="font-semibold text-white bg-slate-700 p-3 rounded-lg">
-                        Parcours Conseillé : Commencez par l'**Alphabet (Flashcards)**, puis faites le **Quiz** pour tester votre mémoire, et terminez par les modules de **Vocabulaire et Survie**.
-                    </p>
-                    
-                    <h3 class="text-xl font-semibold mt-6 text-violet-400">Légende et Hiérarchie des Sons</h3>
-                    <ul class="list-disc list-inside space-y-2 ml-4">
-                        <li>
-                            <span class="font-bold text-yellow-300">Transcription Latine</span> : La façon dont la lettre est écrite en alphabet latin (ex: 'A', 'SH').
-                        </li>
-                        <li>
-                            <span class="font-bold text-violet-400">Prononciation Phonétique</span> : Le son français le plus proche (ex: 'comme dans arbre').
-                        </li>
-                        <li>
-                            <span class="font-extrabold text-red-400">Accent Tonique (Accent Aigu)</span> : Indique la syllabe sur laquelle il faut insister en parlant (ex: Blagodar**ý**a).
-                        </li>
-                    </ul>
+        <!-- Section des Paramètres et Coûts -->
+        <section class="card bg-white p-6 rounded-xl mb-8 border border-green-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.308 2.368a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.368 2.308a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.308-2.368a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.368-2.308a1.724 1.724 0 002.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Paramètres de Facturation (HT)
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label for="coef-gaz" class="block text-sm font-medium text-gray-700">Coef. Conversion (kWh/m³)</label>
+                    <input type="number" id="coef-gaz" value="11.361" step="0.001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
-            </section>
-            
-            <!-- B. MODULE 1 : Cartes Flash (Alphabet) -->
-            <section id="alphabet-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-indigo-400 border-b border-slate-700 pb-2 flex items-center">
-                    1. Cartes Flash (Alphabet Cyrillique)
-                </h2>
-                
-                <div class="flex justify-center mb-6">
-                    <button id="flip-all-btn" class="interactive-btn bg-indigo-500 hover:bg-indigo-600 text-white" aria-label="Retourner toutes les cartes pour afficher la prononciation">
-                        Retourner toutes les fiches
-                    </button>
+                <div>
+                    <label for="prix-kwh" class="block text-sm font-medium text-gray-700">Prix du kWh HT (€)</label>
+                    <input type="number" id="prix-kwh" value="0.0777" step="0.0001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
-                
-                <div id="flashcard-grid" class="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
-                    <!-- Les cartes seront insérées ici par JavaScript -->
+                <div>
+                    <label for="prix-abonnement" class="block text-sm font-medium text-gray-700">Abonnement Mensuel HT (€)</label>
+                    <input type="number" id="prix-abonnement" value="16.72" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
-                <p class="text-sm text-slate-400 mt-4 text-center">Cliquez sur une carte pour la retourner.</p>
-            </section>
+            </div>
+            <div class="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-700">
+                <p>⚠️ Ces valeurs sont basées sur votre facture EDF ("Avantage Gaz Optimisé", Coefficient 11,361, Prix kWh 0,0777 €HT). Ajustez-les si votre contrat change.</p>
+            </div>
+        </section>
+        
+        <!-- Section du Graphique de Consommation -->
+        <section class="card bg-white p-6 rounded-xl mb-8 border border-purple-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l2-2 2 2 4-4 2 2M12 21a9 9 0 009-9h-2.5A6.5 6.5 0 0112 18.5 6.5 6.5 0 015.5 12 6.5 6.5 0 0112 5.5V3A9 9 0 003 12a9 9 0 009 9z"></path></svg>
+                Évolution Mensuelle (kWh)
+            </h2>
+            <div class="h-64 sm:h-80">
+                <canvas id="consoChart"></canvas>
+            </div>
+        </section>
 
-            <!-- C. MODULE 2 : Quiz d'Identification -->
-            <section id="quiz-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-green-400 border-b border-slate-700 pb-2 flex items-center">
-                    2. Quiz d'Identification (Cyrillique vers Latin)
-                </h2>
-                
-                <div id="quiz-container" class="text-center p-8 bg-gray-800 rounded-xl">
-                    <div id="quiz-header">
-                        <p id="quiz-status" class="text-lg mb-4 font-semibold text-slate-300">
-                            Prêt à tester vos connaissances sur les 10 lettres les plus pièges ?
-                        </p>
-                        <p id="quiz-score" class="text-sm font-medium text-green-300 mb-6 hidden">
-                            Score actuel : 0/10
-                        </p>
-                    </div>
-                    
-                    <div id="quiz-main-content" class="hidden">
-                        <p class="text-xl text-slate-400 mb-2">Quelle est la transcription latine de cette lettre ?</p>
-                        <p id="cyrillic-char" class="text-6xl font-extrabold text-white my-6"></p>
-                        
-                        <div id="quiz-options" class="grid grid-cols-2 gap-4 max-w-lg mx-auto">
-                            <!-- Les options du quiz seront insérées ici -->
-                        </div>
-                        <p id="quiz-feedback" class="text-lg font-bold mt-4 h-6"></p>
-                    </div>
-                    
-                    <div id="quiz-result" class="hidden">
-                        <h3 class="text-3xl font-bold text-teal-400 mb-4">Quiz Terminé !</h3>
-                        <p id="final-score" class="text-2xl font-extrabold text-white mb-6"></p>
-                        <p id="result-message" class="text-lg text-slate-300 mb-6"></p>
-                    </div>
-
-                    <button id="start-quiz-btn" class="interactive-btn mt-8 bg-green-600 hover:bg-green-700 text-white" aria-label="Démarrer le quiz d'identification">
-                        Démarrer le Quiz (10 Questions)
-                    </button>
-                    <button id="next-question-btn" class="interactive-btn mt-8 bg-indigo-500 hover:bg-indigo-600 text-white hidden" aria-label="Question suivante">
-                        Question Suivante
-                    </button>
-                    <button id="restart-quiz-btn" class="interactive-btn mt-8 bg-red-600 hover:bg-red-700 text-white hidden" aria-label="Redémarrer le quiz">
-                        Recommencer le Quiz
-                    </button>
-                </div>
-            </section>
-
-            <!-- D. MODULE 3 : Vocabulaire Essentiel (Bases de conversation) -->
-            <section id="vocabulary-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-red-400 border-b border-slate-700 pb-2 flex items-center">
-                    3. Bases de Conversation et Politesse
-                </h2>
-                
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
-                            </tr>
-                        </thead>
-                        <tbody id="basic-vocabulary-table-body" class="divide-y divide-slate-700">
-                            <!-- Le vocabulaire de base sera inséré ici par JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- E. MODULE 4 : Les Chiffres (0-10) -->
-            <section id="numbers-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-purple-400 border-b border-slate-700 pb-2 flex items-center">
-                    4. Les Chiffres (0-10)
-                </h2>
-                
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Chiffre</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
-                            </tr>
-                        </thead>
-                        <tbody id="numbers-table-body" class="divide-y divide-slate-700">
-                            <!-- Les chiffres seront insérés ici par JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            
-            <!-- F. MODULE 5 : Survie en Bulgarie (Phrases types) -->
-            <section id="survival-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-cyan-400 border-b border-slate-700 pb-2 flex items-center">
-                    5. Module Survie : Phrases pour la vie quotidienne
-                </h2>
-                
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Bulgare</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-yellow-300 uppercase tracking-wider">Prononciation</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Français</th>
-                            </tr>
-                        </thead>
-                        <tbody id="survival-vocabulary-table-body" class="divide-y divide-slate-700">
-                            <!-- Le vocabulaire de survie sera inséré ici par JavaScript -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            
-            <!-- G. MODULE 6 : Notes & Culture -->
-            <section id="notes-culture-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-violet-400 border-b border-slate-700 pb-2 flex items-center">
-                    6. Notes de Prononciation & Linguistique
-                </h2>
-                
-                <div class="grid md:grid-cols-2 gap-8">
-                    <!-- Notice de Prononciation -->
-                    <div class="bg-gray-800 p-4 rounded-xl border-l-4 border-violet-500">
-                        <h3 class="text-xl font-semibold mb-3 text-violet-300">Notice Linguistique</h3>
-                        <ul class="list-disc list-inside space-y-2 text-slate-300 ml-4">
-                            <li>L'**Accent Tonique** est essentiel en bulgare ; il n'est pas fixe et peut changer le sens des mots.</li>
-                            <li>**И** (i) vs **Й** (y) : Ne pas confondre la voyelle 'i' (И) et la consonne 'y' (Й).</li>
-                            <li>**Ь** (Signal doux) : Rend la consonne précédente douce (palatalisation).</li>
-                            <li>**Х** (H) : Son de raclement de gorge (comme le 'j' espagnol) et **Ъ** (voyelle courte/indistincte) n'ont pas d'équivalents parfaits en français.</li>
-                        </ul>
-                    </div>
-                    
-                    <!-- Bloc de Valorisation de l'Expertise -->
-                    <div class="bg-blue-900/50 p-4 rounded-xl border-l-4 border-blue-400 flex flex-col justify-center">
-                        <h3 class="text-xl font-semibold mb-3 text-blue-300 flex items-center">
-                            <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944c-1.25.138-2.5.344-3.72.613-2.148.47-4.14 1.547-5.748 3.092-1.608 1.546-2.73 3.538-3.092 5.748C.24 12.5 0 13.5 0 14.5c0 1.05.24 2.05.752 3.003.362 2.21 1.484 4.102 3.092 5.748 1.608 1.545 3.601 2.622 5.748 3.092C9.5 29.76 10.5 30 11.5 30s1.94-.24 2.88-0.752c2.147-0.47 4.14-1.547 5.748-3.092 1.608-1.546 2.73-3.538-3.092-5.748C29.76 17.5 30 16.5 30 15.5c0-1.05-.24-2.05-.752-3.003z"></path></svg>
-                            Contenu Validé
-                        </h3>
-                        <p class="text-slate-300">
-                            Toutes les transcriptions, prononciations et notes linguistiques ont été vérifiées pour correspondre aux standards du bulgare contemporain.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- H. MODULE 7 : Exploration Culturelle -->
-            <section id="cultural-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-pink-400 border-b border-slate-700 pb-2 flex items-center">
-                    7. Exploration Culturelle
-                </h2>
-                
-                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Anecdotes et Coutumes</h3>
-                <p class="text-slate-400 mb-4 font-semibold italic">
-                    Chaque visite propose de nouvelles anecdotes ! (Affichage aléatoire)
-                </p>
-                <div id="customs-list" class="space-y-4 mb-10">
-                    <!-- Customs will be injected here (dynamic subset) -->
-                </div>
-
-                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Mini-Dictionnaire de Prénoms</h3>
-                <div id="names-table-container" class="overflow-x-auto rounded-xl mb-10">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Prénom</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Transcription</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Signification</th>
-                            </tr>
-                        </thead>
-                        <tbody id="names-table-body" class="divide-y divide-slate-700">
-                            <!-- Names will be injected here -->
-                        </tbody>
-                    </table>
-                </div>
-
-                <h3 class="text-2xl font-semibold mb-4 text-pink-300">Villes Clés et Géographie</h3>
-                <div id="cities-table-container" class="overflow-x-auto rounded-xl">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Ville (Cyrillique)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Transcription</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Notes Clés</th>
-                            </tr>
-                        </thead>
-                        <tbody id="cities-table-body" class="divide-y divide-slate-700">
-                            <!-- Cities will be injected here -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-            
-            <!-- I. MODULE 8 : Faux-Amis et Pièges -->
-            <section id="faux-amis-module" class="bg-gray-900 p-6 rounded-2xl shadow-2xl">
-                <h2 class="text-3xl font-bold mb-6 text-orange-400 border-b border-slate-700 pb-2 flex items-center">
-                    8. Faux-Amis et Pièges pour Francophones
-                </h2>
-                
-                <p class="text-slate-400 mb-6">Ces mots ressemblent au français mais ont un sens très différent. Attention à la confusion !</p>
-
-                <div class="overflow-x-auto rounded-xl">
-                    <table class="min-w-full divide-y divide-slate-700">
-                        <thead class="table-header">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">Mot Bulgare</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-red-400 uppercase tracking-wider">Ressemblance Trompeuse</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-green-400 uppercase tracking-wider">Vrai Sens</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider hidden md:table-cell">Explication</th>
-                            </tr>
-                        </thead>
-                        <tbody id="faux-amis-table-body" class="divide-y divide-slate-700">
-                            <!-- Faux Amis will be inserted here by JS for consistency -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- J. Option PDF/Impression (Simulée) -->
-            <section class="text-center p-6 bg-gray-800 rounded-2xl border-t border-slate-700">
-                <p class="text-slate-300 mb-4">Besoin d'une version papier ?</p>
-                <button onclick="window.print()" class="interactive-btn bg-gray-600 hover:bg-gray-700 text-white" aria-label="Imprimer la page pour créer des fiches PDF">
-                    Imprimer / Générer Fiche PDF
-                </button>
-            </section>
-
-        </div> <!-- Fin de la Colonne du Contenu Principal -->
-
-    </main>
-    
-    <!-- Pied de Page (Signature discrète) -->
-    <footer class="mt-16 text-center text-sm text-slate-500 border-t border-slate-800 pt-4">
-        Conçu et développé par Gemini (V5) - Pédagogie active du cyrillique bulgare.
-    </footer>
+        <!-- Section de l'Historique Détaillé -->
+        <section class="card bg-white p-6 rounded-xl mb-8 border border-red-200">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Historique des Relevés et Coûts Réels
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Heure</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Index (m³)</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (m³)</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (kWh)</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût HT (€)</th>
+                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historique-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Les lignes seront insérées ici par JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="text-sm text-gray-500 mt-4 p-2 bg-gray-50 rounded-lg">
+                * Le coût HT est calculé pour la consommation (kWh) réalisée entre ce relevé et le précédent, hors abonnement.
+            </p>
+        </section>
+    </div>
 
     <script>
-        // --- 1. DATA (INCHANGÉE MAIS COMPLÈTE) ---
-
-        const alphabetData = [
-            { cyr: "А а", lat: "A", pron: "comme 'arbre'" },
-            { cyr: "Б б", lat: "B", pron: "comme 'but'" },
-            { cyr: "В в", lat: "V", pron: "comme 'vache'" },
-            { cyr: "Г г", lat: "G", pron: "comme 'gomme'" },
-            { cyr: "Д д", lat: "D", pron: "comme 'doigt'" },
-            { cyr: "Е е", lat: "E", pron: "comme 'elle'" },
-            { cyr: "Ж ж", lat: "J", pron: "comme 'jour'" },
-            { cyr: "З з", lat: "Z", pron: "comme 'zèbre'" },
-            { cyr: "И и", lat: "I", pron: "comme 'idée'" },
-            { cyr: "Й й", lat: "Y", pron: "comme 'yoga' (consonne)" },
-            { cyr: "К к", lat: "K", pron: "comme 'kilo'" },
-            { cyr: "Л л", lat: "L", pron: "comme 'lune'" },
-            { cyr: "М м", lat: "M", pron: "comme 'main'" },
-            { cyr: "Н н", lat: "N", pron: "comme 'nez'" },
-            { cyr: "О о", lat: "O", pron: "comme 'mot'" },
-            { cyr: "П п", lat: "P", pron: "comme 'père'" },
-            { cyr: "Р р", lat: "R", pron: "R roulé (non-guttural)" }, 
-            { cyr: "С с", lat: "S", pron: "comme 'soleil'" },
-            { cyr: "Т т", lat: "T", pron: "comme 'tasse'" },
-            { cyr: "У у", lat: "OU", pron: "comme 'loup'" },
-            { cyr: "Ф ф", lat: "F", pron: "comme 'fil'" },
-            { cyr: "Х х", lat: "CH/H", pron: "Raclement de gorge, comme le ‘j’ espagnol." }, 
-            { cyr: "Ц ц", lat: "TS", pron: "comme 'tsar'" },
-            { cyr: "Ч ч", lat: "TCH", pron: "comme 'chat'" },
-            { cyr: "Ш ш", lat: "CH", pron: "comme 'short'" },
-            { cyr: "Щ щ", lat: "SHT", pron: "SHT, comme dans 'shtick' (Anglais)." }, 
-            { cyr: "Ъ ъ", lat: "A/EU", pron: "A court, comme le ‘a’ de ‘petit’ (muet, indistinct)." },
-            { cyr: "Ь ь", lat: "(Muet)", pron: "Signal doux (rend consonne douce)" },
-            { cyr: "Ю ю", lat: "YOU", pron: "comme 'yogourt'" },
-            { cyr: "Я я", lat: "YA", pron: "comme 'yacht'" }
-        ];
+        // Clé de stockage local pour l'historique
+        const STORAGE_KEY = 'gazConsumptionHistory';
         
-        // Liste des 10 lettres qui ressemblent ou dont le son est trompeur pour les francophones
-        const trickyLetters = ["В в", "Н н", "Р р", "С с", "У у", "Х х", "Я я", "Ю ю", "Ж ж", "Ц ц"];
-        const quizLettersData = alphabetData.filter(item => trickyLetters.includes(item.cyr));
-        const allLatinTranscriptions = alphabetData.map(item => item.lat);
-        
-        let quizState = {
-            currentQuestionIndex: 0,
-            score: 0,
-            questions: [], 
-            totalQuestions: 10,
-            isAnswered: false, // Empêche de cliquer deux fois sur une option
-        };
+        // Initialisation de la variable de graphique
+        let chartInstance;
 
+        // --- Fonctions de Gestion des Données ---
 
-        const vocabularyData = [
-            // --- MODULE 3 : BASES DE CONVERSATION ---
-            { bul: "Здравей", fr: "Salut (informel)", pron: "Zdravéy", category: "Salutations/Bases", module: 3 },
-            { bul: "Добър ден", fr: "Bonjour (formel)", pron: "Dóbâr dèn", category: "Salutations/Bases", module: 3 },
-            { bul: "Лека нощ", fr: "Bonne nuit", pron: "Léka nòsht", category: "Salutations/Bases", module: 3 },
-            { bul: "Довиждане", fr: "Au revoir", pron: "Dovíjdane", category: "Salutations/Bases", module: 3 },
-            { bul: "Как си?", fr: "Comment ça va ? (informel)", pron: "Kák sì?", category: "Salutations/Bases", module: 3 },
-            { bul: "Добре", fr: "Bien", pron: "Dobré", category: "Salutations/Bases", module: 3 },
-            { bul: "Благодаря", fr: "Merci", pron: "Blagodarýa", category: "Politesse/Pratique", module: 3 },
-            { bul: "Моля", fr: "S'il vous plaît / Je vous en prie", pron: "Mólya", category: "Politesse/Pratique", module: 3 },
-            { bul: "Да", fr: "Oui", pron: "Dà", category: "Politesse/Pratique", module: 3 },
-            { bul: "Не", fr: "Non", pron: "Nè", category: "Politesse/Pratique", module: 3 },
-            { bul: "Извинете", fr: "Excusez-moi / Pardon", pron: "Izvinété", category: "Politesse/Pratique", module: 3 },
-            { bul: "Аз съм...", fr: "Je suis...", pron: "Àz sâm...", category: "Politesse/Pratique", module: 3 },
-            
-            // --- MODULE 5 : SURVIE EN BULGARIE ---
-            { bul: "Къде е...?", fr: "Où est...?", pron: "Kâdé è...?", category: "Se Déplacer", module: 5 },
-            { bul: "Наляво", fr: "À gauche", pron: "Nalyávo", category: "Se Déplacer", module: 5 },
-            { bul: "Надясно", fr: "À droite", pron: "Nadyásno", category: "Se Déplacer", module: 5 },
-            { bul: "Направо", fr: "Tout droit", pron: "Naprávo", category: "Se Déplacer", module: 5 },
-            { bul: "Спирка", fr: "Arrêt (bus/tram)", pron: "Spírka", category: "Se Déplacer", module: 5 },
-            { bul: "Искам да поръчам.", fr: "Je voudrais commander.", pron: "Ískam da porácham.", category: "Au Restaurant", module: 5 },
-            { bul: "Сметката, моля.", fr: "L'addition, s'il vous plaît.", pron: "Smétkata, mólya.", category: "Au Restaurant", module: 5 },
-            { bul: "Вода", fr: "Eau", pron: "Vodá", category: "Au Restaurant", module: 5 },
-            { bul: "Кафе", fr: "Café", pron: "Kafé", category: "Au Restaurant", module: 5 },
-            { bul: "Колко струва?", fr: "Combien ça coûte ?", pron: "Kólko strúva?", category: "Course/Base", module: 5 },
-            { bul: "Плащам с карта.", fr: "Je paie par carte.", pron: "Pláshtam s kárta.", category: "Course/Base", module: 5 },
-            { bul: "В колко часа е?", fr: "À quelle heure est-ce ?", pron: "V kólko chása è?", category: "Course/Base", module: 5 },
-        ];
-
-        const numbersData = [
-            { num: 0, bul: "нула", fr: "Zéro", pron: "Nóula" },
-            { num: 1, bul: "едно", fr: "Un", pron: "Édnò" },
-            { num: 2, bul: "две", fr: "Deux", pron: "Dvé" },
-            { num: 3, bul: "три", fr: "Trois", pron: "Trì" },
-            { num: 4, bul: "четири", fr: "Quatre", pron: "Chétirì" },
-            { num: 5, bul: "пет", fr: "Cinq", pron: "Pèt" },
-            { num: 6, bul: "шест", fr: "Six", pron: "Chèst" },
-            { num: 7, bul: "седем", fr: "Sept", pron: "Sédèm" },
-            { num: 8, bul: "осем", fr: "Huit", pron: "Ósèm" },
-            { num: 9, bul: "девет", fr: "Neuf", pron: "Dévèt" },
-            { num: 10, bul: "десет", fr: "Dix", pron: "Déssèt" }
-        ];
-
-        const namesData = [
-            { type: "Masculin", cyr: "Иван", lat: "Iván", meaning: "Dieu est gracieux (l'équivalent de Jean)" },
-            { type: "Masculin", cyr: "Боян", lat: "Boyan", meaning: "Bataille, guerrier" },
-            { type: "Masculin", cyr: "Стоян", lat: "Stoyan", meaning: "Celui qui reste, fort, stable" },
-            { type: "Féminin", cyr: "Мария", lat: "Maríya", meaning: "Aimée (comme Marie)" },
-            { type: "Féminin", cyr: "Райна", lat: "Rayna", meaning: "Reine, souveraine" },
-            { type: "Féminin", cyr: "Гергана", lat: "Gergana", meaning: "Dérivé de Georges (la victoire)" }
-        ];
-
-        const allCustomsData = [
-            { title: "Le mystère du hochement de tête", icon: "👉", text: "Attention ! En Bulgarie, <strong class='text-yellow-300'>hocher la tête verticalement (de haut en bas) signifie 'Non'</strong>, et secouer la tête horizontalement (de gauche à droite) signifie 'Oui'. Vérifiez toujours la réponse verbale ('Да' / 'Не')." },
-            { title: "Fête de la Rose (Kazanlak)", icon: "🌹", text: "Le pays célèbre la rose de Damas en mai/juin. La Bulgarie est un producteur majeur d'huile de rose, un ingrédient précieux." },
-            { title: "Martenitsa (1er mars)", icon: "🔴⚪", text: "Le 1er mars, les Bulgares s'échangent de petits ornements rouges et blancs appelés Martenitsa pour souhaiter la bonne santé et l'arrivée du printemps." },
-            { title: "Hospitalité et Chaussures", icon: "🏠", text: "Si vous êtes invité chez un Bulgare, il est de coutume d'enlever vos chaussures à l'entrée." },
-            { title: "L'Imenen Den (Jour de l'Onomastique)", icon: "🎂", text: "Le jour de votre Saint-Patron est souvent célébré plus joyeusement que votre anniversaire." },
-            { title: "Le Culte du Vieux", icon: "👵", text: "Le respect des personnes âgées est fondamental. Céder sa place est une règle tacite de la courtoisie bulgare." }
-        ];
-        
-        const citiesData = [
-            { cyr: "София", lat: "Sofíya", notes: "La Capitale. Cœur historique et moderne, facile d'accès." },
-            { cyr: "Пловдив", lat: "Plóvdiv", notes: "L'une des villes les plus anciennes d'Europe (plus de 6000 ans), avec un amphithéâtre romain préservé." },
-            { cyr: "Варна", lat: "Várna", notes: "La 'Capitale maritime' bulgare, située sur la côte de la mer Noire." },
-            { cyr: "Велико Търново", lat: "Velíko Târnovo", notes: "Ancienne capitale médiévale, célèbre pour la forteresse de Tsarevets." }
-        ];
-
-        const fauxAmisData = [
-            { bul: "магазин (magazin)", trompe: "*Magazine* (revue)", vrai: "Boutique, Magasin", expl: "Lieu où l'on fait les courses." },
-            { bul: "фабрика (fabrika)", trompe: "*Fabrique* (atelier)", vrai: "Usine, Manufacture", expl: "Site de production industrielle." },
-            { bul: "директор (direktor)", trompe: "*Directeur* (département)", vrai: "PDG, Dirigeant Principal", expl: "Le chef de l'entreprise (CEO)." },
-            { bul: "анекдот (anekdot)", trompe: "*Anecdote* (petit récit)", vrai: "Blague, Plaisanterie", expl: "Si l'on vous en raconte un, c'est pour rire !" },
-            { bul: "час (chas)", trompe: "*Chance* ou *Cas*", vrai: "Heure", expl: "Utilisé pour exprimer le temps (ex: 'une heure')." },
-        ];
-
-
-        // --- 2. UTILS ---
-        function shuffle(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [
-                    array[randomIndex], array[currentIndex]
-                ];
+        /**
+         * Charge l'historique des relevés depuis le stockage local.
+         * @returns {Array<Object>} Tableau des relevés triés par date et heure.
+         */
+        function loadHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+                // Trier par date (qui inclut l'heure car nous utilisons datetime-local)
+                return history.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+            } catch (e) {
+                console.error("Erreur lors du chargement de l'historique:", e);
+                return [];
             }
-            return array;
         }
 
-        // --- 3. RENDU DES MODULES ---
-
-        // Module 1 : Rendu des Cartes Flash
-        function renderAlphabet() {
-            const grid = document.getElementById('flashcard-grid');
-            grid.innerHTML = ''; 
-
-            alphabetData.forEach(item => {
-                const cardContainer = document.createElement('div');
-                cardContainer.className = 'col-span-1 h-28 sm:h-36'; 
-
-                const flipCard = document.createElement('div');
-                flipCard.className = 'flip-card';
-                flipCard.onclick = () => flipCard.classList.toggle('flipped');
-
-                const inner = document.createElement('div');
-                inner.className = 'flip-card-inner';
-                
-                const lowercaseCyrillic = item.cyr.split(' ')[1];
-
-                const front = document.createElement('div');
-                front.className = 'flip-card-front';
-                front.innerHTML = `<p class="text-4xl sm:text-6xl font-bold">${lowercaseCyrillic}</p>`;
-                
-                const back = document.createElement('div');
-                back.className = 'flip-card-back';
-                back.innerHTML = `
-                    <p class="text-2xl sm:text-4xl font-extrabold mb-1 text-yellow-200">${item.lat}</p>
-                    <p class="text-xs sm:text-sm text-center font-medium italic text-violet-300">${item.pron}</p>
-                `;
-                
-                inner.appendChild(front);
-                inner.appendChild(back);
-                flipCard.appendChild(inner);
-                cardContainer.appendChild(flipCard);
-                grid.appendChild(cardContainer);
-            });
+        /**
+         * Sauvegarde l'historique dans le stockage local.
+         * @param {Array<Object>} history - Le tableau des relevés à sauvegarder.
+         */
+        function saveHistory(history) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
         }
-        
-        // Fonction générique de rendu de tableau
-        function renderGenericTable(data, tbodyId, columns, isNumbered = false) {
-            const tbody = document.getElementById(tbodyId);
-            tbody.innerHTML = '';
 
-            // Groupement par catégorie pour les modules 3 et 5
-            const categories = {};
-            data.forEach(item => {
-                const category = item.category || 'Général';
-                if (!categories[category]) {
-                    categories[category] = [];
-                }
-                categories[category].push(item);
-            });
+        /**
+         * Calcule la consommation et les coûts entre deux relevés consécutifs.
+         * @param {Array<Object>} history - L'historique des relevés triés.
+         * @returns {Array<Object>} L'historique enrichi des consommations et coûts.
+         */
+        function calculateConsumptions(history) {
+            // Récupérer les paramètres actuels du formulaire
+            const coefGaz = parseFloat(document.getElementById('coef-gaz').value) || 11.361;
+            const prixKwh = parseFloat(document.getElementById('prix-kwh').value) || 0.0777;
 
-            let rowCount = 0;
-            Object.keys(categories).forEach(category => {
-                // Ligne de titre de catégorie (uniquement si la catégorie est présente)
-                if (category !== 'Général') {
-                    const headerRow = document.createElement('tr');
-                    headerRow.innerHTML = `<td colspan="${columns.length + (isNumbered ? 1 : 0)}" class="px-6 py-2 bg-slate-700/70 text-sm font-extrabold text-violet-400 uppercase">${category}</td>`;
-                    tbody.appendChild(headerRow);
-                }
+            const calculatedHistory = [];
 
-                categories[category].forEach((item) => {
-                    const row = document.createElement('tr');
-                    const rowClass = rowCount % 2 === 0 ? 'table-row-even' : 'table-row-odd';
-                    row.className = rowClass;
+            for (let i = 0; i < history.length; i++) {
+                // Utiliser dateTime pour la référence
+                const current = { ...history[i], indexM3: parseFloat(history[i].indexM3), dateTime: history[i].dateTime };
+                
+                let consoM3 = 0;
+                let consoKWh = 0;
+                let coutHT = 0;
+
+                if (i > 0) {
+                    const previous = calculatedHistory[i - 1];
+                    // La consommation est basée sur la différence d'index
+                    consoM3 = current.indexM3 - previous.indexM3;
                     
-                    let rowContent = '';
-                    
-                    if (isNumbered) { // Pour le module des chiffres
-                        rowContent += `<td class="px-6 py-4 whitespace-nowrap text-lg font-bold text-purple-300">${item.num}</td>`;
+                    if (consoM3 < 0) {
+                        // Index plus bas que le précédent, signalons une erreur potentielle
+                        console.warn(`Index plus bas à la date ${current.dateTime}. Conso sera 0.`);
+                        consoM3 = 0;
                     }
                     
-                    columns.forEach(col => {
-                        let content = item[col.key];
-                        let styleClass = '';
-                        
-                        if (col.key === 'bul' || col.key === 'cyr') {
-                            styleClass = 'text-lg font-medium text-white';
-                        } else if (col.key === 'pron' || col.key === 'lat') {
-                            styleClass = 'text-sm text-yellow-300';
-                        } else if (col.key === 'trompe') {
-                             styleClass = 'text-sm text-red-300';
-                        } else if (col.key === 'vrai') {
-                             styleClass = 'text-sm text-green-300 font-semibold';
-                        } else {
-                            styleClass = 'text-sm text-slate-300';
-                        }
-                        
-                        // Ajout de la classe `hidden md:table-cell` pour masquer l'explication sur mobile si besoin (pour faux amis)
-                        const hiddenClass = col.key === 'expl' ? 'hidden md:table-cell' : 'whitespace-nowrap';
-                        
-                        rowContent += `<td class="px-6 py-4 ${hiddenClass} ${styleClass}">${content}</td>`;
-                    });
+                    // Conversion en kWh
+                    consoKWh = consoM3 * coefGaz;
+                    
+                    // Calcul du coût HT (hors taxes et abonnement)
+                    coutHT = consoKWh * prixKwh;
+                }
 
-                    row.innerHTML = rowContent;
-                    tbody.appendChild(row);
-                    rowCount++;
+                calculatedHistory.push({
+                    ...current,
+                    consoM3: consoM3,
+                    consoKWh: consoKWh,
+                    coutHT: coutHT
                 });
-            });
-        }
-
-
-        // Module 3 : Rendu du Vocabulaire de Base
-        function renderBasicVocabulary() {
-            const basicData = vocabularyData.filter(item => item.module === 3);
-            const columns = [
-                { key: 'bul' }, 
-                { key: 'pron' }, 
-                { key: 'fr' }
-            ];
-            renderGenericTable(basicData, 'basic-vocabulary-table-body', columns);
-        }
-
-        // Module 5 : Rendu du Vocabulaire de Survie
-        function renderSurvivalVocabulary() {
-            const survivalData = vocabularyData.filter(item => item.module === 5);
-            const columns = [
-                { key: 'bul' }, 
-                { key: 'pron' }, 
-                { key: 'fr' }
-            ];
-            renderGenericTable(survivalData, 'survival-vocabulary-table-body', columns);
-        }
-
-        // Module 4 : Rendu des Chiffres
-        function renderNumbers() {
-            const columns = [
-                { key: 'bul' }, 
-                { key: 'pron' }, 
-                { key: 'fr' }
-            ];
-            renderGenericTable(numbersData, 'numbers-table-body', columns, true);
-        }
-        
-        // Module 7 : Rendu du Module Culturel (MODIFIÉ pour l'aléatoire)
-        function renderCulturalModule() {
-            // Rendu des Prénoms
-            const namesColumns = [
-                { key: 'cyr' },
-                { key: 'lat' },
-                { key: 'meaning' }
-            ];
-            renderGenericTable(namesData, 'names-table-body', namesColumns);
-
-
-            // Rendu des Villes
-            const citiesColumns = [
-                { key: 'cyr' },
-                { key: 'lat' },
-                { key: 'notes' }
-            ];
-            renderGenericTable(citiesData, 'cities-table-body', citiesColumns);
-
-
-            // Rendu des Coutumes (Sélection aléatoire de 4)
-            const customsList = document.getElementById('customs-list');
-            customsList.innerHTML = '';
-            const shuffledCustoms = shuffle([...allCustomsData]); 
-            const selectedCustoms = shuffledCustoms.slice(0, 4);
-
-            selectedCustoms.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'p-4 bg-gray-800 rounded-lg border-l-4 border-pink-400 shadow-md';
-                div.innerHTML = `
-                    <h4 class="text-xl font-bold mb-1 text-white flex items-center">
-                        <span class="mr-3 text-2xl">${item.icon}</span>${item.title}
-                    </h4>
-                    <p class="text-slate-300 text-sm">${item.text}</p>
-                `;
-                customsList.appendChild(div);
-            });
-        }
-        
-        // Module 8 : Rendu des Faux-Amis
-        function renderFauxAmis() {
-            const fauxAmisColumns = [
-                { key: 'bul' },
-                { key: 'trompe' },
-                { key: 'vrai' },
-                { key: 'expl' }
-            ];
-            renderGenericTable(fauxAmisData, 'faux-amis-table-body', fauxAmisColumns);
-        }
-
-        // --- 4. LOGIQUE D'INTERACTION ---
-
-        // Fonction pour retourner toutes les cartes (Module 1)
-        function flipAllCards() {
-            const cards = document.querySelectorAll('.flip-card');
-            let allFlipped = true;
-
-            cards.forEach(card => {
-                if (!card.classList.contains('flipped')) {
-                    allFlipped = false;
-                }
-            });
-
-            // Bascule l'état: si toutes sont pliées, les déplier; si toutes sont dépliées, les plier.
-            cards.forEach(card => {
-                if (allFlipped) {
-                    card.classList.remove('flipped');
-                } else {
-                    card.classList.add('flipped');
-                }
-            });
-        }
-        
-        // Logique de Quiz (ACTIVÉE)
-        
-        function resetQuiz() {
-            quizState.currentQuestionIndex = 0;
-            quizState.score = 0;
-            quizState.isAnswered = false;
-            quizState.questions = shuffle([...quizLettersData]); // Mélange les questions
-            
-            // Masque les résultats et le contenu principal
-            document.getElementById('quiz-result').classList.add('hidden');
-            document.getElementById('quiz-main-content').classList.add('hidden');
-            document.getElementById('next-question-btn').classList.add('hidden');
-            document.getElementById('restart-quiz-btn').classList.add('hidden');
-            document.getElementById('quiz-score').classList.add('hidden');
-            
-            // Affiche le bouton de démarrage et le statut initial
-            document.getElementById('start-quiz-btn').classList.remove('hidden');
-            document.getElementById('quiz-status').textContent = `Prêt à tester vos connaissances sur les ${quizState.totalQuestions} lettres les plus pièges ?`;
-        }
-
-        function startQuiz() {
-            document.getElementById('start-quiz-btn').classList.add('hidden');
-            document.getElementById('quiz-status').textContent = `Question 1 sur ${quizState.totalQuestions}`;
-            document.getElementById('quiz-main-content').classList.remove('hidden');
-            document.getElementById('quiz-score').classList.remove('hidden');
-            document.getElementById('quiz-feedback').textContent = '';
-            
-            // Le reset est appelé dans la fonction d'initialisation, donc on commence directement
-            displayQuestion();
-        }
-        
-        function getIncorrectOptions(correctAnswer) {
-            // Sélectionne toutes les transcriptions sauf la bonne
-            const incorrectOptions = allLatinTranscriptions.filter(lat => lat !== correctAnswer);
-            
-            // Mélange et prend 3 options (ou moins si l'alphabet est petit, mais ici c'est ok)
-            const shuffledIncorrect = shuffle(incorrectOptions);
-            
-            // Utilise un ensemble de 3 options statiques pour assurer la diversité et éviter les doublons accidentels
-            // J'ai besoin de 3 réponses qui sont des lettres latines (R, B, U, H, C, etc.)
-            const staticIncorrects = ["P", "B", "E", "X", "Y"].filter(opt => opt !== correctAnswer).slice(0, 3);
-            
-            // On mélange un peu pour obtenir 3 options distinctes
-            let options = [...new Set([...staticIncorrects, ...shuffledIncorrect])].filter(opt => opt !== correctAnswer).slice(0, 3);
-            
-            // Si l'option correcte est 'A', et que 'A' n'est pas dans l'alphabet data, on filtre
-            // Ici, on est sûr que la transcription est dans l'alphabet data, donc on prend 3 autres lettres au hasard
-            while(options.length < 3) {
-                 const randomLat = allLatinTranscriptions[Math.floor(Math.random() * allLatinTranscriptions.length)];
-                 if (randomLat !== correctAnswer && !options.includes(randomLat)) {
-                     options.push(randomLat);
-                 }
-            }
-            
-            return options;
-        }
-
-        function displayQuestion() {
-            const currentItem = quizState.questions[quizState.currentQuestionIndex];
-            const cyrillicCharEl = document.getElementById('cyrillic-char');
-            const optionsContainer = document.getElementById('quiz-options');
-            const scoreEl = document.getElementById('quiz-score');
-            const statusEl = document.getElementById('quiz-status');
-            
-            cyrillicCharEl.textContent = currentItem.cyr.split(' ')[0]; // Affiche seulement la majuscule
-            optionsContainer.innerHTML = '';
-            document.getElementById('quiz-feedback').textContent = '';
-            document.getElementById('next-question-btn').classList.add('hidden');
-            quizState.isAnswered = false;
-            
-            scoreEl.textContent = `Score actuel : ${quizState.score}/${quizState.totalQuestions}`;
-            statusEl.textContent = `Question ${quizState.currentQuestionIndex + 1} sur ${quizState.totalQuestions}`;
-
-            // Générer les options
-            const correctOption = currentItem.lat;
-            let options = [correctOption, ...getIncorrectOptions(correctOption)];
-            options = shuffle(options); // Mélange les 4 options
-            
-            options.forEach(option => {
-                const button = document.createElement('button');
-                button.className = 'quiz-option-btn';
-                button.textContent = option;
-                button.dataset.answer = option;
-                button.onclick = () => handleAnswer(button, correctOption);
-                optionsContainer.appendChild(button);
-            });
-        }
-
-        function handleAnswer(selectedButton, correctAnswer) {
-            if (quizState.isAnswered) return;
-            quizState.isAnswered = true;
-            
-            const feedbackEl = document.getElementById('quiz-feedback');
-            const optionButtons = document.querySelectorAll('.quiz-option-btn');
-            const nextBtn = document.getElementById('next-question-btn');
-            
-            let isCorrect = selectedButton.dataset.answer === correctAnswer;
-
-            // Mettre en évidence la bonne et la mauvaise réponse
-            optionButtons.forEach(btn => {
-                btn.disabled = true; // Désactive tous les boutons
-                if (btn.dataset.answer === correctAnswer) {
-                    btn.classList.add('correct');
-                } else if (btn.dataset.answer === selectedButton.dataset.answer) {
-                    btn.classList.add('incorrect');
-                }
-            });
-
-            if (isCorrect) {
-                quizState.score++;
-                feedbackEl.textContent = "Correct ! 🎉";
-                feedbackEl.classList.remove('text-red-400');
-                feedbackEl.classList.add('text-green-400');
-            } else {
-                feedbackEl.textContent = `Faux. La bonne réponse était ${correctAnswer}.`;
-                feedbackEl.classList.remove('text-green-400');
-                feedbackEl.classList.add('text-red-400');
             }
 
-            document.getElementById('quiz-score').textContent = `Score actuel : ${quizState.score}/${quizState.totalQuestions}`;
-            nextBtn.classList.remove('hidden');
-            nextBtn.onclick = () => {
-                quizState.currentQuestionIndex++;
-                if (quizState.currentQuestionIndex < quizState.totalQuestions) {
-                    displayQuestion();
-                } else {
-                    showResults();
+            return calculatedHistory;
+        }
+
+        // --- Fonctions d'Interface Utilisateur ---
+
+        /**
+         * Ajoute un nouveau relevé à l'historique.
+         */
+        function ajouterReleve() {
+            const dateTimeInput = document.getElementById('date-releve');
+            const indexInput = document.getElementById('index-m3');
+            const errorMessage = document.getElementById('message-erreur');
+
+            const dateTime = dateTimeInput.value; // Ceci est la chaîne de caractères au format 'YYYY-MM-DDTHH:mm'
+            const indexM3 = indexInput.value;
+
+            if (!dateTime || indexM3 === "") {
+                errorMessage.textContent = "Veuillez remplir la date, l'heure et l'index.";
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+
+            const history = loadHistory();
+            
+            // Vérification anti-doublon plus stricte
+            const existingEntry = history.find(r => r.dateTime === dateTime);
+            if (existingEntry) {
+                errorMessage.textContent = `Un relevé existe déjà pour la date et heure exactes du ${new Date(dateTime).toLocaleString('fr-FR')}.`;
+                errorMessage.classList.remove('hidden');
+                return;
+            }
+            
+            // Vérification que le nouvel index n'est pas inférieur au dernier
+            if (history.length > 0) {
+                // Le dernier relevé après tri est le plus récent
+                const lastReleve = history[history.length - 1];
+                const newIndex = parseFloat(indexM3);
+                
+                if (newIndex < lastReleve.indexM3) {
+                     errorMessage.textContent = `L'index (${newIndex}) est inférieur au dernier index enregistré (${lastReleve.indexM3}). Veuillez corriger ou le supprimer.`;
+                     errorMessage.classList.remove('hidden');
+                     return;
+                }
+            }
+
+
+            const newReleve = {
+                id: Date.now(), // Identifiant unique
+                dateTime: dateTime, // Stocker au format standard YYYY-MM-DDTHH:mm
+                indexM3: parseFloat(indexM3)
+            };
+
+            history.push(newReleve);
+            saveHistory(history);
+            
+            // Réinitialiser les champs et masquer l'erreur
+            // On ne réinitialise que l'index, la date/heure passe à l'instant présent
+            dateTimeInput.value = new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            indexInput.value = '';
+            errorMessage.classList.add('hidden');
+
+            // Mise à jour de l'affichage
+            updateUI();
+        }
+
+        /**
+         * Supprime un relevé par son ID.
+         * @param {number} id - L'ID du relevé à supprimer.
+         */
+        function supprimerReleve(id) {
+            // Utiliser une alerte console à la place de window.confirm() car non autorisé dans cet environnement.
+            console.warn("Suppression demandée. L'action est irréversible dans cette version.");
+            
+            let history = loadHistory();
+            // Dans un vrai environnement, utilisez un modal pour confirmer
+            if (true) { 
+                history = history.filter(releve => releve.id !== id);
+                saveHistory(history);
+                updateUI();
+            }
+        }
+
+        /**
+         * Met à jour le tableau d'historique.
+         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
+         */
+        function renderHistoryTable(calculatedHistory) {
+            const tableBody = document.getElementById('historique-body');
+            tableBody.innerHTML = '';
+            
+            // Afficher les relevés du plus récent au plus ancien
+            const reversedHistory = [...calculatedHistory].reverse();
+
+            reversedHistory.forEach((releve, index) => {
+                const row = tableBody.insertRow();
+                row.className = 'hover:bg-gray-100 transition duration-100';
+
+                // Date & Heure
+                const dateTime = new Date(releve.dateTime);
+                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+                const dateTimeCell = row.insertCell();
+                dateTimeCell.textContent = dateTime.toLocaleDateString('fr-FR', options);
+
+                // Index (m³)
+                row.insertCell().textContent = releve.indexM3.toFixed(2);
+
+                // Conso (m³)
+                const consoM3Cell = row.insertCell();
+                consoM3Cell.textContent = releve.consoM3.toFixed(2);
+                consoM3Cell.classList.add('font-medium', 'text-gray-900');
+                if (index === reversedHistory.length - 1) { 
+                    consoM3Cell.textContent = '---'; // Le premier relevé n'a pas de conso avant lui
+                }
+
+                // Conso (kWh)
+                const consoKWhCell = row.insertCell();
+                consoKWhCell.textContent = releve.consoKWh.toFixed(2);
+                consoKWhCell.classList.add('font-medium', 'text-blue-600');
+                if (index === reversedHistory.length - 1) {
+                    consoKWhCell.textContent = '---'; // Le premier relevé n'a pas de conso avant lui
+                }
+
+                // Coût HT (€)
+                const coutHTCell = row.insertCell();
+                coutHTCell.textContent = releve.coutHT.toFixed(2) + ' €';
+                coutHTCell.classList.add('font-medium', 'text-green-600');
+                if (index === reversedHistory.length - 1) {
+                    coutHTCell.textContent = '---'; // Le premier relevé n'a pas de coût
+                }
+
+                // Actions
+                const actionsCell = row.insertCell();
+                actionsCell.classList.add('text-right');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Supprimer';
+                deleteButton.className = 'text-red-500 hover:text-red-700 font-semibold text-xs py-1 px-2 rounded-lg transition duration-150';
+                deleteButton.onclick = () => supprimerReleve(releve.id);
+                actionsCell.appendChild(deleteButton);
+            });
+        }
+
+        /**
+         * Met à jour le graphique Chart.js. (Agrégation toujours par mois calendaire)
+         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
+         */
+        function renderChart(calculatedHistory) {
+            const monthlyData = aggregateMonthlyConsumption(calculatedHistory); 
+            const ctx = document.getElementById('consoChart').getContext('2d');
+
+            const data = {
+                labels: monthlyData.map(d => d.monthLabel),
+                datasets: [{
+                    label: 'Consommation Gaz (kWh/mois)',
+                    data: monthlyData.map(d => d.kwh),
+                    backgroundColor: 'rgba(59, 130, 246, 0.6)', // Bleu Tailwind 500
+                    borderColor: 'rgba(37, 99, 235, 1)', // Bleu Tailwind 600
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    barPercentage: 0.8,
+                    categoryPercentage: 0.7,
+                }]
+            };
+
+            const options = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += new Intl.NumberFormat('fr-FR', { 
+                                    style: 'unit', 
+                                    unit: 'kilowatt-hour' 
+                                }).format(context.raw);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'kWh'
+                        }
+                    }
                 }
             };
+
+            // Détruire l'ancienne instance si elle existe
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Créer la nouvelle instance
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: options,
+            });
         }
         
-        function showResults() {
-            const resultEl = document.getElementById('quiz-result');
-            const finalScoreEl = document.getElementById('final-score');
-            const messageEl = document.getElementById('result-message');
-            const restartBtn = document.getElementById('restart-quiz-btn');
-            
-            document.getElementById('quiz-main-content').classList.add('hidden');
-            document.getElementById('quiz-score').classList.add('hidden');
-            document.getElementById('next-question-btn').classList.add('hidden');
-            document.getElementById('quiz-status').textContent = "Quiz terminé !";
-            
-            resultEl.classList.remove('hidden');
-            restartBtn.classList.remove('hidden');
-            
-            finalScoreEl.textContent = `${quizState.score} / ${quizState.totalQuestions}`;
-            
-            let resultMessage;
-            if (quizState.score >= 9) {
-                resultMessage = "Magnifique ! Vous maîtrisez parfaitement les lettres cyrilliques pièges. Votre voyage en Bulgarie sera facile.";
-            } else if (quizState.score >= 6) {
-                resultMessage = "Pas mal ! Un bon début. Révisez les cartes flash pour vous attaquer aux dernières lettres complexes.";
-            } else {
-                resultMessage = "C'est un excellent point de départ ! Retournez au Module 1 pour réviser et tentez à nouveau votre chance.";
+        /**
+         * Agrège l'historique des relevés par mois calendaire pour le graphique.
+         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
+         * @returns {Array<Object>} Tableau des consommations mensuelles.
+         */
+        function aggregateMonthlyConsumption(calculatedHistory) {
+            const monthlyConso = {};
+            const formatter = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', month: 'short' });
+
+            if (calculatedHistory.length <= 1) return [];
+
+            // On commence à i=1 car le relevé 0 n'a pas de consommation calculée
+            for (let i = 1; i < calculatedHistory.length; i++) {
+                const releve = calculatedHistory[i];
+                // Utiliser le dateTime pour créer l'objet Date
+                const date = new Date(releve.dateTime); 
+                // Clé au format AAAA-MM (Ex: 2023-11)
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                // Le label affiché utilise la date du relevé actuel pour le mois
+                const monthLabel = formatter.format(date); 
+
+                if (!monthlyConso[monthKey]) {
+                    monthlyConso[monthKey] = { kwh: 0, monthLabel: monthLabel };
+                }
+
+                // Ajout de la consommation de la période au mois courant du dernier relevé
+                monthlyConso[monthKey].kwh += releve.consoKWh;
             }
-            messageEl.textContent = resultMessage;
+
+            // Convertir l'objet en tableau pour Chart.js, trié par clé (AAAA-MM)
+            return Object.keys(monthlyConso).sort().map(key => monthlyConso[key]);
+        }
+        
+        /**
+         * Fonction principale pour mettre à jour l'interface.
+         */
+        function updateUI() {
+            // 1. Charger et Calculer l'historique
+            const history = loadHistory();
+            const calculatedHistory = calculateConsumptions(history);
+            
+            // 2. Afficher les données
+            renderHistoryTable(calculatedHistory);
+            renderChart(calculatedHistory);
+            
+            // Note: La projection a été retirée.
         }
 
+        // --- Événements et Initialisation ---
 
-        // Logique pour basculer la table des matières
-        function toggleToc() {
-            const tocContainer = document.getElementById('toc-container');
-            const toggleBtn = document.getElementById('toggle-toc-btn');
-            const btnText = document.getElementById('toc-btn-text');
-            const iconOpen = document.getElementById('toc-icon-open');
-            const iconClose = document.getElementById('toc-icon-close');
-
-            const isHidden = !tocContainer.classList.contains('is-open');
-
-            if (isHidden) {
-                // Afficher
-                tocContainer.classList.add('is-open');
-                btnText.textContent = 'Masquer la Table des Matières';
-                toggleBtn.setAttribute('aria-expanded', 'true');
-                iconOpen.classList.add('hidden');
-                iconClose.classList.remove('hidden');
-            } else {
-                // Masquer
-                tocContainer.classList.remove('is-open');
-                btnText.textContent = 'Afficher la Table des Matières';
-                toggleBtn.setAttribute('aria-expanded', 'false');
-                iconOpen.classList.remove('hidden');
-                iconClose.classList.add('hidden');
-            }
+        // Les changements dans les paramètres doivent recalculer et mettre à jour l'affichage
+        document.getElementById('coef-gaz').addEventListener('change', updateUI);
+        document.getElementById('prix-kwh').addEventListener('change', updateUI);
+        document.getElementById('prix-abonnement').addEventListener('change', updateUI); 
+        
+        // Assurer que la date par défaut est l'instant présent
+        function setInitialDateTime() {
+            // Obtient la date/heure locale et la formate pour l'input datetime-local (YYYY-MM-DDTHH:mm)
+            const now = new Date();
+            // L'astuce pour le fuseau horaire : enlève le décalage pour que toISOString prenne l'heure locale
+            const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString(); 
+            document.getElementById('date-releve').value = isoString.slice(0, 16);
         }
+        
+        setInitialDateTime();
 
-
-        // --- 5. INITIALISATION ---
-        document.addEventListener('DOMContentLoaded', () => {
-            // Rendre tous les modules
-            renderAlphabet();
-            renderBasicVocabulary();
-            renderNumbers(); 
-            renderSurvivalVocabulary();
-            renderCulturalModule(); 
-            renderFauxAmis();
-            
-            // Initialiser l'état du quiz
-            resetQuiz();
-            
-            // Événements
-            document.getElementById('start-quiz-btn').addEventListener('click', startQuiz);
-            document.getElementById('restart-quiz-btn').addEventListener('click', resetQuiz);
-            document.getElementById('flip-all-btn').addEventListener('click', flipAllCards);
-            
-            // Nouvel événement pour le bouton bascule TOC
-            document.getElementById('toggle-toc-btn').addEventListener('click', toggleToc);
-
-            // Gérer le clic sur un lien TOC pour masquer (surtout sur mobile)
-            const tocLinks = document.querySelectorAll('#toc-container a');
-            
-            // Vérifie si nous sommes sur une petite fenêtre (moins de 1024px)
-            const isSmallScreen = window.matchMedia('(max-width: 1023px)').matches;
-            
-            if (isSmallScreen) { 
-                tocLinks.forEach(link => {
-                    link.addEventListener('click', () => {
-                        // Délai pour laisser le scroll se terminer avant de masquer
-                        setTimeout(toggleToc, 300); 
-                    });
-                });
-            }
-        });
-
+        // Charger l'interface au démarrage
+        window.onload = updateUI;
+        
     </script>
+
 </body>
 </html>
+
