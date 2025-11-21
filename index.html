@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi Consommation de Gaz Naturel - Réel</title>
+    <title>Suivi Consommation de Gaz Naturel - Réel (TTC)</title>
     <!-- Chargement de Tailwind CSS pour un style moderne et responsive -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chargement de Chart.js pour les graphiques -->
@@ -44,7 +44,7 @@
                 Suivi Factual de Consommation de Gaz Naturel
             </h1>
             <p class="mt-2 text-lg text-gray-600">
-                Entrez vos relevés de compteur (en m³) pour calculer la consommation **réelle** et les coûts entre deux dates.
+                Entrez vos relevés de compteur (en m³) pour calculer la consommation **réelle** et les coûts HT/TTC.
             </p>
         </header>
 
@@ -78,9 +78,9 @@
         <section class="card bg-white p-6 rounded-xl mb-8 border border-green-200">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.308 2.368a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.368 2.308a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.308-2.368a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.368-2.308a1.724 1.724 0 002.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Paramètres de Facturation (HT)
+                Paramètres de Facturation
             </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
                 <div>
                     <label for="coef-gaz" class="block text-sm font-medium text-gray-700">Coef. Conversion (kWh/m³)</label>
                     <input type="number" id="coef-gaz" value="11.361" step="0.001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
@@ -93,9 +93,19 @@
                     <label for="prix-abonnement" class="block text-sm font-medium text-gray-700">Abonnement Mensuel HT (€)</label>
                     <input type="number" id="prix-abonnement" value="16.72" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
                 </div>
+                <!-- NOUVEAU CHAMP TVA CONSO -->
+                <div>
+                    <label for="tva-kwh" class="block text-sm font-medium text-gray-700">TVA Conso (%)</label>
+                    <input type="number" id="tva-kwh" value="20.0" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+                <!-- NOUVEAU CHAMP TVA ABONNEMENT -->
+                <div>
+                    <label for="tva-abonnement" class="block text-sm font-medium text-gray-700">TVA Abo (%)</label>
+                    <input type="number" id="tva-abonnement" value="5.5" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
+                </div>
             </div>
             <div class="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                <p>⚠️ Ces valeurs sont basées sur votre facture EDF ("Avantage Gaz Optimisé", Coefficient 11,361, Prix kWh 0,0777 €HT). Ajustez-les si votre contrat change.</p>
+                <p>⚠️ Ces valeurs sont basées sur votre facture Gaz (Avantage Gaz Optimisé). Ajustez les prix, coefficients et TVA si votre contrat change.</p>
             </div>
         </section>
         
@@ -105,7 +115,7 @@
                 <svg class="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Synthèse Globale (Depuis le premier relevé)
             </h2>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
                 <!-- Total Relevés -->
                 <div class="p-3 bg-indigo-50 rounded-lg">
                     <p class="text-sm font-medium text-gray-500">Relevés Enregistrés</p>
@@ -126,9 +136,14 @@
                     <p class="text-sm font-medium text-gray-500">Coût Tot. Conso (HT)</p>
                     <p id="total-cout-ht" class="text-2xl font-bold text-green-700 mt-1">0.00 €</p>
                 </div>
+                <!-- Total Coût TTC -->
+                <div class="p-3 bg-emerald-100 rounded-lg">
+                    <p class="text-sm font-medium text-gray-500">Coût Tot. Conso (TTC)</p>
+                    <p id="total-cout-ttc" class="text-2xl font-bold text-emerald-800 mt-1">0.00 €</p>
+                </div>
             </div>
             <p class="text-sm text-gray-500 mt-4 p-2 bg-yellow-50 rounded-lg">
-                * Le coût total représente l'accumulation des coûts HT des kWh consommés entre le premier et le dernier relevé.
+                * Les coûts totaux représentent l'accumulation des coûts des kWh consommés entre le premier et le dernier relevé (hors abonnement).
             </p>
         </section>
         
@@ -158,6 +173,7 @@
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (m³)</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (kWh)</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût HT (€)</th>
+                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût TTC (€)</th> <!-- NOUVEAU: COÛT TTC -->
                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -167,11 +183,11 @@
                 </table>
             </div>
             <p class="text-sm text-gray-500 mt-4 p-2 bg-gray-50 rounded-lg">
-                * Le coût HT est calculé pour la consommation (kWh) réalisée entre ce relevé et le précédent, hors abonnement.
+                * Le coût est calculé pour la consommation (kWh) réalisée entre ce relevé et le précédent, hors abonnement.
             </p>
         </section>
 
-        <!-- Bouton de Réinitialisation (Déplacé en bas) -->
+        <!-- Bouton de Réinitialisation -->
         <div class="flex justify-center mb-10 mt-6">
             <button onclick="showResetConfirmation()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition duration-200 ease-in-out transform hover:scale-[1.02] shadow-xl flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -234,7 +250,7 @@
         }
 
         /**
-         * Calcule la consommation et les coûts entre deux relevés consécutifs.
+         * Calcule la consommation, les coûts HT et TTC entre deux relevés consécutifs.
          * @param {Array<Object>} history - L'historique des relevés triés.
          * @returns {Array<Object>} L'historique enrichi des consommations et coûts.
          */
@@ -242,6 +258,10 @@
             // Récupérer les paramètres actuels du formulaire
             const coefGaz = parseFloat(document.getElementById('coef-gaz').value) || 11.361;
             const prixKwh = parseFloat(document.getElementById('prix-kwh').value) || 0.0777;
+            
+            // NOUVEAUX PARAMÈTRES TVA (TVA Consommation)
+            const tvaKwhRate = parseFloat(document.getElementById('tva-kwh').value) / 100 || 0.20; 
+            // La TVA Abonnement (tva-abonnement) n'est pas utilisée ici car nous ne calculons que le coût de la consommation variable.
 
             const calculatedHistory = [];
 
@@ -252,6 +272,7 @@
                 let consoM3 = 0;
                 let consoKWh = 0;
                 let coutHT = 0;
+                let coutTTC = 0; // Initialisation du coût TTC
 
                 if (i > 0) {
                     const previous = calculatedHistory[i - 1];
@@ -269,13 +290,17 @@
                     
                     // Calcul du coût HT (hors taxes et abonnement)
                     coutHT = consoKWh * prixKwh;
+                    
+                    // Calcul du coût TTC (HT * (1 + Taux TVA))
+                    coutTTC = coutHT * (1 + tvaKwhRate);
                 }
 
                 calculatedHistory.push({
                     ...current,
                     consoM3: consoM3,
                     consoKWh: consoKWh,
-                    coutHT: coutHT
+                    coutHT: coutHT,
+                    coutTTC: coutTTC // Ajout du coût TTC
                 });
             }
 
@@ -293,6 +318,7 @@
             let totalM3 = 0;
             let totalKwh = 0;
             let totalCoutHT = 0;
+            let totalCoutTTC = 0; // Nouveau total TTC
             
             document.getElementById('total-releves').textContent = numReleves;
 
@@ -304,19 +330,22 @@
                 // Calcul de la consommation totale en m³
                 totalM3 = indexFin - indexDebut;
                 
-                // Le total kWh et Coût HT sont la somme de toutes les consommations calculées
+                // Le total kWh, Coût HT et Coût TTC sont la somme de toutes les consommations calculées
                 for (let i = 1; i < numReleves; i++) {
                     totalKwh += calculatedHistory[i].consoKWh;
                     totalCoutHT += calculatedHistory[i].coutHT;
+                    totalCoutTTC += calculatedHistory[i].coutTTC; // Somme TTC
                 }
                 
                 document.getElementById('total-m3').textContent = totalM3.toFixed(2);
                 document.getElementById('total-kwh').textContent = totalKwh.toFixed(2);
                 document.getElementById('total-cout-ht').textContent = totalCoutHT.toFixed(2) + ' €';
+                document.getElementById('total-cout-ttc').textContent = totalCoutTTC.toFixed(2) + ' €'; // Affichage TTC
             } else {
                 document.getElementById('total-m3').textContent = '0.00';
                 document.getElementById('total-kwh').textContent = '0.00';
                 document.getElementById('total-cout-ht').textContent = '0.00 €';
+                document.getElementById('total-cout-ttc').textContent = '0.00 €'; // Reset TTC
             }
         }
 
@@ -474,6 +503,14 @@
                 if (index === reversedHistory.length - 1) {
                     coutHTCell.textContent = '---'; // Le premier relevé n'a pas de coût
                 }
+                
+                // NOUVEAU: Coût TTC (€)
+                const coutTTCCell = row.insertCell();
+                coutTTCCell.textContent = releve.coutTTC.toFixed(2) + ' €';
+                coutTTCCell.classList.add('font-medium', 'text-emerald-700'); // Nouvelle couleur pour TTC
+                if (index === reversedHistory.length - 1) {
+                    coutTTCCell.textContent = '---'; 
+                }
 
                 // Actions
                 const actionsCell = row.insertCell();
@@ -595,10 +632,11 @@
         function updateUI() {
             // 1. Charger et Calculer l'historique
             const history = loadHistory();
+            // Recalculer les consommations et les coûts (HT et TTC)
             const calculatedHistory = calculateConsumptions(history);
             
             // 2. Afficher les données
-            renderGlobalTotals(calculatedHistory); // Mise à jour des totaux
+            renderGlobalTotals(calculatedHistory); // Mise à jour des totaux HT et TTC
             renderHistoryTable(calculatedHistory);
             renderChart(calculatedHistory);
         }
@@ -609,6 +647,8 @@
         document.getElementById('coef-gaz').addEventListener('change', updateUI);
         document.getElementById('prix-kwh').addEventListener('change', updateUI);
         document.getElementById('prix-abonnement').addEventListener('change', updateUI); 
+        document.getElementById('tva-kwh').addEventListener('change', updateUI); // Nouveau listener pour TVA KWH
+        document.getElementById('tva-abonnement').addEventListener('change', updateUI); // Nouveau listener pour TVA Abonnement
         
         /**
          * Définit la valeur de l'input date/heure à l'instant présent.
