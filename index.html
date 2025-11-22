@@ -29,8 +29,8 @@
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            height: 150px;
-            gap: 8px;
+            height: 180px; /* Un peu plus haut pour les détails journaliers */
+            gap: 2px; /* Espace réduit pour 31 jours */
             padding-top: 20px;
         }
         .bar-wrapper {
@@ -44,29 +44,49 @@
         }
         .bar {
             width: 100%;
-            border-top-left-radius: 4px;
-            border-top-right-radius: 4px;
-            transition: height 0.5s ease-out, background-color 0.3s;
-            min-height: 4px; /* Toujours visible un minimum */
+            border-top-left-radius: 3px;
+            border-top-right-radius: 3px;
+            transition: height 0.3s ease-out, background-color 0.3s;
+            min-height: 2px;
         }
         .bar:hover {
             filter: brightness(1.2);
         }
-        .bar-label {
+        /* Tooltip personnalisé au survol des barres */
+        .bar-wrapper:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #111827;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
             font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 20;
+            border: 1px solid #4b5563;
+            pointer-events: none;
+            margin-bottom: 4px;
+        }
+
+        .bar-label {
+            font-size: 0.6rem;
             color: #9ca3af;
-            margin-top: 6px;
+            margin-top: 4px;
             text-align: center;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
             width: 100%;
         }
-        .bar-value {
-            font-size: 0.7rem;
-            color: white;
-            margin-bottom: 4px;
-            font-weight: bold;
+        /* Masquer certains labels si trop serré (mode jour) */
+        .bar-wrapper.dense:nth-child(odd) .bar-label {
+            display: none; /* Affiche 1 jour sur 2 sur mobile/dense */
+        }
+        @media (min-width: 768px) {
+            .bar-wrapper.dense:nth-child(odd) .bar-label { display: block; }
         }
 
         /* --- Calendrier --- */
@@ -228,20 +248,29 @@
             <!-- COLONNE DROITE -->
             <div class="lg:col-span-8 space-y-6">
 
-                <!-- 4. HISTOGRAMME MENSUEL (AMÉLIORATION 1) -->
+                <!-- 4. GRAPHIQUE ÉVOLUTION (MODE JOUR AJOUTÉ) -->
                 <section class="card p-5">
-                    <div class="flex justify-between items-center mb-2">
-                        <h2 class="text-lg font-semibold text-white">Évolution Mensuelle</h2>
-                        <!-- Toggle View -->
-                        <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
-                            <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md transition-colors">kWh</button>
-                            <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md transition-colors">Coût €</button>
+                    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
+                        <h2 class="text-lg font-semibold text-white" id="chart-title">Évolution</h2>
+                        
+                        <div class="flex gap-2">
+                            <!-- Selecteur Période -->
+                            <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
+                                <button onclick="setChartMode('month')" id="btn-mode-month" class="px-3 py-1.5 rounded-md transition-colors">Par Mois</button>
+                                <button onclick="setChartMode('day')" id="btn-mode-day" class="px-3 py-1.5 rounded-md transition-colors">Par Jour</button>
+                            </div>
+                            <!-- Selecteur Unité -->
+                            <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
+                                <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md transition-colors">kWh</button>
+                                <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md transition-colors">Coût €</button>
+                            </div>
                         </div>
                     </div>
+                    
                     <!-- Graphique CSS -->
                     <div id="monthly-chart" class="bar-container border-b border-gray-600">
                         <!-- Barres générées par JS -->
-                        <div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des relevés pour voir le graphique</div>
+                        <div class="text-gray-500 text-sm w-full text-center py-10">Chargement...</div>
                     </div>
                 </section>
 
@@ -349,8 +378,9 @@
             monthlyData: {}, // { "YYYY-MM": { kwh: 0, cost: 0 } }
             currentDate: new Date(),
             view: 'kwh', // 'kwh' ou 'cost'
+            chartMode: 'month', // 'month' ou 'day'
             maxVal: 1, // Pour heatmap
-            maxMonthVal: 1 // Pour graphique
+            maxMonthVal: 1 // Pour graphique mensuel
         };
 
         window.onload = () => {
@@ -557,7 +587,7 @@
                 return { ...curr, dM3, dKwh, cTotalTTC, days: diffDays.toFixed(1) };
             });
 
-            // Update Monthly Max for Chart
+            // Update Monthly Max for Chart (Annuel)
             Object.values(STATE.monthlyData).forEach(d => {
                 const v = STATE.view==='kwh'? d.kwh : d.cost;
                 if(v > STATE.maxMonthVal) STATE.maxMonthVal = v;
@@ -600,40 +630,96 @@
         function renderChart() {
             const c = document.getElementById('monthly-chart');
             c.innerHTML = '';
-            const keys = Object.keys(STATE.monthlyData).sort();
             
-            if(keys.length === 0) {
-                c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données pour voir le graphique</div>';
-                return;
+            // TITRE GRAPHIQUE
+            const titleEl = document.getElementById('chart-title');
+            
+            // LOGIQUE POUR VUE MENSUELLE (PAR JOUR)
+            if (STATE.chartMode === 'day') {
+                titleEl.textContent = "Évolution : " + STATE.currentDate.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+                
+                const y = STATE.currentDate.getFullYear();
+                const m = STATE.currentDate.getMonth();
+                const daysInMonth = new Date(y, m+1, 0).getDate();
+                
+                // Calcul du max local pour ce mois (pour l'échelle)
+                let localMax = 0;
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dt = new Date(y,m,d);
+                    const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
+                    if (STATE.dailyData[k]) {
+                        const val = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
+                        if (val > localMax) localMax = val;
+                    }
+                }
+
+                if (localMax === 0) {
+                     c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Pas de données pour ce mois</div>';
+                     return;
+                }
+
+                for(let d=1; d<=daysInMonth; d++) {
+                    const dt = new Date(y,m,d);
+                    const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
+                    
+                    let val = 0;
+                    if (STATE.dailyData[k]) {
+                        val = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
+                    }
+                    
+                    const percent = localMax > 0 ? (val / localMax * 100) : 0;
+                    
+                    const barWrap = document.createElement('div');
+                    barWrap.className = "bar-wrapper dense";
+                    barWrap.setAttribute("data-tooltip", `${d}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+
+                    let barColor = 'bg-indigo-600';
+                    if(STATE.view === 'cost') barColor = 'bg-emerald-600';
+                    
+                    // Ne pas afficher la valeur texte sur la barre si trop dense, tooltip suffit
+                    barWrap.innerHTML = `
+                        <div class="bar ${barColor}" style="height: ${Math.max(2, percent)}%"></div>
+                        <div class="bar-label">${d}</div>
+                    `;
+                    c.appendChild(barWrap);
+                }
+
+            } else { 
+                // LOGIQUE POUR VUE ANNUELLE (PAR MOIS - EXISTANTE)
+                titleEl.textContent = "Évolution Mensuelle (Année)";
+                const keys = Object.keys(STATE.monthlyData).sort();
+                
+                if(keys.length === 0) {
+                    c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données pour voir le graphique</div>';
+                    return;
+                }
+
+                keys.forEach(m => {
+                    const d = STATE.monthlyData[m];
+                    const val = STATE.view === 'kwh' ? d.kwh : d.cost;
+                    const percent = STATE.maxMonthVal > 0 ? (val / STATE.maxMonthVal * 100) : 0;
+                    
+                    const [y, mon] = m.split('-');
+                    const dateObj = new Date(parseInt(y), parseInt(mon)-1, 1);
+                    const label = dateObj.toLocaleDateString('fr-FR', {month:'short', year:'2-digit'});
+
+                    const barWrap = document.createElement('div');
+                    barWrap.className = "bar-wrapper";
+                    barWrap.setAttribute("data-tooltip", `${label}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+                    
+                    const displayVal = Math.round(val);
+                    const unit = STATE.view==='kwh'?'':'€';
+                    let barColor = 'bg-indigo-600';
+                    if(STATE.view === 'cost') barColor = 'bg-emerald-600';
+
+                    barWrap.innerHTML = `
+                        <div class="bar-value">${displayVal}${unit}</div>
+                        <div class="bar ${barColor}" style="height: ${Math.max(5, percent)}%"></div>
+                        <div class="bar-label">${label}</div>
+                    `;
+                    c.appendChild(barWrap);
+                });
             }
-
-            keys.forEach(m => {
-                const d = STATE.monthlyData[m];
-                const val = STATE.view === 'kwh' ? d.kwh : d.cost;
-                const percent = STATE.maxMonthVal > 0 ? (val / STATE.maxMonthVal * 100) : 0;
-                
-                // Format Date Label (ex: 2024-10 -> Oct 24)
-                const [y, mon] = m.split('-');
-                const dateObj = new Date(parseInt(y), parseInt(mon)-1, 1);
-                const label = dateObj.toLocaleDateString('fr-FR', {month:'short', year:'2-digit'});
-
-                const barWrap = document.createElement('div');
-                barWrap.className = "bar-wrapper";
-                
-                const displayVal = Math.round(val);
-                const unit = STATE.view==='kwh'?'':'€';
-                
-                // Couleur barre
-                let barColor = 'bg-indigo-600';
-                if(STATE.view === 'cost') barColor = 'bg-emerald-600';
-
-                barWrap.innerHTML = `
-                    <div class="bar-value">${displayVal}${unit}</div>
-                    <div class="bar ${barColor}" style="height: ${Math.max(5, percent)}%"></div>
-                    <div class="bar-label">${label}</div>
-                `;
-                c.appendChild(barWrap);
-            });
         }
 
         function renderCalendar() {
@@ -694,6 +780,13 @@
             if(v==='kwh'){ bk.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bc.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
             else { bc.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bk.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
             updateApp(); 
+        }
+        function setChartMode(m) {
+            STATE.chartMode = m;
+            const bm=document.getElementById('btn-mode-month'), bd=document.getElementById('btn-mode-day');
+            if(m==='month'){ bm.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bd.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
+            else { bd.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bm.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
+            updateApp();
         }
         function toggleParams() {
             const c=document.getElementById('params-content'), i=document.getElementById('chevron-icon');
