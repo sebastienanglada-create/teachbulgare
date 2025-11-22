@@ -202,7 +202,7 @@
                     </form>
                 </section>
 
-                <!-- 2. PARAMÈTRES -->
+                <!-- 2. PARAMÈTRES (Escamotables) -->
                 <section class="card print-hidden">
                     <button onclick="toggleParams()" class="w-full p-5 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 rounded-xl transition">
                         <span class="text-lg font-semibold text-white flex items-center">
@@ -288,26 +288,31 @@
                     </div>
                 </section>
 
-                <!-- 6. HISTORIQUE -->
+                <!-- 6. HISTORIQUE (MODIFIÉ : Repliable) -->
                 <section class="card overflow-hidden">
-                    <div class="p-4 border-b border-gray-700">
+                    <button onclick="toggleHistory()" class="w-full p-4 border-b border-gray-700 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 transition">
                         <h2 class="text-lg font-semibold text-white">Historique Détaillé</h2>
+                        <!-- Flèche initiale : rotated 180 (Up) car ouvert par défaut -->
+                        <svg id="history-chevron" style="transform: rotate(180deg)" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    
+                    <div id="history-content"> <!-- Pas de class hidden ici car ouvert par défaut -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-gray-400">
+                                <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs">
+                                    <tr>
+                                        <th class="px-4 py-3">Date</th>
+                                        <th class="px-4 py-3 text-right">Index</th>
+                                        <th class="px-4 py-3 text-right">Conso</th>
+                                        <th class="px-4 py-3 text-right">Coût TTC</th>
+                                        <th class="px-4 py-3 text-center print-hidden">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="history-body" class="divide-y divide-gray-700"></tbody>
+                            </table>
+                        </div>
+                        <div id="empty-msg" class="p-8 text-center text-gray-500 hidden">Aucune donnée.</div>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm text-gray-400">
-                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs">
-                                <tr>
-                                    <th class="px-4 py-3">Date</th>
-                                    <th class="px-4 py-3 text-right">Index</th>
-                                    <th class="px-4 py-3 text-right">Conso</th>
-                                    <th class="px-4 py-3 text-right">Coût TTC</th>
-                                    <th class="px-4 py-3 text-center print-hidden">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="history-body" class="divide-y divide-gray-700"></tbody>
-                        </table>
-                    </div>
-                    <div id="empty-msg" class="p-8 text-center text-gray-500 hidden">Aucune donnée.</div>
                 </section>
 
                 <!-- 7. IMPORT/EXPORT -->
@@ -600,6 +605,11 @@
         }
         function toggleParams() {
             const c=document.getElementById('params-content'), i=document.getElementById('chevron-icon');
+            if(c.classList.contains('hidden')) {c.classList.remove('hidden'); i.style.transform='rotate(180deg)';}
+            else {c.classList.add('hidden'); i.style.transform='rotate(0deg)';}
+        }
+        function toggleHistory() {
+            const c=document.getElementById('history-content'), i=document.getElementById('history-chevron');
             if(c.classList.contains('hidden')) {c.classList.remove('hidden'); i.style.transform='rotate(180deg)';}
             else {c.classList.add('hidden'); i.style.transform='rotate(0deg)';}
         }
