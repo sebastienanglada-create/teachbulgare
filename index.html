@@ -29,8 +29,8 @@
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            height: 180px; /* Un peu plus haut pour les détails journaliers */
-            gap: 2px; /* Espace réduit pour 31 jours */
+            height: 180px;
+            gap: 2px;
             padding-top: 20px;
         }
         .bar-wrapper {
@@ -52,7 +52,6 @@
         .bar:hover {
             filter: brightness(1.2);
         }
-        /* Tooltip personnalisé au survol des barres */
         .bar-wrapper:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -81,9 +80,8 @@
             text-overflow: ellipsis;
             width: 100%;
         }
-        /* Masquer certains labels si trop serré (mode jour) */
         .bar-wrapper.dense:nth-child(odd) .bar-label {
-            display: none; /* Affiche 1 jour sur 2 sur mobile/dense */
+            display: none; 
         }
         @media (min-width: 768px) {
             .bar-wrapper.dense:nth-child(odd) .bar-label { display: block; }
@@ -96,14 +94,14 @@
             gap: 4px;
         }
         .day-cell {
-            aspect-ratio: 1; /* Carré */
+            aspect-ratio: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 0.375rem; /* rounded-md */
-            background-color: #374151; /* gray-700 (vide) */
-            font-size: 0.75rem; /* Plus petit sur mobile */
+            border-radius: 0.375rem;
+            background-color: #374151;
+            font-size: 0.75rem;
             position: relative;
             transition: all 0.2s;
         }
@@ -127,7 +125,6 @@
         }
         .intensity-fill { height: 100%; background-color: #fff; }
 
-        /* --- Utilitaires d'Impression --- */
         @media print {
             .print-hidden { display: none !important; }
             body { background-color: white !important; color: black !important; }
@@ -142,7 +139,6 @@
             .bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
-        /* --- Bouton Flottant Mobile (FAB) --- */
         .fab {
             position: fixed;
             bottom: 1.5rem;
@@ -150,7 +146,7 @@
             width: 3.5rem;
             height: 3.5rem;
             border-radius: 9999px;
-            background-color: #4f46e5; /* indigo-600 */
+            background-color: #4f46e5;
             color: white;
             display: flex;
             align-items: center;
@@ -160,7 +156,6 @@
             transition: transform 0.2s;
         }
         .fab:active { transform: scale(0.95); }
-        /* Masqué sur les grands écrans où le formulaire est déjà visible */
         @media (min-width: 1024px) {
             .fab { display: none; }
         }
@@ -188,7 +183,7 @@
             <!-- COLONNE GAUCHE (INPUTS & STATS) -->
             <div class="lg:col-span-4 space-y-6">
                 
-                <!-- 1. AJOUTER UN RELEVÉ (Desktop: Visible, Mobile: via Modal) -->
+                <!-- 1. AJOUTER UN RELEVÉ -->
                 <section class="card p-5 print-hidden hidden lg:block">
                     <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -207,7 +202,7 @@
                     </form>
                 </section>
 
-                <!-- 2. PARAMÈTRES (Escamotables) -->
+                <!-- 2. PARAMÈTRES -->
                 <section class="card print-hidden">
                     <button onclick="toggleParams()" class="w-full p-5 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 rounded-xl transition">
                         <span class="text-lg font-semibold text-white flex items-center">
@@ -227,7 +222,7 @@
                     </div>
                 </section>
 
-                <!-- 3. SYNTHÈSE GLOBALE -->
+                <!-- 3. SYNTHÈSE -->
                 <section class="card p-5">
                     <h2 class="text-lg font-semibold text-white mb-4">Synthèse Totale</h2>
                     <div class="grid grid-cols-2 gap-4">
@@ -248,47 +243,37 @@
             <!-- COLONNE DROITE -->
             <div class="lg:col-span-8 space-y-6">
 
-                <!-- 4. GRAPHIQUE ÉVOLUTION (MODE JOUR AJOUTÉ) -->
+                <!-- 4. GRAPHIQUE -->
                 <section class="card p-5">
                     <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
                         <h2 class="text-lg font-semibold text-white" id="chart-title">Évolution</h2>
-                        
                         <div class="flex gap-2">
-                            <!-- Selecteur Période -->
                             <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
                                 <button onclick="setChartMode('month')" id="btn-mode-month" class="px-3 py-1.5 rounded-md transition-colors">Par Mois</button>
                                 <button onclick="setChartMode('day')" id="btn-mode-day" class="px-3 py-1.5 rounded-md transition-colors">Par Jour</button>
                             </div>
-                            <!-- Selecteur Unité -->
                             <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
                                 <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md transition-colors">kWh</button>
                                 <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md transition-colors">Coût €</button>
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Graphique CSS -->
                     <div id="monthly-chart" class="bar-container border-b border-gray-600">
-                        <!-- Barres générées par JS -->
                         <div class="text-gray-500 text-sm w-full text-center py-10">Chargement...</div>
                     </div>
                 </section>
 
-                <!-- 5. CALENDRIER HEATMAP (AMÉLIORATION 5 - OPTIMISÉ MOBILE) -->
+                <!-- 5. CALENDRIER -->
                 <section class="card p-5">
                     <div class="flex justify-between items-center mb-4">
                         <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
                         <h2 class="text-lg font-bold text-white capitalize" id="calendar-month-label">--</h2>
                         <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                     </div>
-
-                    <!-- Jours Semaine -->
                     <div class="calendar-grid mb-2 text-center text-[0.65rem] md:text-xs text-gray-500 font-medium uppercase tracking-wide">
                         <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                     </div>
-                    <!-- Grille -->
                     <div id="calendar-grid" class="calendar-grid gap-1 md:gap-2"></div>
-
                     <div class="mt-4 flex justify-between items-end">
                         <div class="flex items-center text-xs text-gray-400 gap-2">
                             <span>Faible</span>
@@ -303,7 +288,7 @@
                     </div>
                 </section>
 
-                <!-- 6. TABLEAU HISTORIQUE -->
+                <!-- 6. HISTORIQUE -->
                 <section class="card overflow-hidden">
                     <div class="p-4 border-b border-gray-700">
                         <h2 class="text-lg font-semibold text-white">Historique Détaillé</h2>
@@ -325,31 +310,29 @@
                     <div id="empty-msg" class="p-8 text-center text-gray-500 hidden">Aucune donnée.</div>
                 </section>
 
-                <!-- 7. GESTION DATA (AMÉLIORATION 2 - IMPORT CSV) -->
+                <!-- 7. IMPORT/EXPORT -->
                 <section class="card p-4 mt-6 print-hidden">
                     <h2 class="text-lg font-semibold text-white mb-4">Données & Sauvegarde</h2>
                     <div class="flex flex-wrap gap-3 justify-between items-center">
                         <div class="flex flex-wrap gap-3">
                              <button onclick="exportData()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">Exporter JSON</button>
-                            
                             <button onclick="triggerImport()" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition">Importer (JSON/CSV)</button>
                             <input type="file" id="import-file" class="hidden" accept=".json,.csv,.txt" onchange="handleImport(this)">
                         </div>
                         <button onclick="resetAll()" class="text-xs text-red-400 hover:text-red-300 underline transition">Réinitialiser tout</button>
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">Accepte JSON (Backup) et CSV (Format: Date;Index - compatible Excel/GRDF).</p>
+                    <p class="text-xs text-gray-500 mt-2">Accepte JSON (Backup) et CSV GRDF (Date;Type;Index;Coeff).</p>
                 </section>
-
             </div>
         </div>
     </div>
 
-    <!-- BOUTON FLOTTANT MOBILE (AMÉLIORATION 5) -->
+    <!-- BOUTON FLOTTANT MOBILE -->
     <button onclick="openModal()" class="fab print-hidden">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
     </button>
 
-    <!-- MODALE AJOUT MOBILE -->
+    <!-- MODALE MOBILE -->
     <div id="mobile-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex items-end sm:items-center justify-center print-hidden">
         <div class="bg-gray-800 w-full max-w-md p-6 rounded-t-2xl sm:rounded-xl shadow-2xl transform transition-all">
             <div class="flex justify-between items-center mb-4">
@@ -357,14 +340,8 @@
                 <button onclick="closeModal()" class="text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <form id="add-form-mobile" onsubmit="handleAdd(event, 'mobile')" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">Date & Heure</label>
-                    <input type="datetime-local" id="input-date-mobile" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-400 mb-1">Index Compteur (m³)</label>
-                    <input type="number" id="input-index-mobile" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3">
-                </div>
+                <div><label class="block text-xs font-medium text-gray-400 mb-1">Date</label><input type="datetime-local" id="input-date-mobile" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3"></div>
+                <div><label class="block text-xs font-medium text-gray-400 mb-1">Index (m³)</label><input type="number" id="input-index-mobile" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3"></div>
                 <button type="submit" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-bold rounded-lg text-lg px-5 py-3 text-center">Enregistrer</button>
             </form>
         </div>
@@ -374,20 +351,16 @@
     <script>
         const STATE = {
             history: [],
-            dailyData: {}, // { "YYYY-MM-DD": { kwh: 0, cost: 0 } }
-            monthlyData: {}, // { "YYYY-MM": { kwh: 0, cost: 0 } }
+            dailyData: {},
+            monthlyData: {},
             currentDate: new Date(),
-            view: 'kwh', // 'kwh' ou 'cost'
-            chartMode: 'month', // 'month' ou 'day'
-            maxVal: 1, // Pour heatmap
-            maxMonthVal: 1 // Pour graphique mensuel
+            view: 'kwh',
+            chartMode: 'month',
+            maxVal: 1,
+            maxMonthVal: 1
         };
 
-        window.onload = () => {
-            initInputs();
-            loadData();
-            updateApp();
-        };
+        window.onload = () => { initInputs(); loadData(); updateApp(); };
 
         function initInputs() {
             const now = new Date();
@@ -396,453 +369,239 @@
             document.getElementById('input-date-desktop').value = iso;
             document.getElementById('input-date-mobile').value = iso;
         }
-
-        function loadData() {
-            try {
-                const saved = localStorage.getItem('gaz_data');
-                if (saved) STATE.history = JSON.parse(saved);
-            } catch (e) { STATE.history = []; }
-        }
+        function loadData() { try { const s=localStorage.getItem('gaz_data'); if(s) STATE.history=JSON.parse(s); } catch(e){ STATE.history=[]; } }
         function saveData() { localStorage.setItem('gaz_data', JSON.stringify(STATE.history)); }
-        
-        function resetAll() {
-            if(confirm("Tout effacer ?")) {
-                STATE.history = [];
-                saveData();
-                updateApp();
-            }
+        function resetAll() { if(confirm("Tout effacer ?")) { STATE.history=[]; saveData(); updateApp(); } }
+        function openModal() { initInputs(); document.getElementById('mobile-modal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('mobile-modal').classList.add('hidden'); }
+        function handleAdd(e, m) {
+            e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
+            const d = document.getElementById('input-date'+s).value;
+            const i = parseFloat(document.getElementById('input-index'+s).value);
+            if(!d || isNaN(i)) return alert("Invalide");
+            if(STATE.history.some(h=>h.date===d)) return alert("Date existe déjà");
+            STATE.history.push({id:Date.now(), date:d, index:i});
+            saveData(); document.getElementById('input-index'+s).value=''; if(m==='mobile') closeModal(); updateApp();
         }
+        function deleteEntry(id) { if(confirm("Supprimer ?")) { STATE.history=STATE.history.filter(h=>h.id!==id); saveData(); updateApp(); } }
 
-        // --- MODALE MOBILE ---
-        function openModal() {
-            initInputs();
-            document.getElementById('mobile-modal').classList.remove('hidden');
-        }
-        function closeModal() {
-            document.getElementById('mobile-modal').classList.add('hidden');
-        }
-
-        // --- AJOUT ---
-        function handleAdd(e, mode) {
-            e.preventDefault();
-            const suffix = mode === 'mobile' ? '-mobile' : '-desktop';
-            const dateVal = document.getElementById('input-date' + suffix).value;
-            const indexVal = parseFloat(document.getElementById('input-index' + suffix).value);
-
-            if (!dateVal || isNaN(indexVal)) return alert("Données invalides");
-            if (STATE.history.some(h => h.date === dateVal)) return alert("Date existante");
-
-            STATE.history.push({ id: Date.now(), date: dateVal, index: indexVal });
-            saveData();
-            
-            document.getElementById('input-index' + suffix).value = '';
-            if(mode === 'mobile') closeModal();
-            updateApp();
-        }
-
-        function deleteEntry(id) {
-            if(confirm("Supprimer ?")) {
-                STATE.history = STATE.history.filter(h => h.id !== id);
-                saveData();
-                updateApp();
-            }
-        }
-
-        // --- IMPORT CSV & JSON (CORRIGÉ ET ROBUSTE) ---
+        // --- IMPORT ADAPTÉ POUR GRDF ET CSV STANDARD ---
         function triggerImport() { document.getElementById('import-file').click(); }
         function exportData() {
-            const blob = new Blob([JSON.stringify(STATE.history, null, 2)], { type: "application/json" });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `gaz_backup_${new Date().toISOString().slice(0,10)}.json`;
+            const b = new Blob([JSON.stringify(STATE.history, null, 2)], {type:"application/json"});
+            const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`gaz_backup_${new Date().toISOString().slice(0,10)}.json`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
-
         function handleImport(input) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if(!file) return;
             const reader = new FileReader();
-            
             reader.onload = (e) => {
                 const content = e.target.result;
                 let count = 0;
-                let errors = [];
-                
-                // Helper défini avant usage pour éviter les problèmes de portée
                 const addItemIfNew = (item) => {
-                    // Vérification basique de l'intégrité de l'item
-                    if (!item.date || item.index === undefined || item.index === null) return;
-                    
-                    if (!STATE.history.some(h => h.date === item.date)) {
-                        // On conserve l'ID s'il existe et est valide, sinon on en génère un
-                        const newId = (item.id && typeof item.id === 'number') ? item.id : (Date.now() + Math.random());
-                        STATE.history.push({ ...item, id: newId });
-                        count++;
+                    if(!item.date || isNaN(item.index)) return;
+                    if(!STATE.history.some(h=>h.date===item.date)) {
+                        STATE.history.push({id:Date.now()+Math.random(), ...item}); count++;
                     }
                 };
-
                 try {
-                    // 1. Tentative JSON
-                    if (file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
-                        try {
-                            const json = JSON.parse(content);
-                            if (Array.isArray(json)) {
-                                json.forEach(addItemIfNew);
-                            } else {
-                                throw new Error("Format JSON invalide (doit être une liste)");
-                            }
-                        } catch (jsonErr) {
-                            // Si ça ressemble à du JSON mais échoue, on arrête là si l'extension est .json
-                            if (file.name.toLowerCase().endsWith('.json')) throw jsonErr;
-                            // Sinon, on continue vers CSV (cas d'un fichier mal nommé)
-                        }
-                    } 
-                    
-                    // 2. Tentative CSV (si JSON n'a rien donné ou si c'est un fichier .csv/.txt)
-                    if (count === 0) {
+                    // 1. JSON
+                    if(file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
+                        JSON.parse(content).forEach(addItemIfNew);
+                    } else {
+                        // 2. CSV (Standard ou GRDF)
                         const lines = content.split(/\r?\n/);
-                        
-                        lines.forEach((line, lineIdx) => {
-                            const trimmedLine = line.trim();
-                            if (!trimmedLine) return;
-
-                            // Nettoyage des guillemets éventuels (ex: "2023-01-01";"123")
-                            const cleanLine = trimmedLine.replace(/"/g, '');
+                        lines.forEach(line => {
+                            const clean = line.trim().replace(/"/g,'');
+                            if(!clean) return;
                             
-                            // Détection du séparateur (; ou ,)
-                            let parts = cleanLine.split(';');
-                            if (parts.length < 2) parts = cleanLine.split(',');
+                            let parts = clean.split(';');
+                            if(parts.length < 2) parts = clean.split(',');
+                            if(parts.length < 2) return;
+
+                            // Détection GRDF : Si col 2 est texte "Index transmis...", alors Index est en col 3
+                            // Format GRDF: Date;Type;Index;Coeff
+                            let indexRaw;
+                            if (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) {
+                                // C'est probablement GRDF, index en colonne 3 (indice 2)
+                                indexRaw = parts[2];
+                            } else {
+                                // C'est probablement Standard, index en colonne 2 (indice 1)
+                                indexRaw = parts[1];
+                            }
                             
-                            if (parts.length >= 2) {
-                                const dateRaw = parts[0].trim();
-                                // Garde chiffres, point, tiret pour l'index (nettoyage unités)
-                                const indexRaw = parts[1].trim().replace(',', '.').replace(/[^\d.-]/g, ''); 
-                                
-                                // Ignorer les lignes d'en-tête (si l'index n'est pas un nombre valide)
-                                if (isNaN(parseFloat(indexRaw))) return;
+                            // Nettoyage valeur index
+                            const indexVal = parseFloat(indexRaw.replace(',','.').replace(/[^\d.-]/g,''));
+                            if(isNaN(indexVal)) return; // Skip header
 
-                                // Parsing Date
-                                let dateObj = null;
-                                
-                                // Format FR : JJ/MM/AAAA
-                                if (dateRaw.includes('/')) {
-                                    const dParts = dateRaw.split('/');
-                                    if (dParts.length === 3) {
-                                        // Ajout 12:00 pour éviter les soucis de fuseau horaire minuit
-                                        dateObj = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T12:00:00`);
-                                    }
-                                } 
-                                // Format ISO : YYYY-MM-DD
-                                else if (dateRaw.includes('-')) {
-                                    dateObj = new Date(dateRaw.includes('T') ? dateRaw : `${dateRaw}T12:00:00`);
-                                }
+                            // Parsing Date
+                            const dateRaw = parts[0].trim();
+                            let dateObj = null;
+                            if(dateRaw.includes('/')) { // FR JJ/MM/AAAA
+                                const p = dateRaw.split('/');
+                                if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`);
+                            } else if(dateRaw.includes('-')) { // ISO
+                                dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`);
+                            }
 
-                                if (dateObj && !isNaN(dateObj.getTime()) && !isNaN(parseFloat(indexRaw))) {
-                                    // Normalisation ISO locale pour input type="datetime-local"
-                                    // On retire le décalage horaire pour avoir l'heure locale dans la string ISO
-                                    const tzOffset = dateObj.getTimezoneOffset() * 60000;
-                                    const localIso = new Date(dateObj.getTime() - tzOffset).toISOString().slice(0, 16);
-                                    
-                                    addItemIfNew({ date: localIso, index: parseFloat(indexRaw) });
-                                }
+                            if(dateObj && !isNaN(dateObj.getTime())) {
+                                const offset = dateObj.getTimezoneOffset()*60000;
+                                const iso = new Date(dateObj.getTime()-offset).toISOString().slice(0,16);
+                                addItemIfNew({date:iso, index:indexVal});
                             }
                         });
                     }
-
-                    if (count > 0) {
-                        saveData();
-                        updateApp();
-                        alert(`${count} relevés importés avec succès !`);
-                    } else {
-                        alert("Aucune donnée valide trouvée (vérifiez le format ou si les dates existent déjà).");
-                    }
-
-                } catch (err) {
-                    console.error(err);
-                    alert("Erreur lors de l'importation : " + err.message);
-                }
-                
-                // Reset input pour permettre de réimporter le même fichier
-                input.value = '';
+                    if(count>0) { saveData(); updateApp(); alert(`${count} relevés importés !`); }
+                    else alert("Aucune donnée importée.");
+                } catch(err) { alert("Erreur import: "+err.message); }
+                input.value='';
             };
-            
-            reader.onerror = () => alert("Erreur de lecture du fichier.");
             reader.readAsText(file);
         }
 
-        // --- UPDATE APP ---
+        // --- UPDATE LOGIC ---
         function updateApp() {
-            // Params
-            const getVal = (id, def) => { const el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
-            const coef = getVal('p-coef', 11.361);
-            const priceKwh = getVal('p-prix-kwh', 0.0777);
-            const priceAbo = getVal('p-abo', 16.72);
-            const tvaC = getVal('p-tva-conso', 20)/100;
-            const tvaA = getVal('p-tva-abo', 5.5)/100;
+            const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
+            const coef=getVal('p-coef',11.361), pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72), tvaC=getVal('p-tva-conso',20)/100, tvaA=getVal('p-tva-abo',5.5)/100;
 
-            STATE.history.sort((a,b) => new Date(a.date) - new Date(b.date));
-            
-            // Reset Caches
-            STATE.dailyData = {};
-            STATE.monthlyData = {};
-            STATE.maxVal = 0;
-            STATE.maxMonthVal = 0;
-            
-            let totKwh=0, totCost=0, totM3=0, totHT=0;
+            STATE.history.sort((a,b)=>new Date(a.date)-new Date(b.date));
+            STATE.dailyData={}; STATE.monthlyData={}; STATE.maxVal=0; STATE.maxMonthVal=0;
+            let tKwh=0, tCost=0, tM3=0, tHT=0;
 
             const processed = STATE.history.map((curr, i) => {
-                if(i===0) return { ...curr, isStart: true };
+                if(i===0) return {...curr, isStart:true};
                 const prev = STATE.history[i-1];
-                
-                const dS = new Date(prev.date);
-                const dE = new Date(curr.date);
-                const diffDays = (dE-dS)/(1000*3600*24);
-                if(diffDays <= 0) return { ...curr, error: true };
+                const diffDays = (new Date(curr.date)-new Date(prev.date))/(1000*3600*24);
+                if(diffDays<=0) return {...curr, error:true};
 
                 const dM3 = curr.index - prev.index;
                 const dKwh = dM3 * coef;
-                
-                // Cost
-                const cConsoHT = dKwh * priceKwh;
-                const cAboHT = (priceAbo*12/365)*diffDays;
-                const cTotalTTC = (cConsoHT*(1+tvaC)) + (cAboHT*(1+tvaA));
+                const cHT = dKwh * pKwh;
+                const aHT = (pAbo*12/365)*diffDays;
+                const cTTC = (cHT*(1+tvaC)) + (aHT*(1+tvaA));
 
-                totM3+=dM3; totKwh+=dKwh; totCost+=cTotalTTC; totHT+=(cConsoHT+cAboHT);
+                tM3+=dM3; tKwh+=dKwh; tCost+=cTTC; tHT+=(cHT+aHT);
 
-                // Distribution
-                const kwhDay = dKwh/diffDays;
-                const costDay = cTotalTTC/diffDays;
+                const kD = dKwh/diffDays, cD = cTTC/diffDays;
+                let loop = new Date(prev.date); loop.setHours(12,0,0,0);
+                const stop = new Date(curr.date); stop.setHours(12,0,0,0);
                 
-                let loop = new Date(dS); loop.setHours(12,0,0,0);
-                const stop = new Date(dE); stop.setHours(12,0,0,0);
-                
-                while(loop < stop) {
+                while(loop<stop) {
                     const k = loop.toISOString().slice(0,10);
-                    const m = k.slice(0,7); // YYYY-MM
-
-                    if(!STATE.dailyData[k]) STATE.dailyData[k] = {kwh:0, cost:0};
-                    STATE.dailyData[k].kwh += kwhDay;
-                    STATE.dailyData[k].cost += costDay;
-
-                    if(!STATE.monthlyData[m]) STATE.monthlyData[m] = {kwh:0, cost:0};
-                    STATE.monthlyData[m].kwh += kwhDay;
-                    STATE.monthlyData[m].cost += costDay;
-
-                    // Max daily
-                    const vD = STATE.view==='kwh'? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
-                    if(vD > STATE.maxVal) STATE.maxVal = vD;
-
+                    const m = k.slice(0,7);
+                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0};
+                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD;
+                    if(!STATE.monthlyData[m]) STATE.monthlyData[m]={kwh:0,cost:0};
+                    STATE.monthlyData[m].kwh+=kD; STATE.monthlyData[m].cost+=cD;
+                    
+                    const v = STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
+                    if(v>STATE.maxVal) STATE.maxVal=v;
                     loop.setDate(loop.getDate()+1);
                 }
-
-                return { ...curr, dM3, dKwh, cTotalTTC, days: diffDays.toFixed(1) };
+                return {...curr, dM3, dKwh, cTTC, days:diffDays.toFixed(1)};
             });
 
-            // Update Monthly Max for Chart
-            Object.values(STATE.monthlyData).forEach(d => {
-                const v = STATE.view==='kwh'? d.kwh : d.cost;
-                if(v > STATE.maxMonthVal) STATE.maxMonthVal = v;
+            Object.values(STATE.monthlyData).forEach(d=>{
+                const v=STATE.view==='kwh'?d.kwh:d.cost;
+                if(v>STATE.maxMonthVal) STATE.maxMonthVal=v;
             });
 
-            // Render UI
-            document.getElementById('total-kwh').textContent = Math.round(totKwh).toLocaleString() + ' kWh';
-            document.getElementById('total-m3').textContent = totM3.toFixed(1) + ' m³';
-            document.getElementById('total-cost').textContent = totCost.toFixed(2) + ' €';
-            document.getElementById('total-cost-ht').textContent = 'HT: ' + totHT.toFixed(2) + ' €';
+            document.getElementById('total-kwh').textContent=Math.round(tKwh).toLocaleString()+' kWh';
+            document.getElementById('total-m3').textContent=tM3.toFixed(1)+' m³';
+            document.getElementById('total-cost').textContent=tCost.toFixed(2)+' €';
+            document.getElementById('total-cost-ht').textContent='HT: '+tHT.toFixed(2)+' €';
 
-            renderHistory(processed);
-            renderCalendar();
-            renderChart();
+            renderHistory(processed); renderCalendar(); renderChart();
         }
 
-        // --- RENDERERS ---
         function renderHistory(data) {
-            const tb = document.getElementById('history-body');
-            const emp = document.getElementById('empty-msg');
-            tb.innerHTML='';
-            if(data.length===0) { emp.classList.remove('hidden'); return; }
-            emp.classList.add('hidden');
-
-            [...data].reverse().forEach(r => {
-                const tr = document.createElement('tr');
-                tr.className="hover:bg-gray-700/50 transition";
-                const d = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'2-digit'});
-                let det = '<span class="text-gray-600 italic text-xs">Départ</span>';
-                let c = '-';
-                if(!r.isStart) {
-                    det = `<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
-                    c = r.cTotalTTC.toFixed(2) + ' €';
-                }
-                tr.innerHTML = `<td class="px-4 py-3 text-white">${d}</td><td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td><td class="px-4 py-3 text-right">${det}</td><td class="px-4 py-3 text-right text-emerald-400 font-bold">${c}</td><td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
-                tb.appendChild(tr);
+            const b=document.getElementById('history-body'), e=document.getElementById('empty-msg');
+            b.innerHTML=''; if(data.length===0) {e.classList.remove('hidden'); return;} e.classList.add('hidden');
+            [...data].reverse().forEach(r=>{
+                const tr=document.createElement('tr'); tr.className="hover:bg-gray-700/50 transition";
+                const d=new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
+                const det = r.isStart?'<span class="text-gray-600 text-xs italic">Départ</span>':`<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
+                const c = r.isStart?'-':r.cTTC.toFixed(2)+' €';
+                tr.innerHTML=`<td class="px-4 py-3 text-white">${d}</td><td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td><td class="px-4 py-3 text-right">${det}</td><td class="px-4 py-3 text-right text-emerald-400 font-bold">${c}</td><td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
+                b.appendChild(tr);
             });
         }
 
         function renderChart() {
-            const c = document.getElementById('monthly-chart');
-            c.innerHTML = '';
-            
-            // TITRE GRAPHIQUE
-            const titleEl = document.getElementById('chart-title');
-            
-            // LOGIQUE POUR VUE MENSUELLE (PAR JOUR)
-            if (STATE.chartMode === 'day') {
-                titleEl.textContent = "Évolution : " + STATE.currentDate.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-                
-                const y = STATE.currentDate.getFullYear();
-                const m = STATE.currentDate.getMonth();
-                const daysInMonth = new Date(y, m+1, 0).getDate();
-                
-                // Calcul du max local pour ce mois (pour l'échelle)
-                let localMax = 0;
-                for(let d=1; d<=daysInMonth; d++) {
-                    const dt = new Date(y,m,d);
-                    const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
-                    if (STATE.dailyData[k]) {
-                        const val = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
-                        if (val > localMax) localMax = val;
-                    }
+            const c=document.getElementById('monthly-chart'), t=document.getElementById('chart-title'); c.innerHTML='';
+            if(STATE.chartMode==='day') {
+                t.textContent="Évolution : "+STATE.currentDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+                const y=STATE.currentDate.getFullYear(), m=STATE.currentDate.getMonth();
+                const days=new Date(y,m+1,0).getDate();
+                let lMax=0;
+                for(let d=1;d<=days;d++) {
+                    const k=new Date(y,m,d,12).toISOString().slice(0,10);
+                    if(STATE.dailyData[k]) { const v=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost; if(v>lMax) lMax=v; }
                 }
-
-                if (localMax === 0) {
-                     c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Pas de données pour ce mois</div>';
-                     return;
+                if(lMax===0) { c.innerHTML='<div class="text-gray-500 text-sm w-full text-center py-10">Pas de données</div>'; return; }
+                for(let d=1;d<=days;d++) {
+                    const k=new Date(y,m,d,12).toISOString().slice(0,10);
+                    let val=0; if(STATE.dailyData[k]) val=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
+                    const p=(val/lMax)*100;
+                    const div=document.createElement('div'); div.className="bar-wrapper dense"; div.setAttribute("data-tooltip",`${d}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+                    const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
+                    div.innerHTML=`<div class="bar ${col}" style="height:${Math.max(2,p)}%"></div><div class="bar-label">${d}</div>`;
+                    c.appendChild(div);
                 }
-
-                for(let d=1; d<=daysInMonth; d++) {
-                    const dt = new Date(y,m,d);
-                    const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
-                    
-                    let val = 0;
-                    if (STATE.dailyData[k]) {
-                        val = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
-                    }
-                    
-                    const percent = localMax > 0 ? (val / localMax * 100) : 0;
-                    
-                    const barWrap = document.createElement('div');
-                    barWrap.className = "bar-wrapper dense";
-                    barWrap.setAttribute("data-tooltip", `${d}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
-
-                    let barColor = 'bg-indigo-600';
-                    if(STATE.view === 'cost') barColor = 'bg-emerald-600';
-                    
-                    // Ne pas afficher la valeur texte sur la barre si trop dense, tooltip suffit
-                    barWrap.innerHTML = `
-                        <div class="bar ${barColor}" style="height: ${Math.max(2, percent)}%"></div>
-                        <div class="bar-label">${d}</div>
-                    `;
-                    c.appendChild(barWrap);
-                }
-
-            } else { 
-                // LOGIQUE POUR VUE ANNUELLE (PAR MOIS - EXISTANTE)
-                titleEl.textContent = "Évolution Mensuelle (Année)";
-                const keys = Object.keys(STATE.monthlyData).sort();
-                
-                if(keys.length === 0) {
-                    c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données pour voir le graphique</div>';
-                    return;
-                }
-
-                keys.forEach(m => {
-                    const d = STATE.monthlyData[m];
-                    const val = STATE.view === 'kwh' ? d.kwh : d.cost;
-                    const percent = STATE.maxMonthVal > 0 ? (val / STATE.maxMonthVal * 100) : 0;
-                    
-                    const [y, mon] = m.split('-');
-                    const dateObj = new Date(parseInt(y), parseInt(mon)-1, 1);
-                    const label = dateObj.toLocaleDateString('fr-FR', {month:'short', year:'2-digit'});
-
-                    const barWrap = document.createElement('div');
-                    barWrap.className = "bar-wrapper";
-                    barWrap.setAttribute("data-tooltip", `${label}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
-                    
-                    const displayVal = Math.round(val);
-                    const unit = STATE.view==='kwh'?'':'€';
-                    let barColor = 'bg-indigo-600';
-                    if(STATE.view === 'cost') barColor = 'bg-emerald-600';
-
-                    barWrap.innerHTML = `
-                        <div class="bar-value">${displayVal}${unit}</div>
-                        <div class="bar ${barColor}" style="height: ${Math.max(5, percent)}%"></div>
-                        <div class="bar-label">${label}</div>
-                    `;
-                    c.appendChild(barWrap);
+            } else {
+                t.textContent="Évolution Mensuelle";
+                const keys=Object.keys(STATE.monthlyData).sort();
+                if(keys.length===0) { c.innerHTML='<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données</div>'; return; }
+                keys.forEach(k=>{
+                    const d=STATE.monthlyData[k];
+                    const val=STATE.view==='kwh'?d.kwh:d.cost;
+                    const p=STATE.maxMonthVal>0?(val/STATE.maxMonthVal*100):0;
+                    const [y,m]=k.split('-'); const lbl=new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
+                    const div=document.createElement('div'); div.className="bar-wrapper"; div.setAttribute("data-tooltip",`${lbl}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+                    const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
+                    div.innerHTML=`<div class="bar-value">${Math.round(val)}</div><div class="bar ${col}" style="height:${Math.max(5,p)}%"></div><div class="bar-label">${lbl}</div>`;
+                    c.appendChild(div);
                 });
             }
         }
 
         function renderCalendar() {
-            const g = document.getElementById('calendar-grid');
-            const l = document.getElementById('calendar-month-label');
-            g.innerHTML='';
-            const y = STATE.currentDate.getFullYear(), m = STATE.currentDate.getMonth();
-            
-            l.textContent = new Date(y, m, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
-            
-            const fD = new Date(y, m, 1).getDay() || 7;
-            const dim = new Date(y, m+1, 0).getDate();
-
-            for(let i=1; i<fD; i++) g.appendChild(document.createElement('div'));
-
-            for(let d=1; d<=dim; d++) {
-                const dt = new Date(y,m,d);
-                const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
-                const cell = document.createElement('div');
-                cell.className = "day-cell border border-gray-700/50";
-                
+            const g=document.getElementById('calendar-grid'), l=document.getElementById('calendar-month-label'); g.innerHTML='';
+            const y=STATE.currentDate.getFullYear(), m=STATE.currentDate.getMonth();
+            l.textContent=new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+            const fd=new Date(y,m,1).getDay()||7, days=new Date(y,m+1,0).getDate();
+            for(let i=1;i<fd;i++) g.appendChild(document.createElement('div'));
+            for(let d=1;d<=days;d++) {
+                const k=new Date(y,m,d,12).toISOString().slice(0,10);
+                const c=document.createElement('div'); c.className="day-cell border border-gray-700/50";
                 if(STATE.dailyData[k]) {
-                    const val = STATE.view==='kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
-                    const ratio = STATE.maxVal>0 ? val/STATE.maxVal : 0;
-                    
-                    let bg = '#374151';
-                    if(val>0) {
-                        cell.classList.add('has-data');
-                        if(ratio<0.25) bg='#064e3b';
-                        else if(ratio<0.5) bg='#713f12';
-                        else if(ratio<0.75) bg='#7c2d12';
-                        else bg='#7f1d1d';
-                    }
-                    cell.style.backgroundColor = bg;
-                    
-                    const disp = STATE.view==='kwh' ? Math.round(val) : val.toFixed(1);
-                    cell.innerHTML = `<span class="font-bold text-white z-10">${d}</span><div class="z-10 text-[0.6rem] md:text-xs text-gray-200 mt-1">${disp}</div>`;
-                    
-                    // Intensity Bar
-                    const bar = document.createElement('div'); bar.className="intensity-bar";
-                    const fill = document.createElement('div'); fill.className="intensity-fill";
-                    fill.style.width = Math.min(100, ratio*100)+'%';
-                    fill.style.backgroundColor = ratio>0.5 ? '#fcd34d' : '#34d399';
-                    bar.appendChild(fill); cell.appendChild(bar);
-                    
-                    cell.title = `${k}\n${val.toFixed(2)}`;
-                } else {
-                    cell.innerHTML = `<span class="text-gray-600">${d}</span>`;
-                }
-                g.appendChild(cell);
+                    const v=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
+                    const r=STATE.maxVal>0?v/STATE.maxVal:0;
+                    let bg='#374151'; if(v>0) { c.classList.add('has-data'); if(r<0.25) bg='#064e3b'; else if(r<0.5) bg='#713f12'; else if(r<0.75) bg='#7c2d12'; else bg='#7f1d1d'; }
+                    c.style.backgroundColor=bg;
+                    c.innerHTML=`<span class="font-bold text-white z-10">${d}</span><div class="z-10 text-[0.6rem] md:text-xs text-gray-200 mt-1">${STATE.view==='kwh'?Math.round(v):v.toFixed(1)}</div>`;
+                    const b=document.createElement('div'); b.className="intensity-bar";
+                    const f=document.createElement('div'); f.className="intensity-fill"; f.style.width=Math.min(100,r*100)+'%'; f.style.backgroundColor=r>0.5?'#fcd34d':'#34d399';
+                    b.appendChild(f); c.appendChild(b); c.title=`${k}\n${v.toFixed(2)}`;
+                } else c.innerHTML=`<span class="text-gray-600">${d}</span>`;
+                g.appendChild(c);
             }
         }
 
         function changeMonth(d) { STATE.currentDate.setMonth(STATE.currentDate.getMonth()+d); updateApp(); }
-        function setView(v) { 
-            STATE.view=v; 
-            const bk=document.getElementById('btn-view-kwh'), bc=document.getElementById('btn-view-cost');
-            if(v==='kwh'){ bk.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bc.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
-            else { bc.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bk.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
-            updateApp(); 
-        }
-        function setChartMode(m) {
-            STATE.chartMode = m;
-            const bm=document.getElementById('btn-mode-month'), bd=document.getElementById('btn-mode-day');
-            if(m==='month'){ bm.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bd.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
-            else { bd.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bm.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
-            updateApp();
+        function setView(v) { STATE.view=v; updateBtnStyles(); updateApp(); }
+        function setChartMode(m) { STATE.chartMode=m; updateBtnStyles(); updateApp(); }
+        function updateBtnStyles() {
+            const act="bg-indigo-600 text-white", ina="text-gray-400 hover:text-white";
+            document.getElementById('btn-view-kwh').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.view==='kwh'?act:ina}`;
+            document.getElementById('btn-view-cost').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.view==='cost'?act:ina}`;
+            document.getElementById('btn-mode-month').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.chartMode==='month'?act:ina}`;
+            document.getElementById('btn-mode-day').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.chartMode==='day'?act:ina}`;
         }
         function toggleParams() {
             const c=document.getElementById('params-content'), i=document.getElementById('chevron-icon');
-            if(c.classList.contains('hidden')) { c.classList.remove('hidden'); i.style.transform='rotate(180deg)'; }
-            else { c.classList.add('hidden'); i.style.transform='rotate(0deg)'; }
+            if(c.classList.contains('hidden')) {c.classList.remove('hidden'); i.style.transform='rotate(180deg)';}
+            else {c.classList.add('hidden'); i.style.transform='rotate(0deg)';}
         }
     </script>
 </body>
