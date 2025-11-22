@@ -333,7 +333,7 @@
                              <button onclick="exportData()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">Exporter JSON</button>
                             
                             <button onclick="triggerImport()" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition">Importer (JSON/CSV)</button>
-                            <input type="file" id="import-file" class="hidden" accept=".json,.csv" onchange="handleImport(this)">
+                            <input type="file" id="import-file" class="hidden" accept=".json,.csv,.txt" onchange="handleImport(this)">
                         </div>
                         <button onclick="resetAll()" class="text-xs text-red-400 hover:text-red-300 underline transition">Réinitialiser tout</button>
                     </div>
@@ -448,7 +448,7 @@
             }
         }
 
-        // --- IMPORT CSV & JSON ---
+        // --- IMPORT CSV & JSON (CORRIGÉ ET ROBUSTE) ---
         function triggerImport() { document.getElementById('import-file').click(); }
         function exportData() {
             const blob = new Blob([JSON.stringify(STATE.history, null, 2)], { type: "application/json" });
@@ -462,60 +462,111 @@
             const file = input.files[0];
             if (!file) return;
             const reader = new FileReader();
+            
             reader.onload = (e) => {
                 const content = e.target.result;
                 let count = 0;
+                let errors = [];
                 
+                // Helper défini avant usage pour éviter les problèmes de portée
+                const addItemIfNew = (item) => {
+                    // Vérification basique de l'intégrité de l'item
+                    if (!item.date || item.index === undefined || item.index === null) return;
+                    
+                    if (!STATE.history.some(h => h.date === item.date)) {
+                        // On conserve l'ID s'il existe et est valide, sinon on en génère un
+                        const newId = (item.id && typeof item.id === 'number') ? item.id : (Date.now() + Math.random());
+                        STATE.history.push({ ...item, id: newId });
+                        count++;
+                    }
+                };
+
                 try {
-                    // Detection JSON ou CSV
-                    if (file.name.endsWith('.json') || content.trim().startsWith('[')) {
-                        const json = JSON.parse(content);
-                        json.forEach(addItemIfNew);
-                    } else {
-                        // CSV Parsing (Format attendu: Date;Index ou Date,Index)
+                    // 1. Tentative JSON
+                    if (file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
+                        try {
+                            const json = JSON.parse(content);
+                            if (Array.isArray(json)) {
+                                json.forEach(addItemIfNew);
+                            } else {
+                                throw new Error("Format JSON invalide (doit être une liste)");
+                            }
+                        } catch (jsonErr) {
+                            // Si ça ressemble à du JSON mais échoue, on arrête là si l'extension est .json
+                            if (file.name.toLowerCase().endsWith('.json')) throw jsonErr;
+                            // Sinon, on continue vers CSV (cas d'un fichier mal nommé)
+                        }
+                    } 
+                    
+                    // 2. Tentative CSV (si JSON n'a rien donné ou si c'est un fichier .csv/.txt)
+                    if (count === 0) {
                         const lines = content.split(/\r?\n/);
-                        lines.forEach(line => {
-                            if(!line.trim() || isNaN(line.charAt(0))) return; // Skip headers/empty
-                            // Essai séparateur ; puis ,
-                            let parts = line.split(';');
-                            if(parts.length < 2) parts = line.split(',');
+                        
+                        lines.forEach((line, lineIdx) => {
+                            const trimmedLine = line.trim();
+                            if (!trimmedLine) return;
+
+                            // Nettoyage des guillemets éventuels (ex: "2023-01-01";"123")
+                            const cleanLine = trimmedLine.replace(/"/g, '');
                             
-                            if(parts.length >= 2) {
-                                let dateRaw = parts[0].trim();
-                                let indexRaw = parts[1].trim().replace(',', '.'); // Remplacer virgule par point
+                            // Détection du séparateur (; ou ,)
+                            let parts = cleanLine.split(';');
+                            if (parts.length < 2) parts = cleanLine.split(',');
+                            
+                            if (parts.length >= 2) {
+                                const dateRaw = parts[0].trim();
+                                // Garde chiffres, point, tiret pour l'index (nettoyage unités)
+                                const indexRaw = parts[1].trim().replace(',', '.').replace(/[^\d.-]/g, ''); 
                                 
-                                // Gestion date format FR JJ/MM/AAAA
-                                let dateObj;
+                                // Ignorer les lignes d'en-tête (si l'index n'est pas un nombre valide)
+                                if (isNaN(parseFloat(indexRaw))) return;
+
+                                // Parsing Date
+                                let dateObj = null;
+                                
+                                // Format FR : JJ/MM/AAAA
                                 if (dateRaw.includes('/')) {
-                                    const [d, m, y] = dateRaw.split('/');
-                                    // Ajouter heure par defaut midi
-                                    dateObj = new Date(`${y}-${m}-${d}T12:00:00`);
-                                } else {
-                                    dateObj = new Date(dateRaw);
+                                    const dParts = dateRaw.split('/');
+                                    if (dParts.length === 3) {
+                                        // Ajout 12:00 pour éviter les soucis de fuseau horaire minuit
+                                        dateObj = new Date(`${dParts[2]}-${dParts[1]}-${dParts[0]}T12:00:00`);
+                                    }
+                                } 
+                                // Format ISO : YYYY-MM-DD
+                                else if (dateRaw.includes('-')) {
+                                    dateObj = new Date(dateRaw.includes('T') ? dateRaw : `${dateRaw}T12:00:00`);
                                 }
 
-                                if (!isNaN(dateObj.getTime()) && !isNaN(parseFloat(indexRaw))) {
-                                    // Ajuster timezone
-                                    dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
-                                    const dateIso = dateObj.toISOString().slice(0,16);
-                                    addItemIfNew({ date: dateIso, index: parseFloat(indexRaw) });
+                                if (dateObj && !isNaN(dateObj.getTime()) && !isNaN(parseFloat(indexRaw))) {
+                                    // Normalisation ISO locale pour input type="datetime-local"
+                                    // On retire le décalage horaire pour avoir l'heure locale dans la string ISO
+                                    const tzOffset = dateObj.getTimezoneOffset() * 60000;
+                                    const localIso = new Date(dateObj.getTime() - tzOffset).toISOString().slice(0, 16);
+                                    
+                                    addItemIfNew({ date: localIso, index: parseFloat(indexRaw) });
                                 }
                             }
                         });
                     }
-                    
-                    function addItemIfNew(item) {
-                        if (!STATE.history.some(h => h.date === item.date)) {
-                            STATE.history.push({ id: Date.now() + Math.random(), ...item });
-                            count++;
-                        }
+
+                    if (count > 0) {
+                        saveData();
+                        updateApp();
+                        alert(`${count} relevés importés avec succès !`);
+                    } else {
+                        alert("Aucune donnée valide trouvée (vérifiez le format ou si les dates existent déjà).");
                     }
 
-                    if(count > 0) { saveData(); updateApp(); alert(`${count} entrées importées !`); }
-                    else alert("Aucune nouvelle donnée trouvée.");
-                } catch(err) { alert("Erreur import: " + err.message); }
+                } catch (err) {
+                    console.error(err);
+                    alert("Erreur lors de l'importation : " + err.message);
+                }
+                
+                // Reset input pour permettre de réimporter le même fichier
                 input.value = '';
             };
+            
+            reader.onerror = () => alert("Erreur de lecture du fichier.");
             reader.readAsText(file);
         }
 
@@ -587,7 +638,7 @@
                 return { ...curr, dM3, dKwh, cTotalTTC, days: diffDays.toFixed(1) };
             });
 
-            // Update Monthly Max for Chart (Annuel)
+            // Update Monthly Max for Chart
             Object.values(STATE.monthlyData).forEach(d => {
                 const v = STATE.view==='kwh'? d.kwh : d.cost;
                 if(v > STATE.maxMonthVal) STATE.maxMonthVal = v;
