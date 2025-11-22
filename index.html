@@ -6,753 +6,700 @@
     <title>Suivi de Consommation Gaz</title>
     <!-- Chargement de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Police Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Configuration du mode sombre et de la police */
+        /* --- Styles de Base (Mode Sombre) --- */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #1f2937; /* Gris foncé pour le fond */
-            color: #f3f4f6; /* Texte clair */
+            background-color: #111827; /* gray-900 */
+            color: #f3f4f6; /* gray-100 */
         }
-        .bg-card {
-            background-color: #374151; /* Couleur de carte plus claire que le fond */
+        
+        /* --- Composants --- */
+        .card {
+            background-color: #1f2937; /* gray-800 */
+            border: 1px solid #374151; /* gray-700 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
-        /* Styles pour le calendrier */
+        
+        /* --- Graphique Barres --- */
+        .bar-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 150px;
+            gap: 8px;
+            padding-top: 20px;
+        }
+        .bar-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+            position: relative;
+        }
+        .bar {
+            width: 100%;
+            border-top-left-radius: 4px;
+            border-top-right-radius: 4px;
+            transition: height 0.5s ease-out, background-color 0.3s;
+            min-height: 4px; /* Toujours visible un minimum */
+        }
+        .bar:hover {
+            filter: brightness(1.2);
+        }
+        .bar-label {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            margin-top: 6px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+        .bar-value {
+            font-size: 0.7rem;
+            color: white;
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        /* --- Calendrier --- */
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 4px;
         }
         .day-cell {
-            padding: 4px;
-            height: 60px;
+            aspect-ratio: 1; /* Carré */
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            border-radius: 6px;
-            background-color: #4b5563; /* Fond des jours */
+            border-radius: 0.375rem; /* rounded-md */
+            background-color: #374151; /* gray-700 (vide) */
+            font-size: 0.75rem; /* Plus petit sur mobile */
             position: relative;
-            cursor: pointer;
-            transition: background-color 0.15s;
+            transition: all 0.2s;
         }
-        .day-cell:hover {
-            background-color: #6b7280;
+        @media (min-width: 768px) {
+            .day-cell { font-size: 0.875rem; }
         }
-        .current-month {
-            background-color: #4b5563;
+        .day-cell.has-data:hover {
+            transform: scale(1.1);
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            border: 1px solid white;
         }
-        /* Style du camembert */
-        .daily-indicator {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background-color: #6b7280;
-            margin-top: 4px;
-            position: relative;
+        
+        .intensity-bar {
+            width: 80%;
+            height: 3px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 2px;
+            margin-top: 2px;
+            overflow: hidden;
         }
-        .daily-indicator-fill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%); /* Masque initial */
-            transform-origin: 50% 50%;
-            transition: clip-path 0.5s;
+        .intensity-fill { height: 100%; background-color: #fff; }
+
+        /* --- Utilitaires d'Impression --- */
+        @media print {
+            .print-hidden { display: none !important; }
+            body { background-color: white !important; color: black !important; }
+            .card { 
+                background-color: white !important; 
+                border: 1px solid #ddd !important; 
+                box-shadow: none !important; 
+                break-inside: avoid;
+            }
+            .day-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #eee; }
+            .day-cell:not(.has-data) { background-color: #f9fafb !important; color: #ddd !important; }
+            .bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
-        /* Améliorations pour l'impression */
-        @media print {
-            .print-hidden {
-                display: none !important;
-            }
-            body {
-                background-color: white !important;
-                color: black !important;
-            }
-            .bg-card {
-                background-color: white !important;
-                box-shadow: none !important;
-                border: 1px solid #ccc !important;
-            }
-            /* Assurer que le texte du calendrier reste lisible */
-            .calendar-title, .day-cell {
-                color: black !important;
-            }
-            .daily-indicator-fill {
-                 /* Assurer que le camembert s'imprime bien */
-                 background-color: #10b981 !important;
-            }
+        /* --- Bouton Flottant Mobile (FAB) --- */
+        .fab {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 9999px;
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            z-index: 40;
+            transition: transform 0.2s;
+        }
+        .fab:active { transform: scale(0.95); }
+        /* Masqué sur les grands écrans où le formulaire est déjà visible */
+        @media (min-width: 1024px) {
+            .fab { display: none; }
         }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 md:p-8 min-h-screen pb-24 lg:pb-8">
 
-    <div class="max-w-6xl mx-auto space-y-8">
+    <div class="max-w-6xl mx-auto space-y-6">
         
-        <!-- EN-TÊTE ET BOUTON IMPRIMER -->
-        <header class="flex justify-between items-center pb-4 border-b border-gray-700 print-hidden">
-            <h1 class="text-3xl font-bold text-white">Suivi Gazpar (Gaz Naturel)</h1>
-            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 transform hover:scale-105" aria-label="Imprimer ce rapport">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm7 9a1 1 0 100 2 1 1 0 000-2zm-5 0a1 1 0 100 2 1 1 0 000-2zm0-4a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zM4 2a2 2 0 00-2 2v2h16V4a2 2 0 00-2-2H4z" clip-rule="evenodd" /></svg>
-                Imprimer
+        <!-- EN-TÊTE -->
+        <header class="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-gray-700 print-hidden gap-4">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white">Suivi Conso Gaz</h1>
+                <p class="text-gray-400 text-sm mt-1">Relevés réels, Graphiques & Heatmap</p>
+            </div>
+            <button onclick="window.print()" class="flex items-center space-x-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                <span>Imprimer</span>
             </button>
         </header>
 
-        <!-- CONTENU PRINCIPAL EN GRILLE -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- GRILLE PRINCIPALE -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
-            <!-- COLONNE GAUCHE (SAISIE & PARAMÈTRES) -->
-            <div class="lg:col-span-1 space-y-6 print-hidden">
+            <!-- COLONNE GAUCHE (INPUTS & STATS) -->
+            <div class="lg:col-span-4 space-y-6">
                 
-                <!-- 1. FORMULAIRE DE NOUVEAU RELEVÉ -->
-                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
-                    <h2 class="text-2xl font-semibold mb-4 text-white">Nouveau Relevé</h2>
-                    <form id="releve-form" onsubmit="ajouterReleve(event)">
-                        <div class="space-y-4">
-                            <!-- Date et Heure -->
-                            <div>
-                                <label for="date-releve" class="block text-sm font-medium text-gray-300 mb-1">Date et Heure du Relevé</label>
-                                <input type="datetime-local" id="date-releve" required class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                            <!-- Index en m³ -->
-                            <div>
-                                <label for="index-releve" class="block text-sm font-medium text-gray-300 mb-1">Index Compteur (m³)</label>
-                                <input type="number" id="index-releve" step="0.001" required placeholder="05352.980" autofocus class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                            </div>
-                            
-                            <button type="submit" class="w-full flex justify-center items-center space-x-2 px-4 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition duration-300 shadow-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 6h12a1 1 0 011 1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a1 1 0 011-1zm0-3a2 2 0 00-2 2v10a4 4 0 004 4h10a4 4 0 004-4V5a2 2 0 00-2-2H4zM9 9a1 1 0 011-1h1a1 1 0 110 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h1a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg>
-                                <span>Ajouter le Relevé</span>
-                            </button>
+                <!-- 1. AJOUTER UN RELEVÉ (Desktop: Visible, Mobile: via Modal) -->
+                <section class="card p-5 print-hidden hidden lg:block">
+                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Nouveau Relevé
+                    </h2>
+                    <form id="add-form-desktop" onsubmit="handleAdd(event, 'desktop')" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Date & Heure</label>
+                            <input type="datetime-local" id="input-date-desktop" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
                         </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-400 mb-1">Index Compteur (m³)</label>
+                            <input type="number" id="input-index-desktop" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
+                        </div>
+                        <button type="submit" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition">Enregistrer</button>
                     </form>
-                </div>
+                </section>
 
-                <!-- 2. PARAMÈTRES DE FACTURATION (Rétractable) -->
-                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
-                    <button onclick="toggleParameters()" class="w-full flex justify-between items-center text-xl font-semibold text-white mb-4" aria-expanded="false" aria-controls="parametres-content">
-                        <span>Paramètres de Facturation</span>
-                        <svg id="param-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                <!-- 2. PARAMÈTRES (Escamotables) -->
+                <section class="card print-hidden">
+                    <button onclick="toggleParams()" class="w-full p-5 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 rounded-xl transition">
+                        <span class="text-lg font-semibold text-white flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.308 2.368a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.368 2.308a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.308-2.368a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.368-2.308a1.724 1.724 0 002.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Paramètres
+                        </span>
+                        <svg id="chevron-icon" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
-                    <div id="parametres-content" class="space-y-4 hidden lg:block">
-                        <!-- Coefficient Gaz -->
-                        <div>
-                            <label for="coef-gaz" class="block text-sm font-medium text-gray-300 mb-1">Coefficient de Conversion Gaz (kWh/m³)</label>
-                            <input type="number" id="coef-gaz" value="11.361" step="0.001" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <!-- Prix kWh HT -->
-                        <div>
-                            <label for="prix-kwh-ht" class="block text-sm font-medium text-gray-300 mb-1">Prix du kWh (HT €)</label>
-                            <input type="number" id="prix-kwh-ht" value="0.0777" step="0.0001" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <!-- Prix Abonnement HT/mois -->
-                        <div>
-                            <label for="prix-abonnement-ht" class="block text-sm font-medium text-gray-300 mb-1">Abonnement Mensuel (HT €)</label>
-                            <input type="number" id="prix-abonnement-ht" value="16.72" step="0.01" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <!-- TVA Consommation -->
-                        <div>
-                            <label for="tva-conso" class="block text-sm font-medium text-gray-300 mb-1">TVA Consommation (%)</label>
-                            <input type="number" id="tva-conso" value="20.0" step="0.1" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        <!-- TVA Abonnement -->
-                        <div>
-                            <label for="tva-abo" class="block text-sm font-medium text-gray-300 mb-1">TVA Abonnement (%)</label>
-                            <input type="number" id="tva-abo" value="5.5" step="0.1" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                    <div id="params-content" class="hidden px-5 pb-5 space-y-3 border-t border-gray-700 pt-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="block text-xs text-gray-400 mb-1">Coef. Gaz</label><input type="number" id="p-coef" value="11.361" step="0.001" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
+                            <div><label class="block text-xs text-gray-400 mb-1">Prix kWh HT</label><input type="number" id="p-prix-kwh" value="0.0777" step="0.0001" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
+                            <div><label class="block text-xs text-gray-400 mb-1">Abo/Mois HT</label><input type="number" id="p-abo" value="16.72" step="0.01" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
+                            <div><label class="block text-xs text-gray-400 mb-1">TVA Conso %</label><input type="number" id="p-tva-conso" value="20" step="0.1" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
+                            <div><label class="block text-xs text-gray-400 mb-1">TVA Abo %</label><input type="number" id="p-tva-abo" value="5.5" step="0.1" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- 3. SYNTHÈSE GLOBALE -->
-                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
-                    <h2 class="text-2xl font-semibold mb-4 text-white">Synthèse Globale</h2>
-                    <dl class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <dt class="text-gray-300">Nombre de Relevés :</dt>
-                            <dd id="total-releves" class="font-bold text-indigo-400">0</dd>
+                <section class="card p-5">
+                    <h2 class="text-lg font-semibold text-white mb-4">Synthèse Totale</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                            <div class="text-xs text-gray-400">Consommation</div>
+                            <div class="text-xl font-bold text-blue-400" id="total-kwh">0 kWh</div>
+                            <div class="text-xs text-gray-500" id="total-m3">0 m³</div>
                         </div>
-                        <div class="flex justify-between border-t border-gray-700 pt-3">
-                            <dt class="text-gray-300">Conso Totale Estimée (m³) :</dt>
-                            <dd id="total-m3" class="font-bold">0 m³</dd>
+                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                            <div class="text-xs text-gray-400">Coût TTC</div>
+                            <div class="text-xl font-bold text-emerald-400" id="total-cost">0.00 €</div>
+                            <div class="text-xs text-gray-500" id="total-cost-ht">HT: 0.00 €</div>
                         </div>
-                        <div class="flex justify-between">
-                            <dt class="text-gray-300">Conso Totale Estimée (kWh) :</dt>
-                            <dd id="total-kwh" class="font-bold">0 kWh</dd>
-                        </div>
-                        <div class="flex justify-between border-t border-gray-700 pt-3">
-                            <dt class="text-gray-300">Coût Tot. Conso (HT) :</dt>
-                            <dd id="total-cout-ht" class="font-bold text-yellow-400">0,00 €</dd>
-                        </div>
-                        <div class="flex justify-between">
-                            <dt class="text-gray-300">Coût Tot. Conso (TTC) :</dt>
-                            <dd id="total-cout-ttc" class="font-bold text-emerald-400">0,00 €</dd>
-                        </div>
-                    </dl>
-                </div>
+                    </div>
+                </section>
             </div>
 
-            <!-- COLONNE DROITE (CALENDRIER ET HISTORIQUE) -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- 4. CALENDRIER DE CONSOMMATION -->
-                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
-                    <h2 class="text-2xl font-semibold text-white mb-4">Consommation Journalière Estimée</h2>
-                    
-                    <!-- Sélecteur de Vue et Navigation -->
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-3 sm:space-y-0">
-                        <div class="flex space-x-2">
-                            <button onclick="changeMonth(-1)" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 transition duration-150" aria-label="Mois précédent">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
-                            </button>
-                            <span id="calendar-title" class="text-xl font-bold text-white calendar-title"></span>
-                            <button onclick="changeMonth(1)" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 transition duration-150" aria-label="Mois suivant">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
-                            </button>
-                        </div>
-                        <div class="flex space-x-3 bg-gray-600 p-1 rounded-lg">
-                            <button onclick="setCalendarView('kwh')" id="view-kwh" class="px-3 py-1 text-sm font-medium rounded-md bg-indigo-600 text-white transition duration-200">kWh</button>
-                            <button onclick="setCalendarView('cost')" id="view-cost" class="px-3 py-1 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-500 transition duration-200">Coût TTC</button>
+            <!-- COLONNE DROITE -->
+            <div class="lg:col-span-8 space-y-6">
+
+                <!-- 4. HISTOGRAMME MENSUEL (AMÉLIORATION 1) -->
+                <section class="card p-5">
+                    <div class="flex justify-between items-center mb-2">
+                        <h2 class="text-lg font-semibold text-white">Évolution Mensuelle</h2>
+                        <!-- Toggle View -->
+                        <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
+                            <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md transition-colors">kWh</button>
+                            <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md transition-colors">Coût €</button>
                         </div>
                     </div>
-                    
-                    <!-- En-têtes des Jours de la Semaine -->
-                    <div class="calendar-grid mb-2 text-sm font-medium text-gray-400">
-                        <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+                    <!-- Graphique CSS -->
+                    <div id="monthly-chart" class="bar-container border-b border-gray-600">
+                        <!-- Barres générées par JS -->
+                        <div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des relevés pour voir le graphique</div>
+                    </div>
+                </section>
+
+                <!-- 5. CALENDRIER HEATMAP (AMÉLIORATION 5 - OPTIMISÉ MOBILE) -->
+                <section class="card p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
+                        <h2 class="text-lg font-bold text-white capitalize" id="calendar-month-label">--</h2>
+                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
                     </div>
 
-                    <!-- Grille du Calendrier -->
-                    <div id="calendar-body" class="calendar-grid">
-                        <!-- Les jours seront injectés ici par JS -->
+                    <!-- Jours Semaine -->
+                    <div class="calendar-grid mb-2 text-center text-[0.65rem] md:text-xs text-gray-500 font-medium uppercase tracking-wide">
+                        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                     </div>
-                    
-                    <!-- Légende -->
-                    <div class="mt-4 text-sm text-gray-400">
-                        <p>Le cercle (camembert) indique la proportion de la consommation du jour par rapport au jour le plus consommateur de votre historique.</p>
-                    </div>
-                </div>
+                    <!-- Grille -->
+                    <div id="calendar-grid" class="calendar-grid gap-1 md:gap-2"></div>
 
-                <!-- 5. HISTORIQUE DÉTAILLÉ -->
-                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
-                    <h2 class="text-2xl font-semibold mb-4 text-white">Historique des Périodes</h2>
-                    <div class="overflow-x-auto rounded-lg">
-                        <table class="min-w-full divide-y divide-gray-700">
-                            <thead class="bg-gray-700">
+                    <div class="mt-4 flex justify-between items-end">
+                        <div class="flex items-center text-xs text-gray-400 gap-2">
+                            <span>Faible</span>
+                            <div class="flex gap-1">
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-emerald-900"></div>
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-yellow-900"></div>
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-orange-900"></div>
+                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-red-900"></div>
+                            </div>
+                            <span>Élevé</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 6. TABLEAU HISTORIQUE -->
+                <section class="card overflow-hidden">
+                    <div class="p-4 border-b border-gray-700">
+                        <h2 class="text-lg font-semibold text-white">Historique Détaillé</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm text-gray-400">
+                            <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs">
                                 <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Index Final (m³)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Période (J)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Conso (kWh)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Coût HT (€)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider text-emerald-400">Coût TTC (€)</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider print-hidden">Action</th>
+                                    <th class="px-4 py-3">Date</th>
+                                    <th class="px-4 py-3 text-right">Index</th>
+                                    <th class="px-4 py-3 text-right">Conso</th>
+                                    <th class="px-4 py-3 text-right">Coût TTC</th>
+                                    <th class="px-4 py-3 text-center print-hidden">Action</th>
                                 </tr>
                             </thead>
-                            <tbody id="history-table-body" class="divide-y divide-gray-700 bg-gray-800">
-                                <!-- Lignes d'historique injectées ici par JS -->
-                            </tbody>
+                            <tbody id="history-body" class="divide-y divide-gray-700"></tbody>
                         </table>
-                        <div id="no-history-message" class="text-center py-4 text-gray-400 hidden">
-                            Aucun relevé enregistré. Commencez par ajouter votre premier index !
-                        </div>
                     </div>
-                </div>
+                    <div id="empty-msg" class="p-8 text-center text-gray-500 hidden">Aucune donnée.</div>
+                </section>
 
-                <!-- 6. BOUTONS D'ACTION EN BAS -->
-                <div class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 print-hidden">
-                    <!-- Bouton Imprimer (dupliqué pour l'ergonomie en bas) -->
-                    <button onclick="window.print()" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105" aria-label="Imprimer le rapport de consommation">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm7 9a1 1 0 100 2 1 1 0 000-2zm-5 0a1 1 0 100 2 1 1 0 000-2zm0-4a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zM4 2a2 2 0 00-2 2v2h16V4a2 2 0 00-2-2H4z" clip-rule="evenodd" /></svg>
-                        Imprimer ce Rapport
-                    </button>
+                <!-- 7. GESTION DATA (AMÉLIORATION 2 - IMPORT CSV) -->
+                <section class="card p-4 mt-6 print-hidden">
+                    <h2 class="text-lg font-semibold text-white mb-4">Données & Sauvegarde</h2>
+                    <div class="flex flex-wrap gap-3 justify-between items-center">
+                        <div class="flex flex-wrap gap-3">
+                             <button onclick="exportData()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">Exporter JSON</button>
+                            
+                            <button onclick="triggerImport()" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition">Importer (JSON/CSV)</button>
+                            <input type="file" id="import-file" class="hidden" accept=".json,.csv" onchange="handleImport(this)">
+                        </div>
+                        <button onclick="resetAll()" class="text-xs text-red-400 hover:text-red-300 underline transition">Réinitialiser tout</button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Accepte JSON (Backup) et CSV (Format: Date;Index - compatible Excel/GRDF).</p>
+                </section>
 
-                    <!-- Bouton Réinitialiser -->
-                    <button onclick="showConfirmationModal()" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-lg hover:bg-red-700 transition duration-300 transform hover:scale-105" aria-label="Réinitialiser tout l'historique">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
-                        Réinitialiser l'Historique
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- MODALE DE CONFIRMATION (Cachée par défaut) -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden print-hidden">
-        <div class="bg-card p-8 rounded-xl shadow-2xl max-w-sm w-full border border-gray-700">
-            <h3 class="text-xl font-bold text-red-400 mb-4">Confirmation Requise</h3>
-            <p class="text-gray-300 mb-6">Êtes-vous absolument certain de vouloir effacer tout l'historique de consommation ? Cette action est irréversible.</p>
-            <div class="flex justify-end space-x-4">
-                <button onclick="hideConfirmationModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-200">
-                    Annuler
-                </button>
-                <button onclick="resetHistory()" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-200">
-                    Confirmer l'Effacement
-                </button>
             </div>
         </div>
     </div>
 
-    <!-- SCRIPT JAVASCRIPT -->
+    <!-- BOUTON FLOTTANT MOBILE (AMÉLIORATION 5) -->
+    <button onclick="openModal()" class="fab print-hidden">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+    </button>
+
+    <!-- MODALE AJOUT MOBILE -->
+    <div id="mobile-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex items-end sm:items-center justify-center print-hidden">
+        <div class="bg-gray-800 w-full max-w-md p-6 rounded-t-2xl sm:rounded-xl shadow-2xl transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-white">Nouveau Relevé</h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <form id="add-form-mobile" onsubmit="handleAdd(event, 'mobile')" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Date & Heure</label>
+                    <input type="datetime-local" id="input-date-mobile" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-400 mb-1">Index Compteur (m³)</label>
+                    <input type="number" id="input-index-mobile" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3">
+                </div>
+                <button type="submit" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-bold rounded-lg text-lg px-5 py-3 text-center">Enregistrer</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGIC JS -->
     <script>
-        // Définition de la variable pour le formatage monétaire (locale française)
-        const currencyFormatter = new Intl.NumberFormat('fr-FR', {
-            style: 'currency',
-            currency: 'EUR'
-        });
+        const STATE = {
+            history: [],
+            dailyData: {}, // { "YYYY-MM-DD": { kwh: 0, cost: 0 } }
+            monthlyData: {}, // { "YYYY-MM": { kwh: 0, cost: 0 } }
+            currentDate: new Date(),
+            view: 'kwh', // 'kwh' ou 'cost'
+            maxVal: 1, // Pour heatmap
+            maxMonthVal: 1 // Pour graphique
+        };
 
-        // Définition de la variable pour le formatage numérique (locale française)
-        const numberFormatter = new Intl.NumberFormat('fr-FR', {
-            minimumFractionDigits: 3,
-            maximumFractionDigits: 3
-        });
-        
-        // État du calendrier
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
-        let calendarView = 'kwh'; // 'kwh' ou 'cost'
-        
-        // Cache pour les données journalières estimées
-        let dailyEstimates = {}; 
-        let maxDailyValue = 1; // Valeur max pour l'échelle du camembert
-        
-        // --- 1. FONCTIONS UTILITAIRES DE L'HISTORIQUE ---
+        window.onload = () => {
+            initInputs();
+            loadData();
+            updateApp();
+        };
 
-        /** Charge l'historique depuis le localStorage. */
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('gasHistory')) || [];
-            // Assure que l'historique est trié par date (le plus récent à la fin)
-            history.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-            return history;
+        function initInputs() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const iso = now.toISOString().slice(0, 16);
+            document.getElementById('input-date-desktop').value = iso;
+            document.getElementById('input-date-mobile').value = iso;
         }
 
-        /** Sauvegarde l'historique dans le localStorage. */
-        function saveHistory(history) {
-            localStorage.setItem('gasHistory', JSON.stringify(history));
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('gaz_data');
+                if (saved) STATE.history = JSON.parse(saved);
+            } catch (e) { STATE.history = []; }
         }
-
-        // --- 2. LOGIQUE DE CALCUL ---
-
-        /** Récupère la valeur d'un paramètre. */
-        function getParamValue(id) {
-            return parseFloat(document.getElementById(id).value) || 0;
-        }
-
-        /** Calcule la consommation et les coûts pour chaque période de l'historique. */
-        function calculateConsumptions(history) {
-            if (history.length < 2) return history;
-
-            const coefGaz = getParamValue('coef-gaz');
-            const prixKwhHT = getParamValue('prix-kwh-ht');
-            const tvaConso = getParamValue('tva-conso') / 100;
-            
-            // Calculer les consommations
-            for (let i = 1; i < history.length; i++) {
-                const prev = history[i - 1];
-                const current = history[i];
-                
-                // Calcul de la période
-                const dateStart = new Date(prev.dateTime);
-                const dateEnd = new Date(current.dateTime);
-                const diffTime = Math.abs(dateEnd - dateStart);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
-                // Consommation
-                const consoM3 = current.index - prev.index;
-                const consoKwh = consoM3 * coefGaz;
-                
-                // Coûts
-                const coutHT = consoKwh * prixKwhHT;
-                const coutTTC = coutHT * (1 + tvaConso);
-
-                // Ajout des résultats à l'enregistrement actuel
-                current.consoM3 = consoM3;
-                current.consoKwh = consoKwh;
-                current.diffDays = diffDays;
-                current.coutHT = coutHT;
-                current.coutTTC = coutTTC;
-                current.isCalculated = true; // Marque comme calculé
+        function saveData() { localStorage.setItem('gaz_data', JSON.stringify(STATE.history)); }
+        
+        function resetAll() {
+            if(confirm("Tout effacer ?")) {
+                STATE.history = [];
+                saveData();
+                updateApp();
             }
-            return history;
         }
 
-        /** Répartit la consommation de chaque période sur les jours du calendrier. */
-        function calculateDailyEstimates(history) {
-            dailyEstimates = {};
-            maxDailyValue = 1; // Reset max value
+        // --- MODALE MOBILE ---
+        function openModal() {
+            initInputs();
+            document.getElementById('mobile-modal').classList.remove('hidden');
+        }
+        function closeModal() {
+            document.getElementById('mobile-modal').classList.add('hidden');
+        }
+
+        // --- AJOUT ---
+        function handleAdd(e, mode) {
+            e.preventDefault();
+            const suffix = mode === 'mobile' ? '-mobile' : '-desktop';
+            const dateVal = document.getElementById('input-date' + suffix).value;
+            const indexVal = parseFloat(document.getElementById('input-index' + suffix).value);
+
+            if (!dateVal || isNaN(indexVal)) return alert("Données invalides");
+            if (STATE.history.some(h => h.date === dateVal)) return alert("Date existante");
+
+            STATE.history.push({ id: Date.now(), date: dateVal, index: indexVal });
+            saveData();
             
-            // S'il n'y a pas assez de données pour un calcul, sortir
-            if (history.length < 2) return;
+            document.getElementById('input-index' + suffix).value = '';
+            if(mode === 'mobile') closeModal();
+            updateApp();
+        }
 
-            // Variables de calcul
-            const prixAbonnementHT = getParamValue('prix-abonnement-ht');
-            const tvaAbo = getParamValue('tva-abo') / 100;
-            const coutAboTTC = prixAbonnementHT * (1 + tvaAbo);
+        function deleteEntry(id) {
+            if(confirm("Supprimer ?")) {
+                STATE.history = STATE.history.filter(h => h.id !== id);
+                saveData();
+                updateApp();
+            }
+        }
 
-            for (let i = 1; i < history.length; i++) {
-                const prev = history[i - 1];
-                const current = history[i];
+        // --- IMPORT CSV & JSON ---
+        function triggerImport() { document.getElementById('import-file').click(); }
+        function exportData() {
+            const blob = new Blob([JSON.stringify(STATE.history, null, 2)], { type: "application/json" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `gaz_backup_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
 
-                if (!current.isCalculated) continue; // Sauter si non calculé
-
-                const dateStart = new Date(prev.dateTime);
-                const dateEnd = new Date(current.dateTime);
+        function handleImport(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const content = e.target.result;
+                let count = 0;
                 
-                // Si la période est très courte, attribuer la conso au jour final
-                let diffDays = current.diffDays;
-                if (diffDays === 0) diffDays = 1; 
+                try {
+                    // Detection JSON ou CSV
+                    if (file.name.endsWith('.json') || content.trim().startsWith('[')) {
+                        const json = JSON.parse(content);
+                        json.forEach(addItemIfNew);
+                    } else {
+                        // CSV Parsing (Format attendu: Date;Index ou Date,Index)
+                        const lines = content.split(/\r?\n/);
+                        lines.forEach(line => {
+                            if(!line.trim() || isNaN(line.charAt(0))) return; // Skip headers/empty
+                            // Essai séparateur ; puis ,
+                            let parts = line.split(';');
+                            if(parts.length < 2) parts = line.split(',');
+                            
+                            if(parts.length >= 2) {
+                                let dateRaw = parts[0].trim();
+                                let indexRaw = parts[1].trim().replace(',', '.'); // Remplacer virgule par point
+                                
+                                // Gestion date format FR JJ/MM/AAAA
+                                let dateObj;
+                                if (dateRaw.includes('/')) {
+                                    const [d, m, y] = dateRaw.split('/');
+                                    // Ajouter heure par defaut midi
+                                    dateObj = new Date(`${y}-${m}-${d}T12:00:00`);
+                                } else {
+                                    dateObj = new Date(dateRaw);
+                                }
 
-                // Calcul des moyennes journalières
-                const avgKwhDay = current.consoKwh / diffDays;
-                // Calcul du coût journalier TTC (Conso + Abonnement réparti)
-                const avgCostDay = (current.coutTTC + (coutAboTTC * current.diffDays / 30.4375)) / diffDays; 
-                // Note: 30.4375 est la moyenne de jours dans un mois (365.25 / 12)
-
-                // Remplissage du cache journalier
-                for (let d = new Date(dateStart); d < dateEnd; d.setDate(d.getDate() + 1)) {
-                    // Création de la clé 'AAAA-MM-JJ'
-                    const dateKey = d.toISOString().split('T')[0];
+                                if (!isNaN(dateObj.getTime()) && !isNaN(parseFloat(indexRaw))) {
+                                    // Ajuster timezone
+                                    dateObj.setMinutes(dateObj.getMinutes() - dateObj.getTimezoneOffset());
+                                    const dateIso = dateObj.toISOString().slice(0,16);
+                                    addItemIfNew({ date: dateIso, index: parseFloat(indexRaw) });
+                                }
+                            }
+                        });
+                    }
                     
-                    // Stockage des moyennes
-                    dailyEstimates[dateKey] = {
-                        kwh: avgKwhDay,
-                        cost: avgCostDay
-                    };
-                    
-                    // Mise à jour de la valeur maximale pour l'échelle du calendrier
-                    maxDailyValue = Math.max(maxDailyValue, avgKwhDay, avgCostDay);
-                }
-            }
-        }
-        
-        // --- 3. LOGIQUE D'AFFICHAGE (RENDER) ---
+                    function addItemIfNew(item) {
+                        if (!STATE.history.some(h => h.date === item.date)) {
+                            STATE.history.push({ id: Date.now() + Math.random(), ...item });
+                            count++;
+                        }
+                    }
 
-        /** Met à jour la carte de synthèse globale. */
-        function renderGlobalTotals(history) {
-            const totalReleves = history.length;
-            const calculatedHistory = history.filter(item => item.isCalculated);
-
-            // Calculer les sommes (le premier relevé n'a pas de conso)
-            const sumM3 = calculatedHistory.reduce((acc, curr) => acc + curr.consoM3, 0);
-            const sumKwh = calculatedHistory.reduce((acc, curr) => acc + curr.consoKwh, 0);
-            const sumCoutHT = calculatedHistory.reduce((acc, curr) => acc + curr.coutHT, 0);
-            const sumCoutTTC = calculatedHistory.reduce((acc, curr) => acc + curr.coutTTC, 0);
-
-            // Affichage
-            document.getElementById('total-releves').textContent = totalReleves;
-            document.getElementById('total-m3').textContent = numberFormatter.format(sumM3) + ' m³';
-            document.getElementById('total-kwh').textContent = numberFormatter.format(sumKwh) + ' kWh';
-            document.getElementById('total-cout-ht').textContent = currencyFormatter.format(sumCoutHT);
-            document.getElementById('total-cout-ttc').textContent = currencyFormatter.format(sumCoutTTC);
+                    if(count > 0) { saveData(); updateApp(); alert(`${count} entrées importées !`); }
+                    else alert("Aucune nouvelle donnée trouvée.");
+                } catch(err) { alert("Erreur import: " + err.message); }
+                input.value = '';
+            };
+            reader.readAsText(file);
         }
 
-        /** Génère le tableau de l'historique détaillé. */
-        function renderHistoryTable(history) {
-            const body = document.getElementById('history-table-body');
-            body.innerHTML = ''; // Nettoyer le tableau
+        // --- UPDATE APP ---
+        function updateApp() {
+            // Params
+            const getVal = (id, def) => { const el = document.getElementById(id); return el ? (parseFloat(el.value)||def) : def; };
+            const coef = getVal('p-coef', 11.361);
+            const priceKwh = getVal('p-prix-kwh', 0.0777);
+            const priceAbo = getVal('p-abo', 16.72);
+            const tvaC = getVal('p-tva-conso', 20)/100;
+            const tvaA = getVal('p-tva-abo', 5.5)/100;
+
+            STATE.history.sort((a,b) => new Date(a.date) - new Date(b.date));
             
-            if (history.length === 0) {
-                document.getElementById('no-history-message').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('no-history-message').classList.add('hidden');
+            // Reset Caches
+            STATE.dailyData = {};
+            STATE.monthlyData = {};
+            STATE.maxVal = 0;
+            STATE.maxMonthVal = 0;
+            
+            let totKwh=0, totCost=0, totM3=0, totHT=0;
 
-
-            history.forEach((item, index) => {
-                const row = body.insertRow();
-                row.className = 'hover:bg-gray-700 transition duration-150';
-
-                // 1. Date et Heure
-                const date = new Date(item.dateTime);
-                const dateStr = date.toLocaleDateString('fr-FR', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                });
-                row.insertCell().textContent = dateStr;
-
-                // 2. Index Final
-                row.insertCell().textContent = numberFormatter.format(item.index);
-
-                // 3. Période (J) / Conso (kWh) / Coût (HT) / Coût (TTC)
-                if (item.isCalculated) {
-                    row.insertCell().textContent = item.diffDays + ' J';
-                    row.insertCell().textContent = numberFormatter.format(item.consoKwh);
-                    row.insertCell().textContent = currencyFormatter.format(item.coutHT);
-                    const ttcCell = row.insertCell();
-                    ttcCell.className = 'font-bold text-emerald-400';
-                    ttcCell.textContent = currencyFormatter.format(item.coutTTC);
-                } else {
-                    // Pour le premier relevé
-                    row.insertCell().textContent = '---';
-                    row.insertCell().textContent = '---';
-                    row.insertCell().textContent = '---';
-                    row.insertCell().textContent = '---';
-                }
+            const processed = STATE.history.map((curr, i) => {
+                if(i===0) return { ...curr, isStart: true };
+                const prev = STATE.history[i-1];
                 
-                // 7. Action (Supprimer)
-                const actionCell = row.insertCell();
-                actionCell.className = 'print-hidden';
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'X';
-                deleteButton.className = 'text-red-500 hover:text-red-400 font-bold p-1 rounded';
-                deleteButton.onclick = () => removeReleve(item.id);
-                actionCell.appendChild(deleteButton);
+                const dS = new Date(prev.date);
+                const dE = new Date(curr.date);
+                const diffDays = (dE-dS)/(1000*3600*24);
+                if(diffDays <= 0) return { ...curr, error: true };
+
+                const dM3 = curr.index - prev.index;
+                const dKwh = dM3 * coef;
+                
+                // Cost
+                const cConsoHT = dKwh * priceKwh;
+                const cAboHT = (priceAbo*12/365)*diffDays;
+                const cTotalTTC = (cConsoHT*(1+tvaC)) + (cAboHT*(1+tvaA));
+
+                totM3+=dM3; totKwh+=dKwh; totCost+=cTotalTTC; totHT+=(cConsoHT+cAboHT);
+
+                // Distribution
+                const kwhDay = dKwh/diffDays;
+                const costDay = cTotalTTC/diffDays;
+                
+                let loop = new Date(dS); loop.setHours(12,0,0,0);
+                const stop = new Date(dE); stop.setHours(12,0,0,0);
+                
+                while(loop < stop) {
+                    const k = loop.toISOString().slice(0,10);
+                    const m = k.slice(0,7); // YYYY-MM
+
+                    if(!STATE.dailyData[k]) STATE.dailyData[k] = {kwh:0, cost:0};
+                    STATE.dailyData[k].kwh += kwhDay;
+                    STATE.dailyData[k].cost += costDay;
+
+                    if(!STATE.monthlyData[m]) STATE.monthlyData[m] = {kwh:0, cost:0};
+                    STATE.monthlyData[m].kwh += kwhDay;
+                    STATE.monthlyData[m].cost += costDay;
+
+                    // Max daily
+                    const vD = STATE.view==='kwh'? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
+                    if(vD > STATE.maxVal) STATE.maxVal = vD;
+
+                    loop.setDate(loop.getDate()+1);
+                }
+
+                return { ...curr, dM3, dKwh, cTotalTTC, days: diffDays.toFixed(1) };
+            });
+
+            // Update Monthly Max for Chart
+            Object.values(STATE.monthlyData).forEach(d => {
+                const v = STATE.view==='kwh'? d.kwh : d.cost;
+                if(v > STATE.maxMonthVal) STATE.maxMonthVal = v;
+            });
+
+            // Render UI
+            document.getElementById('total-kwh').textContent = Math.round(totKwh).toLocaleString() + ' kWh';
+            document.getElementById('total-m3').textContent = totM3.toFixed(1) + ' m³';
+            document.getElementById('total-cost').textContent = totCost.toFixed(2) + ' €';
+            document.getElementById('total-cost-ht').textContent = 'HT: ' + totHT.toFixed(2) + ' €';
+
+            renderHistory(processed);
+            renderCalendar();
+            renderChart();
+        }
+
+        // --- RENDERERS ---
+        function renderHistory(data) {
+            const tb = document.getElementById('history-body');
+            const emp = document.getElementById('empty-msg');
+            tb.innerHTML='';
+            if(data.length===0) { emp.classList.remove('hidden'); return; }
+            emp.classList.add('hidden');
+
+            [...data].reverse().forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className="hover:bg-gray-700/50 transition";
+                const d = new Date(r.date).toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'2-digit'});
+                let det = '<span class="text-gray-600 italic text-xs">Départ</span>';
+                let c = '-';
+                if(!r.isStart) {
+                    det = `<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
+                    c = r.cTotalTTC.toFixed(2) + ' €';
+                }
+                tr.innerHTML = `<td class="px-4 py-3 text-white">${d}</td><td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td><td class="px-4 py-3 text-right">${det}</td><td class="px-4 py-3 text-right text-emerald-400 font-bold">${c}</td><td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
+                tb.appendChild(tr);
             });
         }
-        
-        /** Génère le calendrier pour le mois et l'année courants. */
+
+        function renderChart() {
+            const c = document.getElementById('monthly-chart');
+            c.innerHTML = '';
+            const keys = Object.keys(STATE.monthlyData).sort();
+            
+            if(keys.length === 0) {
+                c.innerHTML = '<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données pour voir le graphique</div>';
+                return;
+            }
+
+            keys.forEach(m => {
+                const d = STATE.monthlyData[m];
+                const val = STATE.view === 'kwh' ? d.kwh : d.cost;
+                const percent = STATE.maxMonthVal > 0 ? (val / STATE.maxMonthVal * 100) : 0;
+                
+                // Format Date Label (ex: 2024-10 -> Oct 24)
+                const [y, mon] = m.split('-');
+                const dateObj = new Date(parseInt(y), parseInt(mon)-1, 1);
+                const label = dateObj.toLocaleDateString('fr-FR', {month:'short', year:'2-digit'});
+
+                const barWrap = document.createElement('div');
+                barWrap.className = "bar-wrapper";
+                
+                const displayVal = Math.round(val);
+                const unit = STATE.view==='kwh'?'':'€';
+                
+                // Couleur barre
+                let barColor = 'bg-indigo-600';
+                if(STATE.view === 'cost') barColor = 'bg-emerald-600';
+
+                barWrap.innerHTML = `
+                    <div class="bar-value">${displayVal}${unit}</div>
+                    <div class="bar ${barColor}" style="height: ${Math.max(5, percent)}%"></div>
+                    <div class="bar-label">${label}</div>
+                `;
+                c.appendChild(barWrap);
+            });
+        }
+
         function renderCalendar() {
-            const body = document.getElementById('calendar-body');
-            body.innerHTML = '';
+            const g = document.getElementById('calendar-grid');
+            const l = document.getElementById('calendar-month-label');
+            g.innerHTML='';
+            const y = STATE.currentDate.getFullYear(), m = STATE.currentDate.getMonth();
             
-            // Mise à jour du titre
-            const title = new Date(currentYear, currentMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-            document.getElementById('calendar-title').textContent = title.charAt(0).toUpperCase() + title.slice(1);
-
-            // Déterminer le premier jour et le nombre de jours du mois
-            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            l.textContent = new Date(y, m, 1).toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
             
-            // Décaler le premier jour pour qu'il commence le lundi (0=Dimanche, 1=Lundi, ..., 6=Samedi)
-            let startingDay = firstDayOfMonth.getDay(); // 0 (Dimanche) à 6 (Samedi)
-            if (startingDay === 0) startingDay = 7; // Convertir Dimanche (0) en 7
-            const dayOfWeek = startingDay === 0 ? 6 : startingDay - 1; // 0 (Lun) à 6 (Dim)
+            const fD = new Date(y, m, 1).getDay() || 7;
+            const dim = new Date(y, m+1, 0).getDate();
 
-            // Remplir les jours vides au début (lundi=0, mardi=1...)
-            for (let i = 0; i < dayOfWeek; i++) {
-                body.appendChild(document.createElement('div'));
-            }
+            for(let i=1; i<fD; i++) g.appendChild(document.createElement('div'));
 
-            // Remplir les jours du mois
-            for (let i = 1; i <= daysInMonth; i++) {
-                const date = new Date(currentYear, currentMonth, i);
-                const dateKey = date.toISOString().split('T')[0];
-                const estimate = dailyEstimates[dateKey];
-                
+            for(let d=1; d<=dim; d++) {
+                const dt = new Date(y,m,d);
+                const k = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,10);
                 const cell = document.createElement('div');
-                cell.className = 'day-cell text-sm';
-                cell.textContent = i;
+                cell.className = "day-cell border border-gray-700/50";
                 
-                if (estimate) {
-                    let value, unit, color;
-                    let percentage = 0;
+                if(STATE.dailyData[k]) {
+                    const val = STATE.view==='kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
+                    const ratio = STATE.maxVal>0 ? val/STATE.maxVal : 0;
                     
-                    if (calendarView === 'kwh') {
-                        value = estimate.kwh;
-                        unit = ' kWh/j';
-                    } else { // cost
-                        value = estimate.cost;
-                        unit = ' € TTC/j';
+                    let bg = '#374151';
+                    if(val>0) {
+                        cell.classList.add('has-data');
+                        if(ratio<0.25) bg='#064e3b';
+                        else if(ratio<0.5) bg='#713f12';
+                        else if(ratio<0.75) bg='#7c2d12';
+                        else bg='#7f1d1d';
                     }
-
-                    // Calcul du pourcentage par rapport au maximum global
-                    if (maxDailyValue > 0) {
-                        percentage = (value / maxDailyValue) * 100;
-                    }
+                    cell.style.backgroundColor = bg;
                     
-                    // Couleur générale du camembert (vert)
-                    color = '#10b981'; // emerald-500
-
-                    // Ajout du camembert
-                    const indicator = document.createElement('div');
-                    indicator.className = 'daily-indicator';
-                    indicator.title = `${date.toLocaleDateString('fr-FR')}\n${numberFormatter.format(value)} ${unit.trim()}`;
+                    const disp = STATE.view==='kwh' ? Math.round(val) : val.toFixed(1);
+                    cell.innerHTML = `<span class="font-bold text-white z-10">${d}</span><div class="z-10 text-[0.6rem] md:text-xs text-gray-200 mt-1">${disp}</div>`;
                     
-                    const fill = document.createElement('div');
-                    fill.className = 'daily-indicator-fill';
-                    fill.style.backgroundColor = color;
+                    // Intensity Bar
+                    const bar = document.createElement('div'); bar.className="intensity-bar";
+                    const fill = document.createElement('div'); fill.className="intensity-fill";
+                    fill.style.width = Math.min(100, ratio*100)+'%';
+                    fill.style.backgroundColor = ratio>0.5 ? '#fcd34d' : '#34d399';
+                    bar.appendChild(fill); cell.appendChild(bar);
                     
-                    // La magie du camembert via clip-path
-                    // On utilise le pourcentage pour ajuster le masque.
-                    const clipPercentage = Math.min(100, Math.max(0, percentage));
-                    
-                    // Simple remplissage vertical pour un affichage plus clair sur une petite surface
-                    fill.style.height = `${clipPercentage}%`;
-                    fill.style.top = `${100 - clipPercentage}%`;
-                    fill.style.borderRadius = '0'; // Pour l'effet barre
-
-                    // fill.style.clipPath = calculateClipPath(clipPercentage); // On reste sur un remplissage vertical simple
-                    
-                    indicator.appendChild(fill);
-                    cell.appendChild(indicator);
-
-                    // Affichage d'une valeur tronquée pour le jour
-                    const valueSpan = document.createElement('span');
-                    valueSpan.className = 'text-xs text-gray-200 mt-1';
-                    valueSpan.textContent = value.toFixed(1); // Afficher une décimale
-                    cell.appendChild(valueSpan);
-
+                    cell.title = `${k}\n${val.toFixed(2)}`;
                 } else {
-                    // Jour sans donnée (conso non encore mesurée)
-                    const placeholder = document.createElement('span');
-                    placeholder.className = 'text-xs text-gray-500 mt-1';
-                    placeholder.textContent = '---';
-                    cell.appendChild(placeholder);
+                    cell.innerHTML = `<span class="text-gray-600">${d}</span>`;
                 }
-
-                body.appendChild(cell);
-            }
-        }
-        
-        // --- 4. LOGIQUE D'INTERACTION ---
-
-        /** Ajoute un nouveau relevé. */
-        function ajouterReleve(event) {
-            event.preventDefault();
-            const inputIndex = document.getElementById('index-releve');
-            const inputDate = document.getElementById('date-releve');
-
-            const newIndex = parseFloat(inputIndex.value);
-            const newDate = inputDate.value;
-
-            if (isNaN(newIndex) || !newDate) {
-                alert('Veuillez entrer un index valide et une date.');
-                return;
-            }
-
-            let history = loadHistory();
-            
-            // Vérification de l'index : doit être > au dernier index
-            if (history.length > 0) {
-                const lastIndex = history[history.length - 1].index;
-                if (newIndex < lastIndex) {
-                    alert(`L'index saisi (${newIndex}) doit être supérieur au dernier index enregistré (${lastIndex}).`);
-                    return;
-                }
-            }
-            
-            // Vérification de l'unicité (pour éviter les doublons accidentels)
-            const isDuplicate = history.some(item => item.dateTime === newDate);
-            if (isDuplicate) {
-                alert("Un relevé existe déjà pour cette date et heure.");
-                return;
-            }
-
-            const newReleve = {
-                id: Date.now(), // Identifiant unique
-                index: newIndex,
-                dateTime: newDate,
-                isCalculated: false // Sera mis à jour dans calculateConsumptions
-            };
-
-            history.push(newReleve);
-            saveHistory(history);
-            
-            // Réinitialiser le formulaire (sauf la date pour un relevé rapide)
-            inputIndex.value = '';
-            inputIndex.focus();
-            
-            updateUI();
-        }
-        
-        /** Supprime un relevé par son ID. */
-        function removeReleve(id) {
-            let history = loadHistory();
-            history = history.filter(item => item.id !== id);
-            saveHistory(history);
-            updateUI();
-        }
-
-        /** Gère la réinitialisation de tout l'historique. */
-        function resetHistory() {
-            localStorage.removeItem('gasHistory');
-            hideConfirmationModal();
-            updateUI();
-        }
-        
-        /** Affiche la modale de confirmation. */
-        function showConfirmationModal() {
-            document.getElementById('confirmation-modal').classList.remove('hidden');
-        }
-
-        /** Masque la modale de confirmation. */
-        function hideConfirmationModal() {
-            document.getElementById('confirmation-modal').classList.add('hidden');
-        }
-        
-        /** Gère le changement de mois dans le calendrier. */
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            } else if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
-            renderCalendar();
-        }
-
-        /** Change la vue du calendrier (kWh ou Coût TTC). */
-        function setCalendarView(view) {
-            calendarView = view;
-            document.getElementById('view-kwh').classList.remove('bg-indigo-600', 'text-white');
-            document.getElementById('view-kwh').classList.add('text-gray-300', 'hover:bg-gray-500');
-            document.getElementById('view-cost').classList.remove('bg-indigo-600', 'text-white');
-            document.getElementById('view-cost').classList.add('text-gray-300', 'hover:bg-gray-500');
-            
-            if (view === 'kwh') {
-                document.getElementById('view-kwh').classList.add('bg-indigo-600', 'text-white');
-            } else {
-                document.getElementById('view-cost').classList.add('bg-indigo-600', 'text-white');
-            }
-
-            renderCalendar();
-        }
-        
-        /** Affiche/Masque les paramètres. */
-        function toggleParameters() {
-            const content = document.getElementById('parametres-content');
-            const icon = document.getElementById('param-icon');
-            const isHidden = content.classList.toggle('hidden');
-            
-            if (isHidden) {
-                icon.style.transform = 'rotate(0deg)';
-                document.querySelector('[aria-controls="parametres-content"]').setAttribute('aria-expanded', 'false');
-            } else {
-                icon.style.transform = 'rotate(-180deg)';
-                document.querySelector('[aria-controls="parametres-content"]').setAttribute('aria-expanded', 'true');
+                g.appendChild(cell);
             }
         }
 
-        // --- 5. INITIALISATION ---
-
-        /** Fonction principale d'orchestration. */
-        function updateUI() {
-            let history = loadHistory();
-            history = calculateConsumptions(history);
-            saveHistory(history); // Sauvegarde l'historique mis à jour avec les calculs
-            
-            // Mise à jour de toutes les sections
-            renderGlobalTotals(history);
-            renderHistoryTable(history);
-            calculateDailyEstimates(history);
-            renderCalendar(); 
+        function changeMonth(d) { STATE.currentDate.setMonth(STATE.currentDate.getMonth()+d); updateApp(); }
+        function setView(v) { 
+            STATE.view=v; 
+            const bk=document.getElementById('btn-view-kwh'), bc=document.getElementById('btn-view-cost');
+            if(v==='kwh'){ bk.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bc.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
+            else { bc.className="px-3 py-1.5 rounded-md bg-indigo-600 text-white"; bk.className="px-3 py-1.5 rounded-md text-gray-400 hover:text-white"; }
+            updateApp(); 
         }
-
-        // Initialisation au chargement de la page
-        window.onload = function() {
-            // Définir la date/heure actuelle dans le champ par défaut
-            const now = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            document.getElementById('date-releve').value = now;
-            
-            // Fermer les paramètres sur mobile par défaut, les laisser ouverts sur desktop
-            if (window.innerWidth < 1024) {
-                document.getElementById('parametres-content').classList.add('hidden');
-            } else {
-                document.getElementById('param-icon').style.transform = 'rotate(-180deg)';
-            }
-            
-            // Initialisation de la vue du calendrier et de l'UI
-            setCalendarView('kwh');
-            updateUI(); 
-        };
+        function toggleParams() {
+            const c=document.getElementById('params-content'), i=document.getElementById('chevron-icon');
+            if(c.classList.contains('hidden')) { c.classList.remove('hidden'); i.style.transform='rotate(180deg)'; }
+            else { c.classList.add('hidden'); i.style.transform='rotate(0deg)'; }
+        }
     </script>
-
 </body>
 </html>
