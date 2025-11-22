@@ -222,19 +222,37 @@
                     </div>
                 </section>
 
-                <!-- 3. SYNTHÈSE -->
+                <!-- 3. SYNTHÈSE DYNAMIQUE (MODIFIÉ) -->
                 <section class="card p-5">
-                    <h2 class="text-lg font-semibold text-white mb-4">Synthèse Totale</h2>
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h2 class="text-lg font-semibold text-white">Synthèse</h2>
+                        <!-- Filtres Période -->
+                        <div class="flex bg-gray-700 rounded-lg p-1 text-[0.65rem] md:text-xs">
+                            <button onclick="setSynthMode('global')" id="synth-mode-global" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Global</button>
+                            <button onclick="setSynthMode('year')" id="synth-mode-year" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Année</button>
+                            <button onclick="setSynthMode('month')" id="synth-mode-month" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Mois</button>
+                            <button onclick="setSynthMode('custom')" id="synth-mode-custom" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Période</button>
+                        </div>
+                    </div>
+
+                    <!-- Inputs Dynamiques (Date/Select) -->
+                    <div id="synth-filters" class="mb-4 text-sm text-gray-400 flex flex-wrap gap-3 items-center hidden">
+                        <!-- Injecté par JS -->
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
                             <div class="text-xs text-gray-400">Consommation</div>
                             <div class="text-xl font-bold text-blue-400" id="total-kwh">0 kWh</div>
                             <div class="text-xs text-gray-500" id="total-m3">0 m³</div>
                         </div>
-                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
                             <div class="text-xs text-gray-400">Coût TTC</div>
                             <div class="text-xl font-bold text-emerald-400" id="total-cost">0.00 €</div>
                             <div class="text-xs text-gray-500" id="total-cost-ht">HT: 0.00 €</div>
+                        </div>
+                        <div class="col-span-2 text-[0.65rem] text-center text-gray-500 italic" id="synth-period-label">
+                            Données globales
                         </div>
                     </div>
                 </section>
@@ -288,15 +306,14 @@
                     </div>
                 </section>
 
-                <!-- 6. HISTORIQUE (MODIFIÉ : Repliable) -->
+                <!-- 6. HISTORIQUE -->
                 <section class="card overflow-hidden">
                     <button onclick="toggleHistory()" class="w-full p-4 border-b border-gray-700 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 transition">
                         <h2 class="text-lg font-semibold text-white">Historique Détaillé</h2>
-                        <!-- Flèche initiale : rotated 180 (Up) car ouvert par défaut -->
                         <svg id="history-chevron" style="transform: rotate(180deg)" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     
-                    <div id="history-content"> <!-- Pas de class hidden ici car ouvert par défaut -->
+                    <div id="history-content">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-gray-400">
                                 <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs">
@@ -357,10 +374,12 @@
         const STATE = {
             history: [],
             dailyData: {},
-            monthlyData: {},
+            monthlyData: {}, // { "YYYY-MM": { kwh: 0, cost: 0 } }
             currentDate: new Date(),
             view: 'kwh',
             chartMode: 'month',
+            synthMode: 'global', // global, year, month, custom
+            synthParams: {}, // Stores filter choices
             maxVal: 1,
             maxMonthVal: 1
         };
@@ -373,12 +392,22 @@
             const iso = now.toISOString().slice(0, 16);
             document.getElementById('input-date-desktop').value = iso;
             document.getElementById('input-date-mobile').value = iso;
+            
+            // Init default synthesis params
+            STATE.synthParams = {
+                year: now.getFullYear(),
+                month: now.toISOString().slice(0,7), // YYYY-MM
+                start: new Date(now.getFullYear(), 0, 1).toISOString().slice(0,10), // 1er Jan
+                end: now.toISOString().slice(0,10)
+            };
         }
+
         function loadData() { try { const s=localStorage.getItem('gaz_data'); if(s) STATE.history=JSON.parse(s); } catch(e){ STATE.history=[]; } }
         function saveData() { localStorage.setItem('gaz_data', JSON.stringify(STATE.history)); }
         function resetAll() { if(confirm("Tout effacer ?")) { STATE.history=[]; saveData(); updateApp(); } }
         function openModal() { initInputs(); document.getElementById('mobile-modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('mobile-modal').classList.add('hidden'); }
+        
         function handleAdd(e, m) {
             e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
             const d = document.getElementById('input-date'+s).value;
@@ -389,8 +418,6 @@
             saveData(); document.getElementById('input-index'+s).value=''; if(m==='mobile') closeModal(); updateApp();
         }
         function deleteEntry(id) { if(confirm("Supprimer ?")) { STATE.history=STATE.history.filter(h=>h.id!==id); saveData(); updateApp(); } }
-
-        // --- IMPORT ADAPTÉ POUR GRDF ET CSV STANDARD ---
         function triggerImport() { document.getElementById('import-file').click(); }
         function exportData() {
             const b = new Blob([JSON.stringify(STATE.history, null, 2)], {type:"application/json"});
@@ -410,45 +437,19 @@
                     }
                 };
                 try {
-                    // 1. JSON
                     if(file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
                         JSON.parse(content).forEach(addItemIfNew);
                     } else {
-                        // 2. CSV (Standard ou GRDF)
                         const lines = content.split(/\r?\n/);
                         lines.forEach(line => {
-                            const clean = line.trim().replace(/"/g,'');
-                            if(!clean) return;
-                            
-                            let parts = clean.split(';');
-                            if(parts.length < 2) parts = clean.split(',');
-                            if(parts.length < 2) return;
-
-                            // Détection GRDF : Si col 2 est texte "Index transmis...", alors Index est en col 3
-                            // Format GRDF: Date;Type;Index;Coeff
-                            let indexRaw;
-                            if (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) {
-                                // C'est probablement GRDF, index en colonne 3 (indice 2)
-                                indexRaw = parts[2];
-                            } else {
-                                // C'est probablement Standard, index en colonne 2 (indice 1)
-                                indexRaw = parts[1];
-                            }
-                            
-                            // Nettoyage valeur index
+                            const clean = line.trim().replace(/"/g,''); if(!clean) return;
+                            let parts = clean.split(';'); if(parts.length < 2) parts = clean.split(','); if(parts.length < 2) return;
+                            let indexRaw = (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) ? parts[2] : parts[1];
                             const indexVal = parseFloat(indexRaw.replace(',','.').replace(/[^\d.-]/g,''));
-                            if(isNaN(indexVal)) return; // Skip header
-
-                            // Parsing Date
-                            const dateRaw = parts[0].trim();
-                            let dateObj = null;
-                            if(dateRaw.includes('/')) { // FR JJ/MM/AAAA
-                                const p = dateRaw.split('/');
-                                if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`);
-                            } else if(dateRaw.includes('-')) { // ISO
-                                dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`);
-                            }
-
+                            if(isNaN(indexVal)) return;
+                            const dateRaw = parts[0].trim(); let dateObj = null;
+                            if(dateRaw.includes('/')) { const p = dateRaw.split('/'); if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`); } 
+                            else if(dateRaw.includes('-')) { dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`); }
                             if(dateObj && !isNaN(dateObj.getTime())) {
                                 const offset = dateObj.getTimezoneOffset()*60000;
                                 const iso = new Date(dateObj.getTime()-offset).toISOString().slice(0,16);
@@ -471,8 +472,7 @@
 
             STATE.history.sort((a,b)=>new Date(a.date)-new Date(b.date));
             STATE.dailyData={}; STATE.monthlyData={}; STATE.maxVal=0; STATE.maxMonthVal=0;
-            let tKwh=0, tCost=0, tM3=0, tHT=0;
-
+            
             const processed = STATE.history.map((curr, i) => {
                 if(i===0) return {...curr, isStart:true};
                 const prev = STATE.history[i-1];
@@ -485,17 +485,16 @@
                 const aHT = (pAbo*12/365)*diffDays;
                 const cTTC = (cHT*(1+tvaC)) + (aHT*(1+tvaA));
 
-                tM3+=dM3; tKwh+=dKwh; tCost+=cTTC; tHT+=(cHT+aHT);
-
-                const kD = dKwh/diffDays, cD = cTTC/diffDays;
+                const kD = dKwh/diffDays, cD = cTTC/diffDays, m3D = dM3/diffDays; // Daily averages
                 let loop = new Date(prev.date); loop.setHours(12,0,0,0);
                 const stop = new Date(curr.date); stop.setHours(12,0,0,0);
                 
                 while(loop<stop) {
                     const k = loop.toISOString().slice(0,10);
                     const m = k.slice(0,7);
-                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0};
-                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD;
+                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0,m3:0};
+                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD; STATE.dailyData[k].m3+=m3D;
+                    
                     if(!STATE.monthlyData[m]) STATE.monthlyData[m]={kwh:0,cost:0};
                     STATE.monthlyData[m].kwh+=kD; STATE.monthlyData[m].cost+=cD;
                     
@@ -511,14 +510,151 @@
                 if(v>STATE.maxMonthVal) STATE.maxMonthVal=v;
             });
 
+            renderSynthesis(); // New dedicated function
+            renderHistory(processed); renderCalendar(); renderChart();
+        }
+
+        // --- SYNTHESIS & FILTERING ---
+        function setSynthMode(m) { 
+            STATE.synthMode = m; 
+            renderSynthesisInputs();
+            renderSynthesis();
+        }
+
+        function updateSynthParam(key, val) {
+            STATE.synthParams[key] = val;
+            renderSynthesis();
+        }
+
+        function renderSynthesisInputs() {
+            const c = document.getElementById('synth-filters');
+            const btns = ['global', 'year', 'month', 'custom'];
+            btns.forEach(b => {
+                const el = document.getElementById('btn-synth-'+b) || document.getElementById('synth-mode-'+b);
+                const active = b === STATE.synthMode;
+                el.className = active 
+                    ? "px-2 py-1 rounded transition bg-indigo-600 text-white shadow" 
+                    : "px-2 py-1 rounded transition text-gray-300 hover:text-white";
+            });
+
+            if (STATE.synthMode === 'global') {
+                c.classList.add('hidden');
+                return;
+            }
+            c.classList.remove('hidden');
+            c.innerHTML = '';
+
+            if (STATE.synthMode === 'year') {
+                // Populate years based on data
+                const years = new Set();
+                Object.keys(STATE.dailyData).forEach(k => years.add(k.substring(0,4)));
+                if(years.size === 0) years.add(new Date().getFullYear());
+                
+                const sel = document.createElement('select');
+                sel.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
+                Array.from(years).sort().reverse().forEach(y => {
+                    const opt = document.createElement('option'); opt.value = y; opt.text = y;
+                    if(y == STATE.synthParams.year) opt.selected = true;
+                    sel.appendChild(opt);
+                });
+                sel.onchange = (e) => updateSynthParam('year', e.target.value);
+                c.appendChild(sel);
+            }
+            else if (STATE.synthMode === 'month') {
+                const inp = document.createElement('input');
+                inp.type = "month";
+                inp.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
+                inp.value = STATE.synthParams.month;
+                inp.onchange = (e) => updateSynthParam('month', e.target.value);
+                c.appendChild(inp);
+            }
+            else if (STATE.synthMode === 'custom') {
+                const s = document.createElement('input'); s.type="date"; s.value=STATE.synthParams.start;
+                s.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
+                s.onchange=(e)=>updateSynthParam('start', e.target.value);
+                
+                const arrow = document.createElement('span'); arrow.textContent="à";
+                
+                const e = document.createElement('input'); e.type="date"; e.value=STATE.synthParams.end;
+                e.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
+                e.onchange=(evt)=>updateSynthParam('end', evt.target.value);
+                
+                c.append(s, arrow, e);
+            }
+        }
+
+        function renderSynthesis() {
+            renderSynthesisInputs(); // Refresh active state visually
+            
+            let start=null, end=null;
+            let label = "Données globales";
+
+            // Define range
+            if (STATE.synthMode === 'global') {
+                // No range limit (or min/max of history)
+            } else if (STATE.synthMode === 'year') {
+                start = new Date(STATE.synthParams.year, 0, 1); // Jan 1
+                end = new Date(STATE.synthParams.year, 11, 31); // Dec 31
+                label = `Année ${STATE.synthParams.year}`;
+            } else if (STATE.synthMode === 'month') {
+                const [y, m] = STATE.synthParams.month.split('-');
+                start = new Date(y, m-1, 1);
+                end = new Date(y, m, 0); // Last day of month
+                label = start.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
+            } else if (STATE.synthMode === 'custom') {
+                start = new Date(STATE.synthParams.start);
+                end = new Date(STATE.synthParams.end);
+                label = `Du ${start.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`;
+            }
+
+            let tKwh=0, tCost=0, tM3=0, tHT=0;
+            const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
+            const tvaC=getVal('p-tva-conso',20)/100, tvaA=getVal('p-tva-abo',5.5)/100;
+            const pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72);
+
+            // Sum daily data within range
+            Object.keys(STATE.dailyData).forEach(k => {
+                const d = new Date(k);
+                if (start && d < start) return;
+                if (end && d > end) return;
+
+                const day = STATE.dailyData[k];
+                tKwh += day.kwh;
+                tCost += day.cost;
+                tM3 += day.m3;
+                
+                // Reconstituer HT approx (un peu complexe car cost est TTC, mais on a les params)
+                // cost = (kwh*pKwh*1.2) + (abo*1.055)
+                // On va simplifier : on recalcule HT basé sur KWH et nb Jours
+            });
+
+            // Recalculer HT pour la synthèse affichée (plus précis)
+            // Pour simplifier on va sommer le HT proportionnellement ou le déduire du TTC moyen
+            // Mais comme on a accumulé daily.cost (TTC), on peut juste afficher ça.
+            // Pour le HT, on va utiliser une approximation inverse moyenne ou sommer si on stockait HT
+            // Astuce: On va recalculer HT basé sur les sommes KWH et le nombre de jours couverts
+            // Nombre de jours avec données dans la période :
+            const daysWithData = Object.keys(STATE.dailyData).filter(k => {
+                const d = new Date(k);
+                return (!start || d >= start) && (!end || d <= end);
+            }).length;
+            
+            if (daysWithData > 0) {
+                const costConsoHT = tKwh * pKwh;
+                const costAboHT = (pAbo * 12 / 365) * daysWithData;
+                tHT = costConsoHT + costAboHT;
+            } else {
+                tHT = 0;
+            }
+
             document.getElementById('total-kwh').textContent=Math.round(tKwh).toLocaleString()+' kWh';
             document.getElementById('total-m3').textContent=tM3.toFixed(1)+' m³';
             document.getElementById('total-cost').textContent=tCost.toFixed(2)+' €';
             document.getElementById('total-cost-ht').textContent='HT: '+tHT.toFixed(2)+' €';
-
-            renderHistory(processed); renderCalendar(); renderChart();
+            document.getElementById('synth-period-label').textContent = label;
         }
 
+        // --- RENDERERS ---
         function renderHistory(data) {
             const b=document.getElementById('history-body'), e=document.getElementById('empty-msg');
             b.innerHTML=''; if(data.length===0) {e.classList.remove('hidden'); return;} e.classList.add('hidden');
