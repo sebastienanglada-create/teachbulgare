@@ -3,706 +3,756 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi Consommation de Gaz Naturel - Réel (TTC)</title>
-    <!-- Chargement de Tailwind CSS pour un style moderne et responsive -->
+    <title>Suivi de Consommation Gaz</title>
+    <!-- Chargement de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Chargement de Chart.js pour les graphiques -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* Configuration de la police Inter et du style général */
+        /* Configuration du mode sombre et de la police */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fc;
+            background-color: #1f2937; /* Gris foncé pour le fond */
+            color: #f3f4f6; /* Texte clair */
         }
-        /* Style des cartes */
-        .card {
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        .bg-card {
+            background-color: #374151; /* Couleur de carte plus claire que le fond */
         }
-        /* Style pour la modale */
-        .modal-overlay {
-            position: fixed;
+        /* Styles pour le calendrier */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .day-cell {
+            padding: 4px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            background-color: #4b5563; /* Fond des jours */
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .day-cell:hover {
+            background-color: #6b7280;
+        }
+        .current-month {
+            background-color: #4b5563;
+        }
+        /* Style du camembert */
+        .daily-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            margin-top: 4px;
+            position: relative;
+        }
+        .daily-indicator-fill {
+            position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
+            border-radius: 50%;
+            clip-path: polygon(50% 50%, 50% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 0%, 50% 0%); /* Masque initial */
+            transform-origin: 50% 50%;
+            transition: clip-path 0.5s;
         }
-        .hidden {
-            display: none;
-        }
-        
-        /* IMPRESSION: Cacher ce qui n'est pas nécessaire lors de l'impression */
+
+        /* Améliorations pour l'impression */
         @media print {
             .print-hidden {
                 display: none !important;
             }
             body {
-                background-color: white;
-                margin: 0;
-                padding: 0;
+                background-color: white !important;
+                color: black !important;
             }
-            /* Assurez-vous que le contenu principal prend toute la largeur */
-            .max-w-4xl {
-                max-width: 100% !important;
+            .bg-card {
+                background-color: white !important;
+                box-shadow: none !important;
+                border: 1px solid #ccc !important;
+            }
+            /* Assurer que le texte du calendrier reste lisible */
+            .calendar-title, .day-cell {
+                color: black !important;
+            }
+            .daily-indicator-fill {
+                 /* Assurer que le camembert s'imprime bien */
+                 background-color: #10b981 !important;
             }
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
+<body class="p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto">
+    <div class="max-w-6xl mx-auto space-y-8">
         
-        <!-- ESPACE LAISSÉ VIDE EN HAUT (Le bouton Imprimer est déplacé vers le bas) -->
-        
-        <header class="text-center mb-10">
-            <h1 class="text-3xl font-extrabold text-blue-800 sm:text-4xl">
-                Suivi Factual de Consommation de Gaz Naturel
-            </h1>
-            <p class="mt-2 text-lg text-gray-600">
-                Entrez vos relevés de compteur (en m³) pour calculer la consommation **réelle** et les coûts HT/TTC.
-            </p>
+        <!-- EN-TÊTE ET BOUTON IMPRIMER -->
+        <header class="flex justify-between items-center pb-4 border-b border-gray-700 print-hidden">
+            <h1 class="text-3xl font-bold text-white">Suivi Gazpar (Gaz Naturel)</h1>
+            <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition duration-300 transform hover:scale-105" aria-label="Imprimer ce rapport">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm7 9a1 1 0 100 2 1 1 0 000-2zm-5 0a1 1 0 100 2 1 1 0 000-2zm0-4a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zM4 2a2 2 0 00-2 2v2h16V4a2 2 0 00-2-2H4z" clip-rule="evenodd" /></svg>
+                Imprimer
+            </button>
         </header>
 
-        <!-- Section de Saisie des Index (à masquer à l'impression) -->
-        <section id="input-section" class="card bg-white p-6 rounded-xl mb-8 border border-blue-200 print-hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3 .895 3 2s-1.343 2-3 2a3.175 3.175 0 01-2.581-1.234l-4.242 4.242A9.914 9.914 0 0015.5 17H18v-2.5a2.5 2.5 0 11-5 0V17H9.5a7.5 7.5 0 01-5.657-2.543l4.242-4.242A3.175 3.175 0 0112 8z"></path></svg>
-                Nouveau Relevé
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="col-span-1">
-                    <!-- Utilisation de datetime-local pour la date et l'heure -->
-                    <label for="date-releve" class="block text-sm font-medium text-gray-700">Date & Heure du Relevé</label>
-                    <input type="datetime-local" id="date-releve" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" required>
+        <!-- CONTENU PRINCIPAL EN GRILLE -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- COLONNE GAUCHE (SAISIE & PARAMÈTRES) -->
+            <div class="lg:col-span-1 space-y-6 print-hidden">
+                
+                <!-- 1. FORMULAIRE DE NOUVEAU RELEVÉ -->
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
+                    <h2 class="text-2xl font-semibold mb-4 text-white">Nouveau Relevé</h2>
+                    <form id="releve-form" onsubmit="ajouterReleve(event)">
+                        <div class="space-y-4">
+                            <!-- Date et Heure -->
+                            <div>
+                                <label for="date-releve" class="block text-sm font-medium text-gray-300 mb-1">Date et Heure du Relevé</label>
+                                <input type="datetime-local" id="date-releve" required class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            <!-- Index en m³ -->
+                            <div>
+                                <label for="index-releve" class="block text-sm font-medium text-gray-300 mb-1">Index Compteur (m³)</label>
+                                <input type="number" id="index-releve" step="0.001" required placeholder="05352.980" autofocus class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                            </div>
+                            
+                            <button type="submit" class="w-full flex justify-center items-center space-x-2 px-4 py-3 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-700 transition duration-300 shadow-md">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 6h12a1 1 0 011 1v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a1 1 0 011-1zm0-3a2 2 0 00-2 2v10a4 4 0 004 4h10a4 4 0 004-4V5a2 2 0 00-2-2H4zM9 9a1 1 0 011-1h1a1 1 0 110 2H9a1 1 0 01-1-1zm0 4a1 1 0 011-1h1a1 1 0 110 2H9a1 1 0 01-1-1z" /></svg>
+                                <span>Ajouter le Relevé</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                <div class="col-span-1">
-                    <label for="index-m3" class="block text-sm font-medium text-gray-700">Index Compteur (m³)</label>
-                    <input type="number" id="index-m3" placeholder="Ex: 5352.9" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500" required>
+
+                <!-- 2. PARAMÈTRES DE FACTURATION (Rétractable) -->
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
+                    <button onclick="toggleParameters()" class="w-full flex justify-between items-center text-xl font-semibold text-white mb-4" aria-expanded="false" aria-controls="parametres-content">
+                        <span>Paramètres de Facturation</span>
+                        <svg id="param-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    <div id="parametres-content" class="space-y-4 hidden lg:block">
+                        <!-- Coefficient Gaz -->
+                        <div>
+                            <label for="coef-gaz" class="block text-sm font-medium text-gray-300 mb-1">Coefficient de Conversion Gaz (kWh/m³)</label>
+                            <input type="number" id="coef-gaz" value="11.361" step="0.001" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <!-- Prix kWh HT -->
+                        <div>
+                            <label for="prix-kwh-ht" class="block text-sm font-medium text-gray-300 mb-1">Prix du kWh (HT €)</label>
+                            <input type="number" id="prix-kwh-ht" value="0.0777" step="0.0001" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <!-- Prix Abonnement HT/mois -->
+                        <div>
+                            <label for="prix-abonnement-ht" class="block text-sm font-medium text-gray-300 mb-1">Abonnement Mensuel (HT €)</label>
+                            <input type="number" id="prix-abonnement-ht" value="16.72" step="0.01" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <!-- TVA Consommation -->
+                        <div>
+                            <label for="tva-conso" class="block text-sm font-medium text-gray-300 mb-1">TVA Consommation (%)</label>
+                            <input type="number" id="tva-conso" value="20.0" step="0.1" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <!-- TVA Abonnement -->
+                        <div>
+                            <label for="tva-abo" class="block text-sm font-medium text-gray-300 mb-1">TVA Abonnement (%)</label>
+                            <input type="number" id="tva-abo" value="5.5" step="0.1" onchange="updateUI()" class="w-full p-3 bg-gray-600 border border-gray-700 rounded-lg text-white focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                    </div>
                 </div>
-                <div class="col-span-1 flex items-end">
-                    <button onclick="ajouterReleve()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-150 ease-in-out transform hover:scale-[1.01]">
-                        Ajouter le Relevé
+
+                <!-- 3. SYNTHÈSE GLOBALE -->
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
+                    <h2 class="text-2xl font-semibold mb-4 text-white">Synthèse Globale</h2>
+                    <dl class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-300">Nombre de Relevés :</dt>
+                            <dd id="total-releves" class="font-bold text-indigo-400">0</dd>
+                        </div>
+                        <div class="flex justify-between border-t border-gray-700 pt-3">
+                            <dt class="text-gray-300">Conso Totale Estimée (m³) :</dt>
+                            <dd id="total-m3" class="font-bold">0 m³</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-300">Conso Totale Estimée (kWh) :</dt>
+                            <dd id="total-kwh" class="font-bold">0 kWh</dd>
+                        </div>
+                        <div class="flex justify-between border-t border-gray-700 pt-3">
+                            <dt class="text-gray-300">Coût Tot. Conso (HT) :</dt>
+                            <dd id="total-cout-ht" class="font-bold text-yellow-400">0,00 €</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-300">Coût Tot. Conso (TTC) :</dt>
+                            <dd id="total-cout-ttc" class="font-bold text-emerald-400">0,00 €</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- COLONNE DROITE (CALENDRIER ET HISTORIQUE) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- 4. CALENDRIER DE CONSOMMATION -->
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
+                    <h2 class="text-2xl font-semibold text-white mb-4">Consommation Journalière Estimée</h2>
+                    
+                    <!-- Sélecteur de Vue et Navigation -->
+                    <div class="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-3 sm:space-y-0">
+                        <div class="flex space-x-2">
+                            <button onclick="changeMonth(-1)" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 transition duration-150" aria-label="Mois précédent">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <span id="calendar-title" class="text-xl font-bold text-white calendar-title"></span>
+                            <button onclick="changeMonth(1)" class="p-2 rounded-full bg-gray-600 hover:bg-gray-500 transition duration-150" aria-label="Mois suivant">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-300" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                        <div class="flex space-x-3 bg-gray-600 p-1 rounded-lg">
+                            <button onclick="setCalendarView('kwh')" id="view-kwh" class="px-3 py-1 text-sm font-medium rounded-md bg-indigo-600 text-white transition duration-200">kWh</button>
+                            <button onclick="setCalendarView('cost')" id="view-cost" class="px-3 py-1 text-sm font-medium rounded-md text-gray-300 hover:bg-gray-500 transition duration-200">Coût TTC</button>
+                        </div>
+                    </div>
+                    
+                    <!-- En-têtes des Jours de la Semaine -->
+                    <div class="calendar-grid mb-2 text-sm font-medium text-gray-400">
+                        <span>Lun</span><span>Mar</span><span>Mer</span><span>Jeu</span><span>Ven</span><span>Sam</span><span>Dim</span>
+                    </div>
+
+                    <!-- Grille du Calendrier -->
+                    <div id="calendar-body" class="calendar-grid">
+                        <!-- Les jours seront injectés ici par JS -->
+                    </div>
+                    
+                    <!-- Légende -->
+                    <div class="mt-4 text-sm text-gray-400">
+                        <p>Le cercle (camembert) indique la proportion de la consommation du jour par rapport au jour le plus consommateur de votre historique.</p>
+                    </div>
+                </div>
+
+                <!-- 5. HISTORIQUE DÉTAILLÉ -->
+                <div class="bg-card p-6 rounded-xl shadow-lg border border-gray-700">
+                    <h2 class="text-2xl font-semibold mb-4 text-white">Historique des Périodes</h2>
+                    <div class="overflow-x-auto rounded-lg">
+                        <table class="min-w-full divide-y divide-gray-700">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Index Final (m³)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Période (J)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Conso (kWh)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Coût HT (€)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider text-emerald-400">Coût TTC (€)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider print-hidden">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="history-table-body" class="divide-y divide-gray-700 bg-gray-800">
+                                <!-- Lignes d'historique injectées ici par JS -->
+                            </tbody>
+                        </table>
+                        <div id="no-history-message" class="text-center py-4 text-gray-400 hidden">
+                            Aucun relevé enregistré. Commencez par ajouter votre premier index !
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. BOUTONS D'ACTION EN BAS -->
+                <div class="mt-8 flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 print-hidden">
+                    <!-- Bouton Imprimer (dupliqué pour l'ergonomie en bas) -->
+                    <button onclick="window.print()" class="px-6 py-3 bg-indigo-600 text-white font-bold rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:scale-105" aria-label="Imprimer le rapport de consommation">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm7 9a1 1 0 100 2 1 1 0 000-2zm-5 0a1 1 0 100 2 1 1 0 000-2zm0-4a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zM4 2a2 2 0 00-2 2v2h16V4a2 2 0 00-2-2H4z" clip-rule="evenodd" /></svg>
+                        Imprimer ce Rapport
+                    </button>
+
+                    <!-- Bouton Réinitialiser -->
+                    <button onclick="showConfirmationModal()" class="px-6 py-3 bg-red-600 text-white font-bold rounded-lg shadow-lg hover:bg-red-700 transition duration-300 transform hover:scale-105" aria-label="Réinitialiser tout l'historique">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 10-2 0v6a1 1 0 102 0V8z" clip-rule="evenodd" /></svg>
+                        Réinitialiser l'Historique
                     </button>
                 </div>
             </div>
-            <p id="message-erreur" class="text-red-500 mt-2 hidden"></p>
-        </section>
-
-
-        <!-- Section des Paramètres et Coûts (à masquer à l'impression) -->
-        <section class="card bg-white p-6 rounded-xl mb-8 border border-green-200 print-hidden">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.308 2.368a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.368 2.308a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.308-2.368a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.368-2.308a1.724 1.724 0 002.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                Paramètres de Facturation
-            </h2>
-            <div class="grid grid-cols-1 sm:grid-cols-5 gap-4">
-                <div>
-                    <label for="coef-gaz" class="block text-sm font-medium text-gray-700">Coef. Conversion (kWh/m³)</label>
-                    <input type="number" id="coef-gaz" value="11.361" step="0.001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
-                </div>
-                <div>
-                    <label for="prix-kwh" class="block text-sm font-medium text-gray-700">Prix du kWh HT (€)</label>
-                    <input type="number" id="prix-kwh" value="0.0777" step="0.0001" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
-                </div>
-                <div>
-                    <label for="prix-abonnement" class="block text-sm font-medium text-gray-700">Abonnement Mensuel HT (€)</label>
-                    <input type="number" id="prix-abonnement" value="16.72" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
-                </div>
-                <!-- CHAMP TVA CONSO -->
-                <div>
-                    <label for="tva-kwh" class="block text-sm font-medium text-gray-700">TVA Conso (%)</label>
-                    <input type="number" id="tva-kwh" value="20.0" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
-                </div>
-                <!-- CHAMP TVA ABONNEMENT -->
-                <div>
-                    <label for="tva-abonnement" class="block text-sm font-medium text-gray-700">TVA Abo (%)</label>
-                    <input type="number" id="tva-abonnement" value="5.5" step="0.1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 focus:ring-green-500 focus:border-green-500">
-                </div>
-            </div>
-            <div class="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-700">
-                <p>⚠️ Ces valeurs sont basées sur votre facture Gaz (Avantage Gaz Optimisé). Ajustez les prix, coefficients et TVA si votre contrat change.</p>
-            </div>
-        </section>
-        
-        <!-- Section de Synthèse Globale -->
-        <section class="card bg-white p-6 rounded-xl mb-8 border border-yellow-300">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Synthèse Globale (Depuis le premier relevé)
-            </h2>
-            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 text-center">
-                <!-- Total Relevés -->
-                <div class="p-3 bg-indigo-50 rounded-lg">
-                    <p class="text-sm font-medium text-gray-500">Relevés Enregistrés</p>
-                    <p id="total-releves" class="text-2xl font-bold text-indigo-700 mt-1">0</p>
-                </div>
-                <!-- Total m³ -->
-                <div class="p-3 bg-blue-50 rounded-lg">
-                    <p class="text-sm font-medium text-gray-500">Conso Totale (m³)</p>
-                    <p id="total-m3" class="text-2xl font-bold text-blue-700 mt-1">0.00</p>
-                </div>
-                <!-- Total kWh -->
-                <div class="p-3 bg-purple-50 rounded-lg">
-                    <p class="text-sm font-medium text-gray-500">Conso Totale (kWh)</p>
-                    <p id="total-kwh" class="text-2xl font-bold text-purple-700 mt-1">0.00</p>
-                </div>
-                <!-- Total Coût HT -->
-                <div class="p-3 bg-green-50 rounded-lg">
-                    <p class="text-sm font-medium text-gray-500">Coût Tot. Conso (HT)</p>
-                    <p id="total-cout-ht" class="text-2xl font-bold text-green-700 mt-1">0.00 €</p>
-                </div>
-                <!-- Total Coût TTC -->
-                <div class="p-3 bg-emerald-100 rounded-lg">
-                    <p class="text-sm font-medium text-gray-500">Coût Tot. Conso (TTC)</p>
-                    <p id="total-cout-ttc" class="text-2xl font-bold text-emerald-800 mt-1">0.00 €</p>
-                </div>
-            </div>
-            <p class="text-sm text-gray-500 mt-4 p-2 bg-yellow-50 rounded-lg">
-                * Les coûts totaux représentent l'accumulation des coûts des kWh consommés entre le premier et le dernier relevé (hors abonnement).
-            </p>
-        </section>
-        
-        <!-- Section du Graphique de Consommation -->
-        <section class="card bg-white p-6 rounded-xl mb-8 border border-purple-200">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l2-2 2 2 4-4 2 2M12 21a9 9 0 009-9h-2.5A6.5 6.5 0 0112 18.5 6.5 6.5 0 015.5 12 6.5 6.5 0 0112 5.5V3A9 9 0 003 12a9 9 0 009 9z"></path></svg>
-                Évolution Mensuelle (kWh)
-            </h2>
-            <div class="h-64 sm:h-80">
-                <canvas id="consoChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Section de l'Historique Détaillé -->
-        <section class="card bg-white p-6 rounded-xl mb-8 border border-red-200">
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
-                <svg class="w-6 h-6 mr-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Historique des Relevés et Coûts Réels
-            </h2>
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date & Heure</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Index (m³)</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (m³)</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conso (kWh)</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût HT (€)</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coût TTC (€)</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider print-hidden">Actions</th> <!-- Cacher la colonne Actions à l'impression -->
-                        </tr>
-                    </thead>
-                    <tbody id="historique-body" class="bg-white divide-y divide-gray-200">
-                        <!-- Les lignes seront insérées ici par JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-            <p class="text-sm text-gray-500 mt-4 p-2 bg-gray-50 rounded-lg">
-                * Le coût est calculé pour la consommation (kWh) réalisée entre ce relevé et le précédent, hors abonnement.
-            </p>
-        </section>
-
-        <!-- NOUVEAU EMPLACEMENT: Bouton Imprimer (sera caché lors de l'impression) -->
-        <div class="print-hidden flex justify-center mb-6">
-            <button 
-                onclick="window.print()" 
-                class="flex items-center space-x-2 px-6 py-3 bg-pink-600 text-white font-semibold rounded-lg shadow-xl hover:bg-pink-700 transition duration-300 transform hover:scale-[1.02] focus:outline-none focus:ring-4 focus:ring-pink-500 focus:ring-opacity-50"
-                aria-label="Imprimer le rapport de consommation"
-            >
-                <!-- Icône d'imprimante (SVG inline) -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5 4v2a2 2 0 002 2h6a2 2 0 002-2V4h2a2 2 0 012 2v6a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2zm7 9a1 1 0 100 2 1 1 0 000-2zm-5 0a1 1 0 100 2 1 1 0 000-2zm0-4a1 1 0 100 2 1 1 0 000-2zm5 0a1 1 0 100 2 1 1 0 000-2zM4 2a2 2 0 00-2 2v2h16V4a2 2 0 00-2-2H4z" clip-rule="evenodd" />
-                </svg>
-                <span>Imprimer ce Rapport</span>
-            </button>
         </div>
 
-
-        <!-- Bouton de Réinitialisation (à masquer à l'impression) -->
-        <div class="flex justify-center mb-10 mt-6 print-hidden">
-            <button onclick="showResetConfirmation()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-xl text-lg transition duration-200 ease-in-out transform hover:scale-[1.02] shadow-xl flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                Réinitialiser l'Historique COMPLET
-            </button>
-        </div>
     </div>
-    
-    <!-- MODALE DE CONFIRMATION DE RÉINITIALISATION (à masquer à l'impression) -->
-    <div id="reset-modal" class="modal-overlay hidden print-hidden">
-        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full transform transition-all">
-            <h3 class="text-xl font-bold text-red-600 mb-4 flex items-center">
-                 <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                Confirmation Requise
-            </h3>
-            <p class="text-gray-700 mb-6">
-                Êtes-vous sûr de vouloir **réinitialiser l'intégralité** de l'historique de consommation ? Cette action est irréversible et effacera toutes les données enregistrées.
-            </p>
-            <div class="flex justify-end space-x-3">
-                <button onclick="hideResetConfirmation()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-150">
+
+    <!-- MODALE DE CONFIRMATION (Cachée par défaut) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 hidden print-hidden">
+        <div class="bg-card p-8 rounded-xl shadow-2xl max-w-sm w-full border border-gray-700">
+            <h3 class="text-xl font-bold text-red-400 mb-4">Confirmation Requise</h3>
+            <p class="text-gray-300 mb-6">Êtes-vous absolument certain de vouloir effacer tout l'historique de consommation ? Cette action est irréversible.</p>
+            <div class="flex justify-end space-x-4">
+                <button onclick="hideConfirmationModal()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition duration-200">
                     Annuler
                 </button>
-                <button onclick="resetData()" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150">
-                    Oui, Tout Effacer
+                <button onclick="resetHistory()" class="px-4 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-200">
+                    Confirmer l'Effacement
                 </button>
             </div>
         </div>
     </div>
 
+    <!-- SCRIPT JAVASCRIPT -->
     <script>
-        // Clé de stockage local pour l'historique
-        const STORAGE_KEY = 'gazConsumptionHistory';
+        // Définition de la variable pour le formatage monétaire (locale française)
+        const currencyFormatter = new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR'
+        });
+
+        // Définition de la variable pour le formatage numérique (locale française)
+        const numberFormatter = new Intl.NumberFormat('fr-FR', {
+            minimumFractionDigits: 3,
+            maximumFractionDigits: 3
+        });
         
-        // Initialisation de la variable de graphique
-        let chartInstance;
+        // État du calendrier
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let calendarView = 'kwh'; // 'kwh' ou 'cost'
+        
+        // Cache pour les données journalières estimées
+        let dailyEstimates = {}; 
+        let maxDailyValue = 1; // Valeur max pour l'échelle du camembert
+        
+        // --- 1. FONCTIONS UTILITAIRES DE L'HISTORIQUE ---
 
-        // --- Fonctions de Gestion des Données ---
-
-        /**
-         * Charge l'historique des relevés depuis le stockage local.
-         * @returns {Array<Object>} Tableau des relevés triés par date et heure.
-         */
+        /** Charge l'historique depuis le localStorage. */
         function loadHistory() {
-            try {
-                const history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-                // Trier par date (qui inclut l'heure car nous utilisons datetime-local)
-                return history.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
-            } catch (e) {
-                console.error("Erreur lors du chargement de l'historique:", e);
-                return [];
+            const history = JSON.parse(localStorage.getItem('gasHistory')) || [];
+            // Assure que l'historique est trié par date (le plus récent à la fin)
+            history.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+            return history;
+        }
+
+        /** Sauvegarde l'historique dans le localStorage. */
+        function saveHistory(history) {
+            localStorage.setItem('gasHistory', JSON.stringify(history));
+        }
+
+        // --- 2. LOGIQUE DE CALCUL ---
+
+        /** Récupère la valeur d'un paramètre. */
+        function getParamValue(id) {
+            return parseFloat(document.getElementById(id).value) || 0;
+        }
+
+        /** Calcule la consommation et les coûts pour chaque période de l'historique. */
+        function calculateConsumptions(history) {
+            if (history.length < 2) return history;
+
+            const coefGaz = getParamValue('coef-gaz');
+            const prixKwhHT = getParamValue('prix-kwh-ht');
+            const tvaConso = getParamValue('tva-conso') / 100;
+            
+            // Calculer les consommations
+            for (let i = 1; i < history.length; i++) {
+                const prev = history[i - 1];
+                const current = history[i];
+                
+                // Calcul de la période
+                const dateStart = new Date(prev.dateTime);
+                const dateEnd = new Date(current.dateTime);
+                const diffTime = Math.abs(dateEnd - dateStart);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                
+                // Consommation
+                const consoM3 = current.index - prev.index;
+                const consoKwh = consoM3 * coefGaz;
+                
+                // Coûts
+                const coutHT = consoKwh * prixKwhHT;
+                const coutTTC = coutHT * (1 + tvaConso);
+
+                // Ajout des résultats à l'enregistrement actuel
+                current.consoM3 = consoM3;
+                current.consoKwh = consoKwh;
+                current.diffDays = diffDays;
+                current.coutHT = coutHT;
+                current.coutTTC = coutTTC;
+                current.isCalculated = true; // Marque comme calculé
+            }
+            return history;
+        }
+
+        /** Répartit la consommation de chaque période sur les jours du calendrier. */
+        function calculateDailyEstimates(history) {
+            dailyEstimates = {};
+            maxDailyValue = 1; // Reset max value
+            
+            // S'il n'y a pas assez de données pour un calcul, sortir
+            if (history.length < 2) return;
+
+            // Variables de calcul
+            const prixAbonnementHT = getParamValue('prix-abonnement-ht');
+            const tvaAbo = getParamValue('tva-abo') / 100;
+            const coutAboTTC = prixAbonnementHT * (1 + tvaAbo);
+
+            for (let i = 1; i < history.length; i++) {
+                const prev = history[i - 1];
+                const current = history[i];
+
+                if (!current.isCalculated) continue; // Sauter si non calculé
+
+                const dateStart = new Date(prev.dateTime);
+                const dateEnd = new Date(current.dateTime);
+                
+                // Si la période est très courte, attribuer la conso au jour final
+                let diffDays = current.diffDays;
+                if (diffDays === 0) diffDays = 1; 
+
+                // Calcul des moyennes journalières
+                const avgKwhDay = current.consoKwh / diffDays;
+                // Calcul du coût journalier TTC (Conso + Abonnement réparti)
+                const avgCostDay = (current.coutTTC + (coutAboTTC * current.diffDays / 30.4375)) / diffDays; 
+                // Note: 30.4375 est la moyenne de jours dans un mois (365.25 / 12)
+
+                // Remplissage du cache journalier
+                for (let d = new Date(dateStart); d < dateEnd; d.setDate(d.getDate() + 1)) {
+                    // Création de la clé 'AAAA-MM-JJ'
+                    const dateKey = d.toISOString().split('T')[0];
+                    
+                    // Stockage des moyennes
+                    dailyEstimates[dateKey] = {
+                        kwh: avgKwhDay,
+                        cost: avgCostDay
+                    };
+                    
+                    // Mise à jour de la valeur maximale pour l'échelle du calendrier
+                    maxDailyValue = Math.max(maxDailyValue, avgKwhDay, avgCostDay);
+                }
             }
         }
+        
+        // --- 3. LOGIQUE D'AFFICHAGE (RENDER) ---
 
-        /**
-         * Sauvegarde l'historique dans le stockage local.
-         * @param {Array<Object>} history - Le tableau des relevés à sauvegarder.
-         */
-        function saveHistory(history) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+        /** Met à jour la carte de synthèse globale. */
+        function renderGlobalTotals(history) {
+            const totalReleves = history.length;
+            const calculatedHistory = history.filter(item => item.isCalculated);
+
+            // Calculer les sommes (le premier relevé n'a pas de conso)
+            const sumM3 = calculatedHistory.reduce((acc, curr) => acc + curr.consoM3, 0);
+            const sumKwh = calculatedHistory.reduce((acc, curr) => acc + curr.consoKwh, 0);
+            const sumCoutHT = calculatedHistory.reduce((acc, curr) => acc + curr.coutHT, 0);
+            const sumCoutTTC = calculatedHistory.reduce((acc, curr) => acc + curr.coutTTC, 0);
+
+            // Affichage
+            document.getElementById('total-releves').textContent = totalReleves;
+            document.getElementById('total-m3').textContent = numberFormatter.format(sumM3) + ' m³';
+            document.getElementById('total-kwh').textContent = numberFormatter.format(sumKwh) + ' kWh';
+            document.getElementById('total-cout-ht').textContent = currencyFormatter.format(sumCoutHT);
+            document.getElementById('total-cout-ttc').textContent = currencyFormatter.format(sumCoutTTC);
         }
 
-        /**
-         * Calcule la consommation, les coûts HT et TTC entre deux relevés consécutifs.
-         * @param {Array<Object>} history - L'historique des relevés triés.
-         * @returns {Array<Object>} L'historique enrichi des consommations et coûts.
-         */
-        function calculateConsumptions(history) {
-            // Récupérer les paramètres actuels du formulaire
-            const coefGaz = parseFloat(document.getElementById('coef-gaz').value) || 11.361;
-            const prixKwh = parseFloat(document.getElementById('prix-kwh').value) || 0.0777;
+        /** Génère le tableau de l'historique détaillé. */
+        function renderHistoryTable(history) {
+            const body = document.getElementById('history-table-body');
+            body.innerHTML = ''; // Nettoyer le tableau
             
-            // NOUVEAUX PARAMÈTRES TVA (TVA Consommation)
-            const tvaKwhRate = parseFloat(document.getElementById('tva-kwh').value) / 100 || 0.20; 
-            // La TVA Abonnement (tva-abonnement) n'est pas utilisée ici car nous ne calculons que le coût de la consommation variable.
+            if (history.length === 0) {
+                document.getElementById('no-history-message').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('no-history-message').classList.add('hidden');
 
-            const calculatedHistory = [];
 
-            for (let i = 0; i < history.length; i++) {
-                // Utiliser dateTime pour la référence
-                const current = { ...history[i], indexM3: parseFloat(history[i].indexM3), dateTime: history[i].dateTime };
+            history.forEach((item, index) => {
+                const row = body.insertRow();
+                row.className = 'hover:bg-gray-700 transition duration-150';
+
+                // 1. Date et Heure
+                const date = new Date(item.dateTime);
+                const dateStr = date.toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                row.insertCell().textContent = dateStr;
+
+                // 2. Index Final
+                row.insertCell().textContent = numberFormatter.format(item.index);
+
+                // 3. Période (J) / Conso (kWh) / Coût (HT) / Coût (TTC)
+                if (item.isCalculated) {
+                    row.insertCell().textContent = item.diffDays + ' J';
+                    row.insertCell().textContent = numberFormatter.format(item.consoKwh);
+                    row.insertCell().textContent = currencyFormatter.format(item.coutHT);
+                    const ttcCell = row.insertCell();
+                    ttcCell.className = 'font-bold text-emerald-400';
+                    ttcCell.textContent = currencyFormatter.format(item.coutTTC);
+                } else {
+                    // Pour le premier relevé
+                    row.insertCell().textContent = '---';
+                    row.insertCell().textContent = '---';
+                    row.insertCell().textContent = '---';
+                    row.insertCell().textContent = '---';
+                }
                 
-                let consoM3 = 0;
-                let consoKWh = 0;
-                let coutHT = 0;
-                let coutTTC = 0; // Initialisation du coût TTC
+                // 7. Action (Supprimer)
+                const actionCell = row.insertCell();
+                actionCell.className = 'print-hidden';
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'X';
+                deleteButton.className = 'text-red-500 hover:text-red-400 font-bold p-1 rounded';
+                deleteButton.onclick = () => removeReleve(item.id);
+                actionCell.appendChild(deleteButton);
+            });
+        }
+        
+        /** Génère le calendrier pour le mois et l'année courants. */
+        function renderCalendar() {
+            const body = document.getElementById('calendar-body');
+            body.innerHTML = '';
+            
+            // Mise à jour du titre
+            const title = new Date(currentYear, currentMonth, 1).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+            document.getElementById('calendar-title').textContent = title.charAt(0).toUpperCase() + title.slice(1);
 
-                if (i > 0) {
-                    const previous = calculatedHistory[i - 1];
-                    // La consommation est basée sur la différence d'index
-                    consoM3 = current.indexM3 - previous.indexM3;
+            // Déterminer le premier jour et le nombre de jours du mois
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Décaler le premier jour pour qu'il commence le lundi (0=Dimanche, 1=Lundi, ..., 6=Samedi)
+            let startingDay = firstDayOfMonth.getDay(); // 0 (Dimanche) à 6 (Samedi)
+            if (startingDay === 0) startingDay = 7; // Convertir Dimanche (0) en 7
+            const dayOfWeek = startingDay === 0 ? 6 : startingDay - 1; // 0 (Lun) à 6 (Dim)
+
+            // Remplir les jours vides au début (lundi=0, mardi=1...)
+            for (let i = 0; i < dayOfWeek; i++) {
+                body.appendChild(document.createElement('div'));
+            }
+
+            // Remplir les jours du mois
+            for (let i = 1; i <= daysInMonth; i++) {
+                const date = new Date(currentYear, currentMonth, i);
+                const dateKey = date.toISOString().split('T')[0];
+                const estimate = dailyEstimates[dateKey];
+                
+                const cell = document.createElement('div');
+                cell.className = 'day-cell text-sm';
+                cell.textContent = i;
+                
+                if (estimate) {
+                    let value, unit, color;
+                    let percentage = 0;
                     
-                    if (consoM3 < 0) {
-                        // Index plus bas que le précédent, signalons une erreur potentielle
-                        console.warn(`Index plus bas à la date ${current.dateTime}. Conso sera 0.`);
-                        consoM3 = 0;
+                    if (calendarView === 'kwh') {
+                        value = estimate.kwh;
+                        unit = ' kWh/j';
+                    } else { // cost
+                        value = estimate.cost;
+                        unit = ' € TTC/j';
+                    }
+
+                    // Calcul du pourcentage par rapport au maximum global
+                    if (maxDailyValue > 0) {
+                        percentage = (value / maxDailyValue) * 100;
                     }
                     
-                    // Conversion en kWh
-                    consoKWh = consoM3 * coefGaz;
+                    // Couleur générale du camembert (vert)
+                    color = '#10b981'; // emerald-500
+
+                    // Ajout du camembert
+                    const indicator = document.createElement('div');
+                    indicator.className = 'daily-indicator';
+                    indicator.title = `${date.toLocaleDateString('fr-FR')}\n${numberFormatter.format(value)} ${unit.trim()}`;
                     
-                    // Calcul du coût HT (hors taxes et abonnement)
-                    coutHT = consoKWh * prixKwh;
+                    const fill = document.createElement('div');
+                    fill.className = 'daily-indicator-fill';
+                    fill.style.backgroundColor = color;
                     
-                    // Calcul du coût TTC (HT * (1 + Taux TVA))
-                    coutTTC = coutHT * (1 + tvaKwhRate);
+                    // La magie du camembert via clip-path
+                    // On utilise le pourcentage pour ajuster le masque.
+                    const clipPercentage = Math.min(100, Math.max(0, percentage));
+                    
+                    // Simple remplissage vertical pour un affichage plus clair sur une petite surface
+                    fill.style.height = `${clipPercentage}%`;
+                    fill.style.top = `${100 - clipPercentage}%`;
+                    fill.style.borderRadius = '0'; // Pour l'effet barre
+
+                    // fill.style.clipPath = calculateClipPath(clipPercentage); // On reste sur un remplissage vertical simple
+                    
+                    indicator.appendChild(fill);
+                    cell.appendChild(indicator);
+
+                    // Affichage d'une valeur tronquée pour le jour
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'text-xs text-gray-200 mt-1';
+                    valueSpan.textContent = value.toFixed(1); // Afficher une décimale
+                    cell.appendChild(valueSpan);
+
+                } else {
+                    // Jour sans donnée (conso non encore mesurée)
+                    const placeholder = document.createElement('span');
+                    placeholder.className = 'text-xs text-gray-500 mt-1';
+                    placeholder.textContent = '---';
+                    cell.appendChild(placeholder);
                 }
 
-                calculatedHistory.push({
-                    ...current,
-                    consoM3: consoM3,
-                    consoKWh: consoKWh,
-                    coutHT: coutHT,
-                    coutTTC: coutTTC // Ajout du coût TTC
-                });
-            }
-
-            return calculatedHistory;
-        }
-
-        // --- Fonctions de Synthèse Globale ---
-
-        /**
-         * Calcule et affiche les totaux de l'historique.
-         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
-         */
-        function renderGlobalTotals(calculatedHistory) {
-            const numReleves = calculatedHistory.length;
-            let totalM3 = 0;
-            let totalKwh = 0;
-            let totalCoutHT = 0;
-            let totalCoutTTC = 0; // Nouveau total TTC
-            
-            document.getElementById('total-releves').textContent = numReleves;
-
-            if (numReleves > 1) {
-                // Consommation totale m³ = Dernier Index - Premier Index
-                const indexDebut = calculatedHistory[0].indexM3;
-                const indexFin = calculatedHistory[numReleves - 1].indexM3;
-                
-                // Calcul de la consommation totale en m³
-                totalM3 = indexFin - indexDebut;
-                
-                // Le total kWh, Coût HT et Coût TTC sont la somme de toutes les consommations calculées
-                for (let i = 1; i < numReleves; i++) {
-                    totalKwh += calculatedHistory[i].consoKWh;
-                    totalCoutHT += calculatedHistory[i].coutHT;
-                    totalCoutTTC += calculatedHistory[i].coutTTC; // Somme TTC
-                }
-                
-                document.getElementById('total-m3').textContent = totalM3.toFixed(2);
-                document.getElementById('total-kwh').textContent = totalKwh.toFixed(2);
-                document.getElementById('total-cout-ht').textContent = totalCoutHT.toFixed(2) + ' €';
-                document.getElementById('total-cout-ttc').textContent = totalCoutTTC.toFixed(2) + ' €'; // Affichage TTC
-            } else {
-                document.getElementById('total-m3').textContent = '0.00';
-                document.getElementById('total-kwh').textContent = '0.00';
-                document.getElementById('total-cout-ht').textContent = '0.00 €';
-                document.getElementById('total-cout-ttc').textContent = '0.00 €'; // Reset TTC
+                body.appendChild(cell);
             }
         }
+        
+        // --- 4. LOGIQUE D'INTERACTION ---
 
+        /** Ajoute un nouveau relevé. */
+        function ajouterReleve(event) {
+            event.preventDefault();
+            const inputIndex = document.getElementById('index-releve');
+            const inputDate = document.getElementById('date-releve');
 
-        // --- Fonctions d'Interface Utilisateur ---
+            const newIndex = parseFloat(inputIndex.value);
+            const newDate = inputDate.value;
 
-        /**
-         * Ajoute un nouveau relevé à l'historique.
-         */
-        function ajouterReleve() {
-            const dateTimeInput = document.getElementById('date-releve');
-            const indexInput = document.getElementById('index-m3');
-            const errorMessage = document.getElementById('message-erreur');
-
-            const dateTime = dateTimeInput.value; // Ceci est la chaîne de caractères au format 'YYYY-MM-DDTHH:mm'
-            const indexM3 = indexInput.value;
-
-            if (!dateTime || indexM3 === "") {
-                errorMessage.textContent = "Veuillez remplir la date, l'heure et l'index.";
-                errorMessage.classList.remove('hidden');
+            if (isNaN(newIndex) || !newDate) {
+                alert('Veuillez entrer un index valide et une date.');
                 return;
             }
 
-            const history = loadHistory();
+            let history = loadHistory();
             
-            // Vérification anti-doublon plus stricte
-            const existingEntry = history.find(r => r.dateTime === dateTime);
-            if (existingEntry) {
-                errorMessage.textContent = `Un relevé existe déjà pour la date et heure exactes du ${new Date(dateTime).toLocaleDateString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })}.`;
-                errorMessage.classList.remove('hidden');
-                return;
-            }
-            
-            // Vérification que le nouvel index n'est pas inférieur au dernier
+            // Vérification de l'index : doit être > au dernier index
             if (history.length > 0) {
-                // Le dernier relevé après tri est le plus récent
-                const lastReleve = history[history.length - 1];
-                const newIndex = parseFloat(indexM3);
-                
-                if (newIndex < lastReleve.indexM3) {
-                     errorMessage.textContent = `L'index (${newIndex.toFixed(2)}) est inférieur au dernier index enregistré (${lastReleve.indexM3.toFixed(2)}). Veuillez corriger ou le supprimer.`;
-                     errorMessage.classList.remove('hidden');
-                     return;
+                const lastIndex = history[history.length - 1].index;
+                if (newIndex < lastIndex) {
+                    alert(`L'index saisi (${newIndex}) doit être supérieur au dernier index enregistré (${lastIndex}).`);
+                    return;
                 }
             }
-
+            
+            // Vérification de l'unicité (pour éviter les doublons accidentels)
+            const isDuplicate = history.some(item => item.dateTime === newDate);
+            if (isDuplicate) {
+                alert("Un relevé existe déjà pour cette date et heure.");
+                return;
+            }
 
             const newReleve = {
                 id: Date.now(), // Identifiant unique
-                dateTime: dateTime, // Stocker au format standard YYYY-MM-DDTHH:mm
-                indexM3: parseFloat(indexM3)
+                index: newIndex,
+                dateTime: newDate,
+                isCalculated: false // Sera mis à jour dans calculateConsumptions
             };
 
             history.push(newReleve);
             saveHistory(history);
             
-            // Réinitialiser les champs et masquer l'erreur
-            // On ne réinitialise que l'index, la date/heure passe à l'instant présent
-            setInitialDateTime();
-            indexInput.value = '';
-            errorMessage.classList.add('hidden');
-
-            // Mise à jour de l'affichage
+            // Réinitialiser le formulaire (sauf la date pour un relevé rapide)
+            inputIndex.value = '';
+            inputIndex.focus();
+            
+            updateUI();
+        }
+        
+        /** Supprime un relevé par son ID. */
+        function removeReleve(id) {
+            let history = loadHistory();
+            history = history.filter(item => item.id !== id);
+            saveHistory(history);
             updateUI();
         }
 
-        /**
-         * Supprime un relevé par son ID.
-         * @param {number} id - L'ID du relevé à supprimer.
-         */
-        function supprimerReleve(id) {
-            // Utiliser une alerte console à la place de window.confirm() car non autorisé dans cet environnement.
-            console.warn("Suppression demandée. L'action est irréversible dans cette version.");
-            
-            let history = loadHistory();
-            // Dans un vrai environnement, utilisez un modal pour confirmer
-            if (true) { 
-                history = history.filter(releve => releve.id !== id);
-                saveHistory(history);
-                updateUI();
-            }
-        }
-
-        /**
-         * Affiche la modale de confirmation pour la réinitialisation.
-         */
-        function showResetConfirmation() {
-            const modal = document.getElementById('reset-modal');
-            modal.classList.remove('hidden');
-        }
-
-        /**
-         * Cache la modale de confirmation.
-         */
-        function hideResetConfirmation() {
-            const modal = document.getElementById('reset-modal');
-            modal.classList.add('hidden');
-        }
-
-        /**
-         * Efface toutes les données de l'historique et met à jour l'interface.
-         */
-        function resetData() {
-            localStorage.removeItem(STORAGE_KEY);
-            hideResetConfirmation(); // Cacher la modale
-            updateUI(); // Mettre à jour l'interface (qui sera vide)
-            console.log("Historique de consommation de gaz réinitialisé.");
-        }
-
-
-        /**
-         * Met à jour le tableau d'historique.
-         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
-         */
-        function renderHistoryTable(calculatedHistory) {
-            const tableBody = document.getElementById('historique-body');
-            tableBody.innerHTML = '';
-            
-            // Afficher les relevés du plus récent au plus ancien
-            const reversedHistory = [...calculatedHistory].reverse();
-
-            reversedHistory.forEach((releve, index) => {
-                const row = tableBody.insertRow();
-                row.className = 'hover:bg-gray-100 transition duration-100';
-
-                // Date & Heure
-                const dateTime = new Date(releve.dateTime);
-                const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-                const dateTimeCell = row.insertCell();
-                dateTimeCell.textContent = dateTime.toLocaleDateString('fr-FR', options);
-
-                // Index (m³)
-                row.insertCell().textContent = releve.indexM3.toFixed(2);
-
-                // Conso (m³)
-                const consoM3Cell = row.insertCell();
-                consoM3Cell.textContent = releve.consoM3.toFixed(2);
-                consoM3Cell.classList.add('font-medium', 'text-gray-900');
-                if (index === reversedHistory.length - 1) { 
-                    consoM3Cell.textContent = '---'; // Le premier relevé n'a pas de conso avant lui
-                }
-
-                // Conso (kWh)
-                const consoKWhCell = row.insertCell();
-                consoKWhCell.textContent = releve.consoKWh.toFixed(2);
-                consoKWhCell.classList.add('font-medium', 'text-blue-600');
-                if (index === reversedHistory.length - 1) {
-                    consoKWhCell.textContent = '---'; // Le premier relevé n'a pas de conso avant lui
-                }
-
-                // Coût HT (€)
-                const coutHTCell = row.insertCell();
-                coutHTCell.textContent = releve.coutHT.toFixed(2) + ' €';
-                coutHTCell.classList.add('font-medium', 'text-green-600');
-                if (index === reversedHistory.length - 1) {
-                    coutHTCell.textContent = '---'; // Le premier relevé n'a pas de coût
-                }
-                
-                // Coût TTC (€)
-                const coutTTCCell = row.insertCell();
-                coutTTCCell.textContent = releve.coutTTC.toFixed(2) + ' €';
-                coutTTCCell.classList.add('font-medium', 'text-emerald-700');
-                if (index === reversedHistory.length - 1) {
-                    coutTTCCell.textContent = '---'; 
-                }
-
-                // Actions (cellule cachée à l'impression)
-                const actionsCell = row.insertCell();
-                actionsCell.classList.add('text-right', 'print-hidden'); 
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Supprimer';
-                deleteButton.className = 'text-red-500 hover:text-red-700 font-semibold text-xs py-1 px-2 rounded-lg transition duration-150';
-                deleteButton.onclick = () => supprimerReleve(releve.id);
-                actionsCell.appendChild(deleteButton);
-            });
-        }
-
-        /**
-         * Met à jour le graphique Chart.js. (Agrégation toujours par mois calendaire)
-         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
-         */
-        function renderChart(calculatedHistory) {
-            const monthlyData = aggregateMonthlyConsumption(calculatedHistory); 
-            const ctx = document.getElementById('consoChart').getContext('2d');
-
-            const data = {
-                labels: monthlyData.map(d => d.monthLabel),
-                datasets: [{
-                    label: 'Consommation Gaz (kWh/mois)',
-                    data: monthlyData.map(d => d.kwh),
-                    backgroundColor: 'rgba(59, 130, 246, 0.6)', // Bleu Tailwind 500
-                    borderColor: 'rgba(37, 99, 235, 1)', // Bleu Tailwind 600
-                    borderWidth: 1,
-                    borderRadius: 8,
-                    barPercentage: 0.8,
-                    categoryPercentage: 0.7,
-                }]
-            };
-
-            const options = {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let label = context.dataset.label || '';
-                                if (label) {
-                                    label += ': ';
-                                }
-                                label += new Intl.NumberFormat('fr-FR', { 
-                                    style: 'unit', 
-                                    unit: 'kilowatt-hour' 
-                                }).format(context.raw);
-                                return label;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'kWh'
-                        }
-                    }
-                }
-            };
-
-            // Détruire l'ancienne instance si elle existe
-            if (chartInstance) {
-                chartInstance.destroy();
-            }
-
-            // Créer la nouvelle instance
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: data,
-                options: options,
-            });
+        /** Gère la réinitialisation de tout l'historique. */
+        function resetHistory() {
+            localStorage.removeItem('gasHistory');
+            hideConfirmationModal();
+            updateUI();
         }
         
-        /**
-         * Agrège l'historique des relevés par mois calendaire pour le graphique.
-         * @param {Array<Object>} calculatedHistory - L'historique enrichi.
-         * @returns {Array<Object>} Tableau des consommations mensuelles.
-         */
-        function aggregateMonthlyConsumption(calculatedHistory) {
-            const monthlyConso = {};
-            const formatter = new Intl.DateTimeFormat('fr-FR', { year: 'numeric', month: 'short' });
+        /** Affiche la modale de confirmation. */
+        function showConfirmationModal() {
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+        }
 
-            if (calculatedHistory.length <= 1) return [];
-
-            // On commence à i=1 car le relevé 0 n'a pas de consommation calculée
-            for (let i = 1; i < calculatedHistory.length; i++) {
-                const releve = calculatedHistory[i];
-                // Utiliser le dateTime pour créer l'objet Date
-                const date = new Date(releve.dateTime); 
-                // Clé au format AAAA-MM (Ex: 2023-11)
-                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                // Le label affiché utilise la date du relevé actuel pour le mois
-                const monthLabel = formatter.format(date); 
-
-                if (!monthlyConso[monthKey]) {
-                    monthlyConso[monthKey] = { kwh: 0, monthLabel: monthLabel };
-                }
-
-                // Ajout de la consommation de la période au mois courant du dernier relevé
-                monthlyConso[monthKey].kwh += releve.consoKWh;
-            }
-
-            // Convertir l'objet en tableau pour Chart.js, trié par clé (AAAA-MM)
-            return Object.keys(monthlyConso).sort().map(key => monthlyConso[key]);
+        /** Masque la modale de confirmation. */
+        function hideConfirmationModal() {
+            document.getElementById('confirmation-modal').classList.add('hidden');
         }
         
-        /**
-         * Fonction principale pour mettre à jour l'interface.
-         */
+        /** Gère le changement de mois dans le calendrier. */
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            renderCalendar();
+        }
+
+        /** Change la vue du calendrier (kWh ou Coût TTC). */
+        function setCalendarView(view) {
+            calendarView = view;
+            document.getElementById('view-kwh').classList.remove('bg-indigo-600', 'text-white');
+            document.getElementById('view-kwh').classList.add('text-gray-300', 'hover:bg-gray-500');
+            document.getElementById('view-cost').classList.remove('bg-indigo-600', 'text-white');
+            document.getElementById('view-cost').classList.add('text-gray-300', 'hover:bg-gray-500');
+            
+            if (view === 'kwh') {
+                document.getElementById('view-kwh').classList.add('bg-indigo-600', 'text-white');
+            } else {
+                document.getElementById('view-cost').classList.add('bg-indigo-600', 'text-white');
+            }
+
+            renderCalendar();
+        }
+        
+        /** Affiche/Masque les paramètres. */
+        function toggleParameters() {
+            const content = document.getElementById('parametres-content');
+            const icon = document.getElementById('param-icon');
+            const isHidden = content.classList.toggle('hidden');
+            
+            if (isHidden) {
+                icon.style.transform = 'rotate(0deg)';
+                document.querySelector('[aria-controls="parametres-content"]').setAttribute('aria-expanded', 'false');
+            } else {
+                icon.style.transform = 'rotate(-180deg)';
+                document.querySelector('[aria-controls="parametres-content"]').setAttribute('aria-expanded', 'true');
+            }
+        }
+
+        // --- 5. INITIALISATION ---
+
+        /** Fonction principale d'orchestration. */
         function updateUI() {
-            // 1. Charger et Calculer l'historique
-            const history = loadHistory();
-            // Recalculer les consommations et les coûts (HT et TTC)
-            const calculatedHistory = calculateConsumptions(history);
+            let history = loadHistory();
+            history = calculateConsumptions(history);
+            saveHistory(history); // Sauvegarde l'historique mis à jour avec les calculs
             
-            // 2. Afficher les données
-            renderGlobalTotals(calculatedHistory); // Mise à jour des totaux HT et TTC
-            renderHistoryTable(calculatedHistory);
-            renderChart(calculatedHistory);
+            // Mise à jour de toutes les sections
+            renderGlobalTotals(history);
+            renderHistoryTable(history);
+            calculateDailyEstimates(history);
+            renderCalendar(); 
         }
 
-        // --- Événements et Initialisation ---
-
-        // Les changements dans les paramètres doivent recalculer et mettre à jour l'affichage
-        document.getElementById('coef-gaz').addEventListener('change', updateUI);
-        document.getElementById('prix-kwh').addEventListener('change', updateUI);
-        document.getElementById('prix-abonnement').addEventListener('change', updateUI); 
-        document.getElementById('tva-kwh').addEventListener('change', updateUI); // Listener pour TVA KWH
-        document.getElementById('tva-abonnement').addEventListener('change', updateUI); // Listener pour TVA Abonnement
-        
-        /**
-         * Définit la valeur de l'input date/heure à l'instant présent.
-         */
-        function setInitialDateTime() {
-            // Obtient la date/heure locale et la formate pour l'input datetime-local (YYYY-MM-DDTHH:mm)
-            const now = new Date();
-            // L'astuce pour le fuseau horaire : enlève le décalage pour que toISOString prenne l'heure locale
-            const isoString = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString(); 
-            document.getElementById('date-releve').value = isoString.slice(0, 16);
-        }
-        
-        setInitialDateTime();
-
-        // Charger l'interface au démarrage
-        window.onload = updateUI;
-        
+        // Initialisation au chargement de la page
+        window.onload = function() {
+            // Définir la date/heure actuelle dans le champ par défaut
+            const now = new Date(Date.now() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+            document.getElementById('date-releve').value = now;
+            
+            // Fermer les paramètres sur mobile par défaut, les laisser ouverts sur desktop
+            if (window.innerWidth < 1024) {
+                document.getElementById('parametres-content').classList.add('hidden');
+            } else {
+                document.getElementById('param-icon').style.transform = 'rotate(-180deg)';
+            }
+            
+            // Initialisation de la vue du calendrier et de l'UI
+            setCalendarView('kwh');
+            updateUI(); 
+        };
     </script>
 
 </body>
 </html>
-
