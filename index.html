@@ -316,7 +316,7 @@
                                         <th class="px-4 py-3">Date</th>
                                         <th class="px-4 py-3 text-right">Index</th>
                                         <th class="px-4 py-3 text-right">Conso</th>
-                                        <th class="px-4 py-3 text-right">Coût TTC</th>
+                                        <th class="px-4 py-3 text-right">Coût Total Période</th> <!-- CHANGEMENT DE NOM -->
                                         <th class="px-4 py-3 text-center print-hidden">Action</th>
                                     </tr>
                                 </thead>
@@ -517,7 +517,7 @@
                     
                     loop.setDate(loop.getDate()+1);
                 }
-                return {...curr, dM3, dKwh, cTTC, cHT, aHT, days:diffDays.toFixed(1)};
+                return {...curr, dM3, dKwh, cTTC, cHT, aHT, cD, days:diffDays.toFixed(1)}; // Ajout de cD (Coût Quotidien)
             });
 
             // 1. Projection du dernier jour (Fixe l'affichage jusqu'à AUJOURD'HUI-1)
@@ -683,9 +683,34 @@
             [...data].reverse().forEach(r=>{
                 const tr=document.createElement('tr'); tr.className="hover:bg-gray-700/50 transition";
                 const d=new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
-                const det = r.isStart?'<span class="text-gray-600 text-xs italic">Départ</span>':`<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
-                const c = r.isStart?'-':r.cTTC.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
-                tr.innerHTML=`<td class="px-4 py-3 text-white">${d}</td><td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td><td class="px-4 py-3 text-right">${det}</td><td class="px-4 py-3 text-right text-emerald-400 font-bold">${c}</td><td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
+                
+                // Détails Conso
+                const detConso = r.isStart
+                    ? '<span class="text-gray-600 text-xs italic">Départ</span>'
+                    : `<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
+                
+                // CHANGEMENT DE RENDU ICI : Coût Total Période + Coût/Jour
+                let detCost;
+                if (r.isStart) {
+                    detCost = '-';
+                } else {
+                    const totalCost = r.cTTC.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
+                    const dailyCost = r.cD.toLocaleString('fr-FR', {style:'currency', currency:'EUR', maximumFractionDigits: 2, minimumFractionDigits: 2});
+                    detCost = `
+                        <div class="font-bold text-emerald-400">${totalCost}</div>
+                        <div class="text-xs text-gray-500 italic">(${dailyCost} / j)</div>
+                    `;
+                }
+
+                tr.innerHTML=`
+                    <td class="px-4 py-3 text-white">${d}</td>
+                    <td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td>
+                    <td class="px-4 py-3 text-right">${detConso}</td>
+                    <td class="px-4 py-3 text-right">${detCost}</td>
+                    <td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button></td>
+                `;
                 b.appendChild(tr);
             });
         }
