@@ -520,22 +520,20 @@
                 return {...curr, dM3, dKwh, cTTC, cHT, aHT, days:diffDays.toFixed(1)};
             });
 
-            // 1. Projection du dernier jour (Fixe l'affichage jusqu'à aujourd'hui)
+            // 1. Projection du dernier jour (Fixe l'affichage jusqu'à AUJOURD'HUI-1)
             if (processed.length > 0 && processed[processed.length - 1].date) {
                 const lastReleveDate = new Date(processed[processed.length - 1].date);
                 lastReleveDate.setHours(12, 0, 0, 0);
-
+                
                 let loopDate = new Date(lastReleveDate);
-                // On projette à partir du jour du dernier relevé inclusif, jusqu'à AUJOURD'HUI.
-                while(loopDate <= today) {
+                const stopDate = new Date(today); // Stop JUST BEFORE today
+
+                // Correction de la boucle: doit s'arrêter avant le jour actuel (d'où l'usage de < stopDate)
+                while(loopDate < stopDate) { 
                     const k = loopDate.toISOString().slice(0, 10);
                     const m = k.slice(0, 7);
 
-                    // Utiliser le taux moyen de la dernière période complète
-                    if (STATE.dailyData[k]) {
-                        // Si le jour existe déjà, on vérifie juste le max
-                    } else {
-                        // Jour non encore dans l'historique (projection)
+                    if (!STATE.dailyData[k]) { // Si le jour n'a pas été couvert par un relevé réel
                         if(!STATE.dailyData[k]) STATE.dailyData[k] = { kwh: 0, cost: 0, m3: 0 };
 
                         STATE.dailyData[k].kwh = lastConsumptionRate.kwh;
