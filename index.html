@@ -3,799 +3,644 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi de Consommation Gaz</title>
-    <!-- Chargement de Tailwind CSS -->
+    <title>Suivi Gaz - Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Styles de Base (Mode Sombre) --- */
+        /* --- DESIGN GLASSMORPHISM --- */
         body {
-            font-family: system-ui, sans-serif; /* Utilisation d'une police système pour la stabilité */
-            background-color: #111827; /* gray-900 */
-            color: #f3f4f6; /* gray-100 */
-        }
-        
-        /* --- Composants --- */
-        .card {
-            background-color: #1f2937; /* gray-800 */
-            border: 1px solid #374151; /* gray-700 */
-            border-radius: 0.75rem; /* rounded-xl */
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-        
-        /* --- Graphique Barres --- */
-        .bar-container {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            height: 180px;
-            gap: 2px;
-            padding-top: 20px;
-        }
-        .bar-wrapper {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            height: 100%;
-            position: relative;
-        }
-        .bar {
-            width: 100%;
-            border-top-left-radius: 3px;
-            border-top-right-radius: 3px;
-            transition: height 0.3s ease-out, background-color 0.3s;
-            min-height: 2px;
-        }
-        .bar-wrapper:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #111827;
-            color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            white-space: nowrap;
-            z-index: 20;
-            border: 1px solid #4b5563;
-            pointer-events: none;
-            margin-bottom: 4px;
-        }
-        .bar-label {
-            font-size: 0.6rem;
-            color: #9ca3af;
-            margin-top: 4px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-        .bar-wrapper.dense:nth-child(odd) .bar-label {
-            display: none; 
-        }
-        @media (min-width: 768px) {
-            .bar-wrapper.dense:nth-child(odd) .bar-label { display: block; }
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #111827 0%, #1e3a8a 50%, #4c1d95 100%);
+            min-height: 100vh;
+            color: #fff;
+            background-attachment: fixed;
         }
 
-        /* --- Calendrier --- */
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 4px;
+        /* Carte Translucide */
+        .card {
+            background: rgba(31, 41, 55, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .day-cell {
-            aspect-ratio: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 0.375rem;
-            background-color: #374151;
-            font-size: 0.75rem;
-            position: relative;
-            transition: all 0.2s;
+        .card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
         }
-        @media (min-width: 768px) {
-            .day-cell { font-size: 0.875rem; }
+
+        /* Inputs */
+        input, select {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+            backdrop-filter: blur(5px);
         }
-        .day-cell.has-data:hover {
-            transform: scale(1.1);
-            z-index: 10;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
-            border: 1px solid white;
+        input:focus, select:focus {
+            border-color: #60a5fa !important;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.3);
         }
+
+        /* Graphique */
+        .bar-container { display: flex; align-items: flex-end; justify-content: space-between; height: 220px; gap: 2px; padding-top: 20px; }
+        .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; position: relative; min-width: 3px; }
+        .bar { width: 100%; border-radius: 3px 3px 0 0; transition: height 0.5s cubic-bezier(0.4, 0, 0.2, 1); min-height: 2px; }
+        .bar-wrapper:hover .bar { filter: brightness(1.3); }
         
-        .intensity-bar {
-            width: 80%;
-            height: 3px;
-            background-color: rgba(255,255,255,0.2);
-            border-radius: 2px;
-            margin-top: 2px;
-            overflow: hidden;
+        .bar-wrapper:hover::after {
+            content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: rgba(17, 24, 39, 0.95); color: white; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;
+            white-space: pre; z-index: 50; border: 1px solid rgba(255,255,255,0.1); pointer-events: none; margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); backdrop-filter: blur(4px);
         }
+        .bar-label { font-size: 0.65rem; color: #94a3b8; margin-top: 6px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Couleurs Graphique */
+        .real .bar { background: linear-gradient(to top, #059669, #34d399); } /* Vert (GRDF) */
+        .estimated .bar { background: linear-gradient(to top, #7c3aed, #a78bfa); } /* Violet (Estimé) */
+        .mixed .bar { background: linear-gradient(to top, #2563eb, #60a5fa); } /* Bleu (Mensuel) */
+
+        /* Calendrier */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+        .day-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 8px; background: rgba(255,255,255,0.05); font-size: 0.8rem; position: relative; border: 1px solid transparent; transition: all 0.2s; }
+        .day-cell.has-data:hover { transform: scale(1.1); z-index: 10; border-color: rgba(255,255,255,0.5); box-shadow: 0 8px 20px rgba(0,0,0,0.4); background: rgba(30, 41, 59, 0.9); }
+        
+        .intensity-bar { width: 70%; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 4px; overflow: hidden; }
+        .intensity-fill { height: 100%; border-radius: 2px; }
+        .marker-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 5px currentColor;}
+        .bg-real { background-color: #10b981; color: #10b981; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
         @media print {
             .print-hidden { display: none !important; }
-            body { background-color: white !important; color: black !important; }
-            .card { 
-                background-color: white !important; 
-                border: 1px solid #ddd !important; 
-                box-shadow: none !important; 
-                break-inside: avoid;
-            }
-            .day-cell { -webkit-print-color-adjust: exact; print-color-adjust: exact; border: 1px solid #eee; }
-            .day-cell:not(.has-data) { background-color: #f9fafb !important; color: #ddd !important; }
-            .bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            body { background: white !important; color: black !important; }
+            .card { background: white !important; border: 1px solid #ccc !important; box-shadow: none !important; }
+            .bar { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
 
-        .fab {
-            position: fixed;
-            bottom: 1.5rem;
-            right: 1.5rem;
-            width: 3.5rem;
-            height: 3.5rem;
-            border-radius: 9999px;
-            background-color: #4f46e5;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-            z-index: 40;
-            transition: transform 0.2s;
-        }
-        .fab:active { transform: scale(0.95); }
-        @media (min-width: 1024px) {
-            .fab { display: none; }
-        }
+        .fab { position: fixed; bottom: 2rem; right: 2rem; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4); z-index: 50; transition: transform 0.2s; }
+        .fab:active { transform: scale(0.9); }
+        @media (min-width: 1024px) { .fab { display: none; } }
+        .hidden { display: none; }
     </style>
 </head>
-<body class="p-3 md:p-8 min-h-screen pb-24 lg:pb-8">
+<body class="p-4 md:p-8 pb-24">
 
-    <div class="max-w-6xl mx-auto space-y-6">
+    <div class="max-w-7xl mx-auto space-y-8">
         
         <!-- EN-TÊTE -->
-        <header class="flex flex-col md:flex-row justify-between items-center pb-4 border-b border-gray-700 print-hidden gap-4">
+        <header class="flex flex-col md:flex-row justify-between items-center pb-6 border-b border-white/10 print-hidden gap-6">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-white">Suivi Conso Gaz</h1>
-                <p class="text-gray-400 text-sm mt-1">Relevés réels, Graphiques & Heatmap</p>
+                <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200">Suivi Gaz</h1>
+                <div class="flex items-center gap-4 mt-2 text-sm text-blue-200/80 font-medium">
+                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mr-2 shadow-[0_0_10px_#34d399]"></span> Réel (GRDF)</span>
+                    <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-violet-400 mr-2 shadow-[0_0_10px_#a78bfa]"></span> Estimé (Index)</span>
+                </div>
             </div>
-            <button onclick="window.print()" class="flex items-center space-x-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                <span>Imprimer</span>
-            </button>
+            <div class="flex flex-wrap gap-3">
+                <button onclick="document.getElementById('file-input').click()" class="flex items-center space-x-2 px-5 py-2.5 btn-primary rounded-xl shadow-lg transform hover:scale-105 active:scale-95">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                    <span>Importer GRDF</span>
+                </button>
+                <input type="file" id="file-input" class="hidden" accept=".csv,.json,.txt" onchange="handleImport(this)" multiple>
+                
+                <button onclick="exportData()" class="px-5 py-2.5 btn-secondary rounded-xl">Sauvegarder</button>
+                <button onclick="window.print()" class="px-5 py-2.5 btn-secondary rounded-xl">Imprimer</button>
+            </div>
         </header>
 
-        <!-- GRILLE PRINCIPALE -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-            <!-- COLONNE GAUCHE (INPUTS & STATS) -->
-            <div class="lg:col-span-4 space-y-6">
+        <!-- GRILLE CONTENU -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- COLONNE GAUCHE -->
+            <div class="lg:col-span-4 space-y-8">
                 
-                <!-- 1. AJOUTER UN RELEVÉ (Visibilité corrigée) -->
-                <section class="card p-5 print-hidden lg:block">
-                    <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        Nouveau Relevé
-                    </h2>
-                    <form id="add-form-desktop" onsubmit="handleAdd(event, 'desktop')" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400 mb-1">Date & Heure</label>
-                            <input type="datetime-local" id="input-date-desktop" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-400 mb-1">Index Compteur (m³)</label>
-                            <input type="number" id="input-index-desktop" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5">
-                        </div>
-                        <button type="submit" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-medium rounded-lg text-sm px-5 py-2.5 text-center transition">Enregistrer</button>
-                    </form>
-                </section>
-
-                <!-- 2. PARAMÈTRES (Escamotables) -->
-                <section class="card print-hidden">
-                    <button onclick="toggleParams()" class="w-full p-5 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 rounded-xl transition">
-                        <span class="text-lg font-semibold text-white flex items-center">
-                            <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.942 3.313.823 2.308 2.368a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.942 1.543-.823 3.313-2.368 2.308a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.942-3.313-.823-2.308-2.368a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.942-1.543.823-3.313 2.368-2.308a1.724 1.724 0 002.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            Paramètres
-                        </span>
-                        <svg id="chevron-icon" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </button>
-                    <!-- Contenu masqué par défaut (hidden) -->
-                    <div id="params-content" class="hidden px-5 pb-5 space-y-3 border-t border-gray-700 pt-4">
-                        <div class="grid grid-cols-2 gap-3">
-                            <div><label class="block text-xs text-gray-400 mb-1">Coef. Gaz</label><input type="number" id="p-coef" value="11.361" step="0.001" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
-                            <div><label class="block text-xs text-gray-400 mb-1">Prix kWh HT</label><input type="number" id="p-prix-kwh" value="0.0777" step="0.0001" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
-                            <div><label class="block text-xs text-gray-400 mb-1">Abo/Mois HT</label><input type="number" id="p-abo" value="16.72" step="0.01" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
-                            <div><label class="block text-xs text-gray-400 mb-1">TVA Conso %</label><input type="number" id="p-tva-conso" value="20" step="0.1" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
-                            <div><label class="block text-xs text-gray-400 mb-1">TVA Abo %</label><input type="number" id="p-tva-abo" value="5.5" step="0.1" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
+                <!-- SYNTHÈSE DYNAMIQUE -->
+                <section class="card p-6">
+                    <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="text-2xl">📊</span> Synthèse
+                        </h2>
+                        <div class="flex bg-black/20 rounded-lg p-1 gap-1">
+                            <button onclick="setSynth('global')" id="btn-sy-global" class="px-3 py-1.5 text-xs font-medium rounded-md text-white bg-indigo-500 shadow-sm">Global</button>
+                            <button onclick="setSynth('year')" id="btn-sy-year" class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-400 hover:text-white hover:bg-white/5">An</button>
+                            <button onclick="setSynth('month')" id="btn-sy-month" class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-400 hover:text-white hover:bg-white/5">Mois</button>
+                            <button onclick="setSynth('custom')" id="btn-sy-custom" class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-400 hover:text-white hover:bg-white/5">Perso</button>
                         </div>
                     </div>
-                </section>
-
-                <!-- 3. SYNTHÈSE DYNAMIQUE -->
-                <section class="card p-5">
-                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
-                        <h2 class="text-lg font-semibold text-white">Synthèse</h2>
-                        <!-- Filtres Période -->
-                        <div class="flex bg-gray-700 rounded-lg p-1 text-[0.65rem] md:text-xs">
-                            <button onclick="setSynthMode('global')" id="synth-mode-global" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Global</button>
-                            <button onclick="setSynthMode('year')" id="synth-mode-year" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Année</button>
-                            <button onclick="setSynthMode('month')" id="synth-mode-month" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Mois</button>
-                            <button onclick="setSynthMode('custom')" id="synth-mode-custom" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Période</button>
+                    
+                    <!-- Filtres dynamiques -->
+                    <div id="synth-controls" class="mb-6 hidden space-y-3 bg-black/20 p-3 rounded-lg border border-white/5">
+                        <select id="synth-year-select" onchange="updateSynth()" class="w-full p-2 rounded-lg text-sm hidden"></select>
+                        <input type="month" id="synth-month-select" onchange="updateSynth()" class="w-full p-2 rounded-lg text-sm hidden">
+                        <div id="synth-custom-range" class="hidden flex gap-2">
+                            <input type="date" id="synth-start" onchange="updateSynth()" class="w-1/2 p-2 rounded-lg text-sm">
+                            <input type="date" id="synth-end" onchange="updateSynth()" class="w-1/2 p-2 rounded-lg text-sm">
                         </div>
-                    </div>
-
-                    <!-- Inputs Dynamiques (Date/Select) -->
-                    <div id="synth-filters" class="mb-4 text-sm text-gray-400 flex flex-wrap gap-3 items-center hidden">
-                        <!-- Injecté par JS -->
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
-                            <div class="text-xs text-gray-400">Consommation</div>
-                            <div class="text-xl font-bold text-blue-400" id="total-kwh">0 kWh</div>
-                            <div class="text-xs text-gray-500" id="total-m3">0 m³</div>
+                        <div class="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition"></div>
+                            <div class="text-xs text-blue-300 uppercase font-bold tracking-wider mb-1">Volume</div>
+                            <div class="text-2xl font-bold text-white" id="disp-m3">0 m³</div>
+                            <div class="text-sm text-blue-200/60 font-mono mt-1" id="disp-kwh">0 kWh</div>
                         </div>
-                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
-                            <div class="text-xs text-gray-400">Coût TTC</div>
-                            <div class="text-xl font-bold text-emerald-400" id="total-cost">0.00 €</div>
-                            <div class="text-xs text-gray-500" id="total-cost-ht">HT: 0.00 €</div>
+                        <div class="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 relative overflow-hidden group">
+                            <div class="absolute -right-4 -top-4 w-16 h-16 bg-emerald-500/20 rounded-full blur-2xl group-hover:bg-emerald-500/30 transition"></div>
+                            <div class="text-xs text-emerald-300 uppercase font-bold tracking-wider mb-1">Coût TTC</div>
+                            <div class="text-2xl font-bold text-white" id="disp-cost">0 €</div>
+                            <div class="text-sm text-emerald-200/60 font-mono mt-1" id="disp-cost-ht">HT: 0 €</div>
                         </div>
-                        <div class="col-span-2 text-[0.65rem] text-center text-gray-500 italic" id="synth-period-label">
-                            Données globales
+                        <div class="col-span-2 text-xs text-center text-gray-500 italic mt-2 border-t border-white/5 pt-2" id="synth-label">Période globale</div>
+                    </div>
+                </section>
+                
+                <!-- SAISIE MANUELLE -->
+                <section class="card p-6 print-hidden hidden lg:block relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-10 text-6xl">📝</div>
+                    <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-5">Ajouter un Index</h2>
+                    <form onsubmit="addManualIndex(event, 'desktop')" class="space-y-5">
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1.5 block font-medium">Date du relevé</label>
+                            <input type="datetime-local" id="date-desktop" required class="w-full p-3 rounded-xl text-sm">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 mb-1.5 block font-medium">Index Compteur (m³)</label>
+                            <input type="number" id="index-desktop" step="0.001" required placeholder="Ex: 5488" class="w-full p-3 rounded-xl text-sm font-mono">
+                        </div>
+                        <button type="submit" class="w-full btn-primary py-3 rounded-xl text-sm shadow-lg">Enregistrer l'index</button>
+                    </form>
+                </section>
+
+                <!-- PARAMÈTRES -->
+                <section class="card print-hidden">
+                    <button onclick="document.getElementById('params-box').classList.toggle('hidden')" class="w-full p-5 flex justify-between items-center hover:bg-white/5 transition rounded-xl group">
+                        <span class="text-sm font-semibold text-gray-300 group-hover:text-white flex items-center gap-2">
+                            <span>⚙️</span> Paramètres Facture
+                        </span>
+                        <svg class="w-4 h-4 text-gray-500 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="params-box" class="hidden px-5 pb-6 pt-2 border-t border-white/10 space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block">Prix kWh HT</label><input id="p-kwh" type="number" step="0.0001" value="0.0777" onchange="recalc()" class="w-full p-2 rounded-lg text-xs bg-black/20 border border-white/10 font-mono text-indigo-300"></div>
+                            <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block">Abo/Mois HT</label><input id="p-abo" type="number" step="0.01" value="16.72" onchange="recalc()" class="w-full p-2 rounded-lg text-xs bg-black/20 border border-white/10 font-mono text-indigo-300"></div>
+                            <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block">TVA Conso %</label><input id="p-tva1" type="number" step="0.1" value="20" onchange="recalc()" class="w-full p-2 rounded-lg text-xs bg-black/20 border border-white/10 font-mono text-indigo-300"></div>
+                            <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block">TVA Abo %</label><input id="p-tva2" type="number" step="0.1" value="5.5" onchange="recalc()" class="w-full p-2 rounded-lg text-xs bg-black/20 border border-white/10 font-mono text-indigo-300"></div>
+                            <div class="col-span-2"><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block">Coef. Conv. (kWh/m³)</label><input id="p-coef" type="number" step="0.01" value="11.36" onchange="recalc()" class="w-full p-2 rounded-lg text-xs bg-black/20 border border-white/10 font-mono text-indigo-300"></div>
                         </div>
                     </div>
                 </section>
             </div>
 
             <!-- COLONNE DROITE -->
-            <div class="lg:col-span-8 space-y-6">
-
-                <!-- 4. GRAPHIQUE -->
-                <section class="card p-5">
-                    <div class="flex flex-wrap gap-3 justify-between items-center mb-4">
-                        <h2 class="text-lg font-semibold text-white" id="chart-title">Évolution</h2>
-                        <div class="flex gap-2">
-                            <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
-                                <button onclick="setChartMode('month')" id="btn-mode-month" class="px-3 py-1.5 rounded-md transition-colors">Par Mois</button>
-                                <button onclick="setChartMode('day')" id="btn-mode-day" class="px-3 py-1.5 rounded-md transition-colors">Par Jour</button>
+            <div class="lg:col-span-8 space-y-8">
+                
+                <!-- GRAPHIQUE -->
+                <section class="card p-6">
+                    <div class="flex flex-wrap gap-4 justify-between items-center mb-8">
+                        <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                            <span class="text-2xl">📈</span> <span id="chart-title">Évolution</span>
+                        </h2>
+                        <div class="flex gap-3">
+                            <div class="flex bg-black/20 rounded-lg p-1 text-xs">
+                                <button onclick="setChart('day')" id="btn-chart-day" class="px-3 py-1.5 rounded-md bg-indigo-600 text-white shadow-sm transition">Jour</button>
+                                <button onclick="setChart('month')" id="btn-chart-month" class="px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition">Mois</button>
                             </div>
-                            <div class="bg-gray-700 p-1 rounded-lg flex text-xs font-medium">
-                                <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md transition-colors">kWh</button>
-                                <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md transition-colors">Coût €</button>
+                            <div class="flex bg-black/20 rounded-lg p-1 text-xs">
+                                <button onclick="setView('cost')" id="btn-view-cost" class="px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow-sm transition">€</button>
+                                <button onclick="setView('kwh')" id="btn-view-kwh" class="px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition">kWh</button>
                             </div>
                         </div>
                     </div>
-                    <div id="monthly-chart" class="bar-container border-b border-gray-600">
-                        <div class="text-gray-500 text-sm w-full text-center py-10">Chargement...</div>
-                    </div>
+                    <div id="chart-container" class="bar-container border-b border-white/10"></div>
+                    <div id="chart-empty" class="hidden h-48 flex items-center justify-center text-gray-500 text-sm italic">Aucune donnée pour cette période</div>
                 </section>
 
-                <!-- 5. CALENDRIER -->
-                <section class="card p-5">
-                    <div class="flex justify-between items-center mb-4">
-                        <button onclick="changeMonth(-1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg></button>
-                        <h2 class="text-lg font-bold text-white capitalize" id="calendar-month-label">--</h2>
-                        <button onclick="changeMonth(1)" class="p-2 hover:bg-gray-700 rounded-full"><svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                <!-- CALENDRIER -->
+                <section class="card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <button onclick="moveCal(-1)" class="p-2 hover:bg-white/10 rounded-lg transition text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+                        <h2 class="text-xl font-bold text-white capitalize w-48 text-center tracking-wide" id="cal-title">--</h2>
+                        <button onclick="moveCal(1)" class="p-2 hover:bg-white/10 rounded-lg transition text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
                     </div>
-                    <div class="calendar-grid mb-2 text-center text-[0.65rem] md:text-xs text-gray-500 font-medium uppercase tracking-wide">
+                    <div class="calendar-grid mb-3 text-center text-[0.65rem] text-gray-500 font-bold uppercase tracking-widest">
                         <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
                     </div>
-                    <div id="calendar-grid" class="calendar-grid gap-1 md:gap-2"></div>
-                    <div class="mt-4 flex justify-between items-end">
-                        <div class="flex items-center text-xs text-gray-400 gap-2">
-                            <span>Faible</span>
-                            <div class="flex gap-1">
-                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-emerald-900"></div>
-                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-yellow-900"></div>
-                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-orange-900"></div>
-                                <div class="w-2 h-2 md:w-3 md:h-3 rounded bg-red-900"></div>
-                            </div>
-                            <span>Élevé</span>
-                        </div>
-                    </div>
+                    <div id="cal-grid" class="calendar-grid gap-2"></div>
                 </section>
 
-                <!-- 6. HISTORIQUE (MODIFIÉ : Repliable) -->
+                <!-- HISTORIQUE DES INDEX -->
                 <section class="card overflow-hidden">
-                    <button onclick="toggleHistory()" class="w-full p-4 border-b border-gray-700 flex justify-between items-center text-left focus:outline-none hover:bg-gray-700/50 transition">
-                        <h2 class="text-lg font-semibold text-white">Historique Détaillé</h2>
-                        <!-- Flèche initiale : rotated 180 (Up) car ouvert par défaut -->
-                        <svg id="history-chevron" style="transform: rotate(180deg)" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <button onclick="document.getElementById('hist-content').classList.toggle('hidden')" class="w-full p-5 flex justify-between items-center hover:bg-white/5 transition group">
+                        <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+                            <span class="text-xl">📋</span> Historique des Index
+                        </h2>
+                        <svg class="w-5 h-5 text-gray-500 group-hover:text-white transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
-                    
-                    <div id="history-content"> <!-- Pas de class hidden ici car ouvert par défaut -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm text-gray-400">
-                                <thead class="bg-gray-700/50 text-gray-200 uppercase text-xs">
-                                    <tr>
-                                        <th class="px-4 py-3">Date</th>
-                                        <th class="px-4 py-3 text-right">Index</th>
-                                        <th class="px-4 py-3 text-right">Conso</th>
-                                        <th class="px-4 py-3 text-right">Coût Total Période</th> <!-- CHANGEMENT DE NOM -->
-                                        <th class="px-4 py-3 text-center print-hidden">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="history-body" class="divide-y divide-gray-700"></tbody>
-                            </table>
-                        </div>
-                        <div id="empty-msg" class="p-8 text-center text-gray-500 hidden">Aucune donnée.</div>
+                    <div id="hist-content" class="hidden max-h-80 overflow-y-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs text-gray-400">
+                            <thead class="bg-black/20 text-gray-200 sticky top-0 backdrop-blur-sm">
+                                <tr>
+                                    <th class="px-5 py-3 font-semibold">Date</th>
+                                    <th class="px-5 py-3 text-right font-semibold">Index</th>
+                                    <th class="px-5 py-3 text-right font-semibold">Coût Période (Est.)</th>
+                                    <th class="px-5 py-3 text-center font-semibold">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="hist-body" class="divide-y divide-gray-700/50"></tbody>
+                        </table>
                     </div>
                 </section>
-
-                <!-- 7. IMPORT/EXPORT -->
-                <section class="card p-4 mt-6 print-hidden">
-                    <h2 class="text-lg font-semibold text-white mb-4">Données & Sauvegarde</h2>
-                    <div class="flex flex-wrap gap-3 justify-between items-center">
-                        <div class="flex flex-wrap gap-3">
-                             <button onclick="exportData()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg transition">Exporter JSON</button>
-                            <button onclick="triggerImport()" class="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-white text-xs font-medium rounded-lg transition">Importer (JSON/CSV)</button>
-                            <input type="file" id="import-file" class="hidden" accept=".json,.csv,.txt" onchange="handleImport(this)">
-                        </div>
-                        <button onclick="resetAll()" class="text-xs text-red-400 hover:text-red-300 underline transition">Réinitialiser tout</button>
-                    </div>
-                    <p class="text-xs text-gray-500 mt-2">Accepte JSON (Backup) et CSV GRDF (Date;Type;Index;Coeff).</p>
-                </section>
+                
+                <!-- Reset -->
+                <div class="flex justify-end pt-2 print-hidden">
+                    <button onclick="resetAll()" class="text-xs text-red-400/70 hover:text-red-400 hover:underline transition flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                        Réinitialiser les données
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- BOUTON FLOTTANT MOBILE -->
-    <button onclick="openModal()" class="fab print-hidden">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-    </button>
-
-    <!-- MODALE MOBILE -->
-    <div id="mobile-modal" class="fixed inset-0 bg-black bg-opacity-80 z-50 hidden flex items-end sm:items-center justify-center print-hidden">
-        <div class="bg-gray-800 w-full max-w-md p-6 rounded-t-2xl sm:rounded-xl shadow-2xl transform transition-all">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-white">Nouveau Relevé</h2>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            </div>
-            <form id="add-form-mobile" onsubmit="handleAdd(event, 'mobile')" class="space-y-4">
-                <div><label class="block text-xs font-medium text-gray-400 mb-1">Date</label><input type="datetime-local" id="input-date-mobile" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3"></div>
-                <div><label class="block text-xs font-medium text-gray-400 mb-1">Index (m³)</label><input type="number" id="input-index-mobile" step="0.001" placeholder="Ex: 5350.123" required class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg p-3"></div>
-                <button type="submit" class="w-full text-white bg-indigo-600 hover:bg-indigo-700 font-bold rounded-lg text-lg px-5 py-3 text-center">Enregistrer</button>
+    <!-- MOBILE MODAL -->
+    <div id="mob-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+        <div class="card w-full max-w-sm p-6 shadow-2xl transform transition-all scale-100">
+            <h2 class="text-xl font-bold text-white mb-6">Ajouter Index</h2>
+            <form onsubmit="addManualIndex(event, 'mobile')" class="space-y-5">
+                <input type="datetime-local" id="date-mobile" required class="w-full p-3 rounded-lg text-sm">
+                <input type="number" id="index-mobile" step="0.001" required placeholder="Index m³" class="w-full p-3 rounded-lg text-sm">
+                <button class="w-full btn-primary py-3 rounded-lg shadow-lg">Sauvegarder</button>
             </form>
         </div>
     </div>
+    <button onclick="openMob()" class="fab print-hidden flex lg:hidden"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg></button>
 
-    <!-- LOGIC JS -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            initInputs();
-            loadData();
-            // Initialisation de l'état par défaut (Coût / Par Jour)
-            STATE.view = 'cost';
-            STATE.chartMode = 'day';
-            STATE.synthMode = 'global'; // Force la sélection initiale
-            updateApp();
-        });
-
-        const STATE = {
-            history: [],
-            dailyData: {},
-            monthlyData: {},
-            currentDate: new Date(),
-            view: 'cost', // Default to cost
-            chartMode: 'day', // Default to day
-            synthMode: 'global',
-            synthParams: {},
-            maxVal: 1,
-            maxMonthVal: 1
+        // --- APP STATE ---
+        const APP = {
+            db: { indexes: [], realDays: {}, computedDays: {}, monthly: {} },
+            ui: { view: 'cost', chartMode: 'day', synthMode: 'global', synthFilter: {}, calDate: new Date() },
+            limits: { maxD: 1, maxM: 1 }
         };
 
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initInputs();
+            loadDB();
+            recalc();
+        });
+
         function initInputs() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            const iso = now.toISOString().slice(0, 16);
+            const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            const iso = now.toISOString().slice(0,16);
+            if(document.getElementById('date-desktop')) document.getElementById('date-desktop').value = iso;
+            if(document.getElementById('date-mobile')) document.getElementById('date-mobile').value = iso;
             
-            // Initialisation des champs de date
-            if (document.getElementById('input-date-desktop')) document.getElementById('input-date-desktop').value = iso;
-            if (document.getElementById('input-date-mobile')) document.getElementById('input-date-mobile').value = iso;
+            const y = new Date().getFullYear(), m = new Date().toISOString().slice(0,7);
+            APP.ui.synthFilter = { year: y, month: m, start: `${y}-01-01`, end: new Date().toISOString().slice(0,10) };
+        }
 
-            // Initialisation des paramètres de synthèse pour les filtres dynamiques
-            STATE.synthParams = {
-                year: now.getFullYear(),
-                month: now.toISOString().slice(0,7),
-                start: new Date(now.getFullYear(), 0, 1).toISOString().slice(0,10),
-                end: now.toISOString().slice(0,10)
+        // --- PERSISTENCE ---
+        function loadDB() {
+            try {
+                const s = localStorage.getItem('gaz_db_final_v3');
+                if(s) { const d = JSON.parse(s); APP.db.indexes = d.indexes||[]; APP.db.realDays = d.realDays||{}; }
+            } catch(e) { console.error(e); }
+        }
+        function saveDB() {
+            localStorage.setItem('gaz_db_final_v3', JSON.stringify({ indexes: APP.db.indexes, realDays: APP.db.realDays }));
+        }
+
+        // --- IMPORT ENGINE ---
+        function handleImport(input) {
+            const f = input.files[0]; if(!f) return;
+            const r = new FileReader();
+            r.onload = (e) => {
+                const txt = e.target.result; let cR=0, cI=0;
+                try {
+                    if(f.name.endsWith('.json')||txt.trim().startsWith('{')) {
+                        const j = JSON.parse(txt); if(j.indexes) APP.db.indexes=j.indexes; if(j.realDays) APP.db.realDays=j.realDays; alert("Restauré !");
+                    } else {
+                        const lines = txt.split(/\r?\n/);
+                        // Scan headers
+                        let headIdx=0, type='unknown';
+                        for(let i=0; i<Math.min(20, lines.length); i++) {
+                            const l = lines[i].toLowerCase();
+                            if(l.includes('date') && l.includes('consommation')) { headIdx=i; type='daily'; break; }
+                            if(l.includes('date') && l.includes('index')) { headIdx=i; type='index'; break; }
+                        }
+                        
+                        if(type==='unknown') throw new Error("Format inconnu");
+
+                        for(let i=headIdx+1; i<lines.length; i++) {
+                            const cl = lines[i].replace(/"/g,'').trim(); if(!cl || !/\d/.test(cl)) continue;
+                            let p = cl.split(';'); if(p.length<2) p=cl.split(','); if(p.length<2) continue;
+
+                            // Date Parse
+                            let dk = null;
+                            const dRaw = p[0].trim();
+                            if(dRaw.match(/^\d{2}\/\d{2}\/\d{4}$/)) { const[d,m,y]=dRaw.split('/'); dk=`${y}-${m}-${d}`; }
+                            else if(dRaw.match(/^\d{4}-\d{2}-\d{2}/)) { dk=dRaw.split(' ')[0]; }
+                            if(!dk) continue;
+
+                            if(type==='daily') {
+                                // Daily: Date; Conso(m3); [Coeff]
+                                let v = p[1]; if(isNaN(parseFloat(v.replace(',','.'))) && p[2]) v=p[2];
+                                const m3 = parseFloat(v.replace(',','.'));
+                                let cf = 11.2;
+                                if(p[2] && !isNaN(parseFloat(p[2].replace(',','.')))) cf=parseFloat(p[2].replace(',','.'));
+                                else if(p[3] && !isNaN(parseFloat(p[3].replace(',','.')))) cf=parseFloat(p[3].replace(',','.'));
+                                
+                                if(!isNaN(m3)) { APP.db.realDays[dk] = { m3, kwh: m3*cf }; cR++; }
+                            } else {
+                                // Index: Date; Type; Index
+                                let v = p[1]; if(isNaN(parseFloat(v.replace(',','.'))) && p[2]) v=p[2];
+                                const idx = parseFloat(v.replace(',','.'));
+                                if(!isNaN(idx) && idx>10) {
+                                    if(!APP.db.indexes.some(x=>x.date.startsWith(dk))) {
+                                        APP.db.indexes.push({id:Date.now()+Math.random(), date:dk+"T12:00", index: idx});
+                                        cI++;
+                                    }
+                                }
+                            }
+                        }
+                        alert(`Importé: ${cR} jours réels, ${cI} index.`);
+                    }
+                    saveDB(); recalc();
+                } catch(err) { alert("Erreur: "+err.message); }
+                input.value = '';
             };
-
-            // Mise à jour des styles des boutons au chargement initial
-            updateBtnStyles();
+            r.readAsText(f);
         }
 
-        function loadData() { try { const s=localStorage.getItem('gaz_data'); if(s) STATE.history=JSON.parse(s); } catch(e){ STATE.history=[]; } }
-        function saveData() { localStorage.setItem('gaz_data', JSON.stringify(STATE.history)); }
-        function resetAll() { if(confirm("Attention, cette action effacera TOUT l'historique ! Êtes-vous sûr ?")) { STATE.history=[]; saveData(); updateApp(); } }
-        function openModal() { initInputs(); document.getElementById('mobile-modal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('mobile-modal').classList.add('hidden'); }
-        function handleAdd(e, m) {
-            e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
-            const d = document.getElementById('input-date'+s).value;
-            const i = parseFloat(document.getElementById('input-index'+s).value);
-            if(!d || isNaN(i)) return alert("Date ou Index invalide.");
-            if(STATE.history.some(h=>h.date===d)) return alert("Date existe déjà.");
-            STATE.history.push({id:Date.now(), date:d, index:i});
-            saveData(); document.getElementById('input-index'+s).value=''; if(m==='mobile') closeModal(); updateApp();
-        }
-        function deleteEntry(id) { if(confirm("Supprimer ce relevé ?")) { STATE.history=STATE.history.filter(h=>h.id!==id); saveData(); updateApp(); } }
-
-        function triggerImport() { document.getElementById('import-file').click(); }
         function exportData() {
-            const b = new Blob([JSON.stringify(STATE.history, null, 2)], {type:"application/json"});
-            const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=`gaz_backup_${new Date().toISOString().slice(0,10)}.json`;
+            const b = new Blob([JSON.stringify({indexes: APP.db.indexes, realDays: APP.db.realDays})], {type:'application/json'});
+            const u = URL.createObjectURL(b);
+            const a = document.createElement('a'); a.href=u; a.download=`gaz_backup_${new Date().toISOString().slice(0,10)}.json`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
-        function handleImport(input) {
-            const file = input.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const content = e.target.result; let count = 0;
-                const addItemIfNew = (item) => {
-                    if(!item.date || isNaN(item.index)) return;
-                    if(!STATE.history.some(h=>h.date===item.date)) {
-                        STATE.history.push({id:Date.now()+Math.random(), ...item}); count++;
-                    }
-                };
-                try {
-                    if(file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
-                        JSON.parse(content).forEach(addItemIfNew);
-                    } else {
-                        const lines = content.split(/\r?\n/);
-                        lines.forEach(line => {
-                            const clean = line.trim().replace(/"/g,''); if(!clean) return;
-                            let parts = clean.split(';'); if(parts.length < 2) parts = clean.split(','); if(parts.length < 2) return;
-                            let indexRaw;
-                            if (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) indexRaw = parts[2]; // GRDF
-                            else indexRaw = parts[1]; // Standard
-                            const indexVal = parseFloat(indexRaw.replace(',','.').replace(/[^\d.-]/g,''));
-                            if(isNaN(indexVal)) return;
 
-                            const dateRaw = parts[0].trim(); let dateObj = null;
-                            if(dateRaw.includes('/')) { const p = dateRaw.split('/'); if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`); } 
-                            else if(dateRaw.includes('-')) { dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`); }
+        // --- CALCULATION ENGINE ---
+        function recalc() {
+            const P = getParams();
+            APP.db.computedDays = {}; APP.db.monthly = {}; APP.limits.maxD = 0; APP.limits.maxM = 0;
 
-                            if(dateObj && !isNaN(dateObj.getTime())) {
-                                const offset = dateObj.getTimezoneOffset()*60000;
-                                const iso = new Date(dateObj.getTime()-offset).toISOString().slice(0,16);
-                                addItemIfNew({date:iso, index:indexVal});
-                            }
-                        });
-                    }
-                    if(count>0) { saveData(); updateApp(); alert(`${count} relevés importés !`); }
-                    else alert("Aucune donnée importée.");
-                } catch(err) { alert("Erreur import: "+err.message); }
-                input.value='';
-            };
-            reader.readAsText(file);
-        }
+            // 1. Real Data
+            for(const [k,v] of Object.entries(APP.db.realDays)) {
+                const costHT = v.kwh * P.kwh;
+                const costTTC = (costHT*(1+P.tva1)) + ((P.abo*12/365)*(1+P.tva2));
+                APP.db.computedDays[k] = { ...v, cost: costTTC, type: 'real' };
+            }
 
-        // --- CŒUR DE CALCUL ---
-        function updateApp() {
-            const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
-            const coef=getVal('p-coef',11.361), pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72), tvaC=getVal('p-tva-conso',20)/100, tvaA=getVal('p-tva-abo',5.5)/100;
-
-            STATE.history.sort((a,b)=>new Date(a.date)-new Date(b.date));
-            STATE.dailyData={}; STATE.monthlyData={}; STATE.maxVal=0; STATE.maxMonthVal=0;
+            // 2. Index Gap Filling
+            APP.db.indexes.sort((a,b) => new Date(a.date) - new Date(b.date));
             
-            let lastConsumptionRate = { kwh: 0, cost: 0, m3: 0 };
-            const today = new Date();
-            today.setHours(12, 0, 0, 0);
+            for(let i=1; i<APP.db.indexes.length; i++) {
+                const p = APP.db.indexes[i-1], c = APP.db.indexes[i];
+                const d1 = new Date(p.date), d2 = new Date(c.date);
+                const days = Math.ceil((d2-d1)/(86400000));
+                if(days<=0) continue;
 
-            const processed = STATE.history.map((curr, i) => {
-                if(i===0) return {...curr, isStart:true};
-                const prev = STATE.history[i-1];
-                const diffDays = (new Date(curr.date)-new Date(prev.date))/(1000*3600*24);
-                if(diffDays<=0) return {...curr, error:true};
+                // Calculate Period Cost for History Table
+                const deltaM3 = c.index - p.index;
+                if(deltaM3 >= 0) {
+                    const kwhPer = deltaM3 * P.coef;
+                    const costPer = (kwhPer * P.kwh * (1+P.tva1)) + (P.abo * (days/30.5) * (1+P.tva2));
+                    c.costPeriod = costPer; // Store for history table
+                } else continue;
 
-                const dM3 = curr.index - prev.index;
-                const dKwh = dM3 * coef;
-                const cHT = dKwh * pKwh;
-                const aHT = (pAbo*12/365)*diffDays;
-                const cTTC = (cHT*(1+tvaC)) + (aHT*(1+tvaA));
+                const totKwh = deltaM3 * P.coef;
+                let realKwh = 0, missing = [];
 
-                const kD = dKwh/diffDays, cD = cTTC/diffDays, m3D = dM3/diffDays; 
-                
-                // Mettre à jour le dernier taux connu pour la projection
-                lastConsumptionRate = { kwh: kD, cost: cD, m3: m3D };
-
-                let loop = new Date(prev.date); loop.setHours(12,0,0,0);
-                const stop = new Date(curr.date); stop.setHours(12,0,0,0);
-                
-                while(loop<stop) {
-                    const k = loop.toISOString().slice(0,10); const m = k.slice(0,7);
-                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0,m3:0};
-                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD; STATE.dailyData[k].m3+=m3D;
-                    if(!STATE.monthlyData[m]) STATE.monthlyData[m]={kwh:0,cost:0};
-                    STATE.monthlyData[m].kwh+=kD; STATE.monthlyData[m].cost+=cD;
-                    
-                    loop.setDate(loop.getDate()+1);
+                for(let j=0; j<days; j++) {
+                    const d = new Date(d1); d.setDate(d.getDate()+j);
+                    const k = d.toISOString().slice(0,10);
+                    if(APP.db.computedDays[k] && APP.db.computedDays[k].type==='real') realKwh += APP.db.computedDays[k].kwh;
+                    else missing.push(k);
                 }
-                return {...curr, dM3, dKwh, cTTC, cHT, aHT, cD, days:diffDays.toFixed(1)}; // Ajout de cD (Coût Quotidien)
-            });
 
-            // 1. Projection du dernier jour (Fixe l'affichage jusqu'à AUJOURD'HUI-1)
-            if (processed.length > 0 && processed[processed.length - 1].date) {
-                const lastReleveDate = new Date(processed[processed.length - 1].date);
-                lastReleveDate.setHours(12, 0, 0, 0);
-                
-                let loopDate = new Date(lastReleveDate);
-                const stopDate = new Date(today); // Stop JUST BEFORE today
+                if(missing.length > 0) {
+                    const remKwh = Math.max(0, totKwh - realKwh);
+                    const estDay = remKwh / missing.length;
+                    const estM3 = (deltaM3 - (realKwh/P.coef)) / missing.length;
+                    const costDay = (estDay * P.kwh * (1+P.tva1)) + ((P.abo*12/365)*(1+P.tva2));
 
-                // Correction de la boucle: doit s'arrêter avant le jour actuel (d'où l'usage de < stopDate)
-                while(loopDate < stopDate) { 
-                    const k = loopDate.toISOString().slice(0, 10);
-                    const m = k.slice(0, 7);
-
-                    if (!STATE.dailyData[k]) { // Si le jour n'a pas été couvert par un relevé réel
-                        if(!STATE.dailyData[k]) STATE.dailyData[k] = { kwh: 0, cost: 0, m3: 0 };
-
-                        STATE.dailyData[k].kwh = lastConsumptionRate.kwh;
-                        STATE.dailyData[k].cost = lastConsumptionRate.cost;
-                        STATE.dailyData[k].m3 = lastConsumptionRate.m3;
-
-                        if(!STATE.monthlyData[m]) STATE.monthlyData[m] = { kwh: 0, cost: 0 };
-                        STATE.monthlyData[m].kwh += lastConsumptionRate.kwh;
-                        STATE.monthlyData[m].cost += lastConsumptionRate.cost;
-                    }
-                    
-                    const v = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
-                    if(v > STATE.maxVal) STATE.maxVal = v;
-
-                    loopDate.setDate(loopDate.getDate() + 1);
+                    missing.forEach(k => {
+                        if(!APP.db.computedDays[k]) APP.db.computedDays[k] = { kwh: estDay, m3: Math.max(0,estM3), cost: costDay, type: 'estimated' };
+                    });
                 }
             }
 
-            // 2. Mise à jour du Max Mensuel (après projection)
-            Object.values(STATE.monthlyData).forEach(d=>{
-                const v=STATE.view==='kwh'?d.kwh:d.cost;
-                if(v>STATE.maxMonthVal) STATE.maxMonthVal=v;
-            });
-
-            // 3. Rendu
-            renderSynthesis();
-            renderHistory(processed); 
-            renderCalendar(); 
-            renderChart();
-        }
-
-        // --- SYNTHESIS & FILTERING ---
-        function setSynthMode(m) { 
-            STATE.synthMode = m; 
-            renderSynthesisInputs();
-            renderSynthesis();
-        }
-
-        function updateSynthParam(key, val) {
-            STATE.synthParams[key] = val;
-            renderSynthesis();
-        }
-
-        function renderSynthesisInputs() {
-            const c = document.getElementById('synth-filters');
-            const btns = ['global', 'year', 'month', 'custom'];
-            btns.forEach(b => {
-                const el = document.getElementById('synth-mode-'+b);
-                const active = b === STATE.synthMode;
-                el.className = active 
-                    ? "px-2 py-1 rounded transition bg-indigo-600 text-white shadow" 
-                    : "px-2 py-1 rounded transition text-gray-300 hover:text-white";
-            });
-
-            if (STATE.synthMode === 'global') { c.classList.add('hidden'); return; }
-            c.classList.remove('hidden'); c.innerHTML = '';
-
-            const today = new Date().toISOString().slice(0,10);
-            const now = new Date();
-            const years = new Set();
-            Object.keys(STATE.dailyData).forEach(k => years.add(k.substring(0,4)));
-            if(years.size === 0) years.add(now.getFullYear());
-
-            if (STATE.synthMode === 'year') {
-                const sel = document.createElement('select'); sel.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
-                Array.from(years).sort().reverse().forEach(y => {
-                    const opt = document.createElement('option'); opt.value = y; opt.text = y;
-                    if(y == STATE.synthParams.year) opt.selected = true; sel.appendChild(opt);
-                });
-                sel.onchange = (e) => updateSynthParam('year', e.target.value);
-                c.appendChild(sel);
+            // 3. Aggregate
+            for(const [k,v] of Object.entries(APP.db.computedDays)) {
+                const m = k.slice(0,7);
+                if(!APP.db.monthly[m]) APP.db.monthly[m] = { kwh:0, cost:0, m3:0 };
+                APP.db.monthly[m].kwh += v.kwh; APP.db.monthly[m].cost += v.cost; APP.db.monthly[m].m3 += v.m3;
+                const val = APP.ui.view==='kwh'?v.kwh:v.cost;
+                if(val>APP.limits.maxD) APP.limits.maxD = val;
             }
-            else if (STATE.synthMode === 'month') {
-                const inp = document.createElement('input'); inp.type = "month";
-                inp.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
-                inp.value = STATE.synthParams.month;
-                inp.onchange = (e) => updateSynthParam('month', e.target.value);
-                c.appendChild(inp);
+            for(const v of Object.values(APP.db.monthly)) {
+                const val = APP.ui.view==='kwh'?v.kwh:v.cost;
+                if(val>APP.limits.maxM) APP.limits.maxM = val;
             }
-            else if (STATE.synthMode === 'custom') {
-                const s = document.createElement('input'); s.type="date"; s.value=STATE.synthParams.start; s.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
-                s.onchange=(e)=>updateSynthParam('start', e.target.value);
-                const arrow = document.createElement('span'); arrow.textContent="à";
-                const e = document.createElement('input'); e.type="date"; e.value=STATE.synthParams.end || today; e.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
-                e.onchange=(evt)=>updateSynthParam('end', evt.target.value);
-                c.append(s, arrow, e);
-            }
-        }
-
-        function renderSynthesis() {
-            renderSynthesisInputs();
-            let start=null, end=null;
-            let label = "Données globales";
-
-            if (STATE.synthMode === 'year') {
-                start = new Date(STATE.synthParams.year, 0, 1); 
-                end = new Date(STATE.synthParams.year, 11, 31);
-                label = `Année ${STATE.synthParams.year}`;
-            } else if (STATE.synthMode === 'month') {
-                const [y, m] = STATE.synthParams.month.split('-');
-                start = new Date(y, m-1, 1);
-                end = new Date(y, m, 0); 
-                label = start.toLocaleDateString('fr-FR', {month:'long', year:'numeric', day: undefined});
-            } else if (STATE.synthMode === 'custom') {
-                start = new Date(STATE.synthParams.start);
-                end = new Date(STATE.synthParams.end);
-                label = `Du ${start.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`;
-            }
-
-            let tKwh=0, tCost=0, tM3=0, daysCount=0;
-
-            // Sum daily data within range
-            Object.keys(STATE.dailyData).forEach(k => {
-                const d = new Date(k);
-                if (start && d < start) return;
-                if (end && d > end) return;
-                daysCount++;
-
-                const day = STATE.dailyData[k];
-                tKwh += day.kwh;
-                tCost += day.cost;
-                tM3 += day.m3;
-            });
             
-            // Recalculer HT basé sur les totaux KWH et Jours
-            const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
-            const pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72);
-
-            let tHT = 0;
-            if (daysCount > 0) {
-                const costConsoHT = tKwh * pKwh;
-                const costAboHT = (pAbo * 12 / 365) * daysCount;
-                tHT = costConsoHT + costAboHT;
-            }
-
-            document.getElementById('total-kwh').textContent=Math.round(tKwh).toLocaleString('fr-FR', {maximumFractionDigits: 0})+' kWh';
-            document.getElementById('total-m3').textContent=tM3.toLocaleString('fr-FR', {maximumFractionDigits: 1})+' m³';
-            document.getElementById('total-cost').textContent=tCost.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
-            document.getElementById('total-cost-ht').textContent='HT: '+tHT.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
-            document.getElementById('synth-period-label').textContent = label;
+            renderAll();
         }
+
+        function renderAll() { renderSynth(); renderChart(); renderCal(); renderHist(); }
 
         // --- RENDERERS ---
-        function renderHistory(data) {
-            const b=document.getElementById('history-body'), e=document.getElementById('empty-msg');
-            b.innerHTML=''; if(data.length===0) {e.classList.remove('hidden'); return;} e.classList.add('hidden');
-            [...data].reverse().forEach(r=>{
-                const tr=document.createElement('tr'); tr.className="hover:bg-gray-700/50 transition";
-                const d=new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
-                
-                // Détails Conso
-                const detConso = r.isStart
-                    ? '<span class="text-gray-600 text-xs italic">Départ</span>'
-                    : `<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
-                
-                // CHANGEMENT DE RENDU ICI : Coût Total Période + Coût/Jour
-                let detCost;
-                if (r.isStart) {
-                    detCost = '-';
-                } else {
-                    const totalCost = r.cTTC.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
-                    const dailyCost = r.cD.toLocaleString('fr-FR', {style:'currency', currency:'EUR', maximumFractionDigits: 2, minimumFractionDigits: 2});
-                    detCost = `
-                        <div class="font-bold text-emerald-400">${totalCost}</div>
-                        <div class="text-xs text-gray-500 italic">(${dailyCost} / j)</div>
-                    `;
-                }
+        
+        function renderSynth() {
+            const mode = APP.ui.synthMode;
+            const f = document.getElementById('synth-controls');
+            const ys = document.getElementById('synth-year-select');
+            const ms = document.getElementById('synth-month-select');
+            const cs = document.getElementById('synth-custom-range');
+            const lLabel = document.getElementById('synth-label');
 
-                tr.innerHTML=`
-                    <td class="px-4 py-3 text-white">${d}</td>
-                    <td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td>
-                    <td class="px-4 py-3 text-right">${detConso}</td>
-                    <td class="px-4 py-3 text-right">${detCost}</td>
-                    <td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300 p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button></td>
-                `;
-                b.appendChild(tr);
+            ['global','year','month','custom'].forEach(m => {
+                const b = document.getElementById('btn-sy-'+m);
+                b.className = (m===mode) ? "px-2 py-1 text-xs rounded bg-indigo-600 text-white shadow-sm transition" : "px-2 py-1 text-xs rounded text-gray-400 hover:text-white hover:bg-white/5 transition";
+            });
+
+            f.classList.add('hidden'); ys.classList.add('hidden'); ms.classList.add('hidden'); cs.classList.add('hidden');
+            if(mode !== 'global') f.classList.remove('hidden');
+
+            let start=null, end=null, label="Données Globales";
+            const allKeys = Object.keys(APP.db.computedDays).sort();
+
+            if(mode==='year') {
+                ys.classList.remove('hidden');
+                const years = [...new Set(allKeys.map(k=>k.slice(0,4)))].sort().reverse();
+                if(years.length===0) years.push(new Date().getFullYear());
+                if(ys.options.length !== years.length) { ys.innerHTML=''; years.forEach(y=>ys.add(new Option(y,y))); }
+                if(!years.includes(APP.ui.synthFilter.year.toString())) APP.ui.synthFilter.year = years[0];
+                ys.value = APP.ui.synthFilter.year;
+                start=new Date(ys.value,0,1); end=new Date(ys.value,11,31); label=`Année ${ys.value}`;
+            } 
+            else if(mode==='month') {
+                ms.classList.remove('hidden');
+                ms.value = APP.ui.synthFilter.month;
+                const [y,m] = ms.value.split('-');
+                start=new Date(y,m-1,1); end=new Date(y,m,0); label=new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+            }
+            else if(mode==='custom') {
+                cs.classList.remove('hidden');
+                document.getElementById('synth-start').value = APP.ui.synthFilter.start;
+                document.getElementById('synth-end').value = APP.ui.synthFilter.end;
+                start=new Date(APP.ui.synthFilter.start); end=new Date(APP.ui.synthFilter.end);
+                label=`Période personnalisée`;
+            }
+
+            let tk=0, tc=0, tm=0;
+            allKeys.forEach(k => {
+                const d = new Date(k);
+                if(start && d<start) return;
+                if(end && d>end) return;
+                const v = APP.db.computedDays[k];
+                tk+=v.kwh; tc+=v.cost; tm+=v.m3;
+            });
+
+            document.getElementById('disp-m3').innerText = tm.toLocaleString('fr-FR',{maximumFractionDigits:1})+' m³';
+            document.getElementById('disp-kwh').innerText = Math.round(tk).toLocaleString()+' kWh';
+            document.getElementById('disp-cost').innerText = tc.toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+            document.getElementById('disp-cost-ht').innerText = 'HT: ' + (tc/1.2).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
+            lLabel.innerText = label;
+        }
+
+        function updateSynth() {
+            APP.ui.synthFilter.year = document.getElementById('synth-year-select').value;
+            APP.ui.synthFilter.month = document.getElementById('synth-month-select').value;
+            APP.ui.synthFilter.start = document.getElementById('synth-start').value;
+            APP.ui.synthFilter.end = document.getElementById('synth-end').value;
+            renderSynth();
+        }
+
+        function setSynth(m) { APP.ui.synthMode = m; renderSynth(); }
+
+        function renderChart() {
+            const c = document.getElementById('chart-container'); c.innerHTML='';
+            const isDay = APP.ui.chartMode === 'day';
+            
+            document.getElementById('btn-chart-day').className = isDay ? "px-3 py-1.5 rounded-md bg-indigo-600 text-white shadow-sm transition" : "px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition";
+            document.getElementById('btn-chart-month').className = !isDay ? "px-3 py-1.5 rounded-md bg-indigo-600 text-white shadow-sm transition" : "px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition";
+            document.getElementById('btn-view-cost').className = APP.ui.view==='cost' ? "px-3 py-1.5 rounded-md bg-emerald-600 text-white shadow-sm transition" : "px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition";
+            document.getElementById('btn-view-kwh').className = APP.ui.view==='kwh' ? "px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition" : "px-3 py-1.5 rounded-md text-gray-400 hover:text-white hover:bg-white/5 transition";
+
+            let data={}, max=0, keys=[];
+            
+            if(isDay) {
+                const y = APP.ui.calDate.getFullYear(), m = APP.ui.calDate.getMonth();
+                const dim = new Date(y,m+1,0).getDate();
+                document.getElementById('chart-title').innerText = "Évolution " + new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+                max = APP.limits.maxD;
+                for(let d=1; d<=dim; d++) {
+                    const k = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const v = APP.db.computedDays[k];
+                    data[k] = { label:d, val: v ? (APP.ui.view==='kwh'?v.kwh:v.cost) : 0, type: v?.type };
+                    keys.push(k);
+                }
+            } else {
+                document.getElementById('chart-title').innerText = "Évolution Annuelle";
+                max = APP.limits.maxM;
+                keys = Object.keys(APP.db.monthly).sort();
+                keys.forEach(k => {
+                    const v = APP.db.monthly[k];
+                    const [yy,mm] = k.split('-');
+                    data[k] = { label: `${mm}/${yy.slice(2)}`, val: APP.ui.view==='kwh'?v.kwh:v.cost, type: 'mixed' };
+                });
+            }
+
+            if(keys.length===0 || max===0) { document.getElementById('chart-empty').classList.remove('hidden'); return; }
+            document.getElementById('chart-empty').classList.add('hidden');
+
+            keys.forEach(k => {
+                const item = data[k];
+                const pct = (item.val/max)*100;
+                const el = document.createElement('div');
+                el.className = `bar-wrapper ${item.type||'estimated'} ${keys.length>20?'dense':''}`;
+                el.setAttribute('data-tooltip', `${item.label}: ${item.val.toFixed(1)}`);
+                el.innerHTML = `<div class="bar" style="height:${Math.max(2, pct)}%"></div><div class="bar-label">${item.label}</div>`;
+                c.appendChild(el);
             });
         }
 
-        function renderChart() {
-            const c=document.getElementById('monthly-chart'), t=document.getElementById('chart-title'); c.innerHTML='';
-            if(STATE.chartMode==='day') {
-                t.textContent="Évolution : "+STATE.currentDate.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-                const y=STATE.currentDate.getFullYear(), m=STATE.currentDate.getMonth();
-                const days=new Date(y,m+1,0).getDate();
-                let lMax=0;
-                for(let d=1;d<=days;d++) {
-                    const k=new Date(y,m,d,12).toISOString().slice(0,10);
-                    if(STATE.dailyData[k]) { const v=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost; if(v>lMax) lMax=v; }
-                }
-                if(lMax===0) { c.innerHTML='<div class="text-gray-500 text-sm w-full text-center py-10">Pas de données</div>'; return; }
-                for(let d=1;d<=days;d++) {
-                    const k=new Date(y,m,d,12).toISOString().slice(0,10);
-                    let val=0; if(STATE.dailyData[k]) val=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
-                    const p=(val/lMax)*100;
-                    const div=document.createElement('div'); div.className="bar-wrapper dense"; div.setAttribute("data-tooltip",`${d}: ${val.toFixed(1)}${STATE.view==='kwh'?'kWh':'€'}`);
-                    const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
-                    div.innerHTML=`<div class="bar ${col}" style="height:${Math.max(2,p)}%"></div><div class="bar-label">${d}</div>`;
-                    c.appendChild(div);
-                }
-            } else {
-                t.textContent="Évolution Mensuelle";
-                const keys=Object.keys(STATE.monthlyData).sort();
-                if(keys.length===0) { c.innerHTML='<div class="text-gray-500 text-sm w-full text-center py-10">Ajoutez des données</div>'; return; }
-                keys.forEach(k=>{
-                    const d=STATE.monthlyData[k];
-                    const val=STATE.view==='kwh'?d.kwh:d.cost;
-                    const p=STATE.maxMonthVal>0?(val/STATE.maxMonthVal*100):0;
-                    const [y,m]=k.split('-'); const lbl=new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
-                    const div=document.createElement('div'); div.className="bar-wrapper"; div.setAttribute("data-tooltip",`${lbl}: ${val.toFixed(1)}${STATE.view==='kwh'?'kWh':'€'}`);
-                    const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
-                    div.innerHTML=`<div class="bar ${col}" style="height:${Math.max(5,p)}%"></div><div class="bar-label">${lbl}</div>`;
-                    c.appendChild(div);
-                });
-            }
-        }
+        function renderCal() {
+            const g = document.getElementById('cal-grid'); g.innerHTML='';
+            const y = APP.ui.calDate.getFullYear(), m = APP.ui.calDate.getMonth();
+            document.getElementById('cal-title').innerText = new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
+            const fd = new Date(y,m,1).getDay()||7, dim = new Date(y,m+1,0).getDate();
 
-        function renderCalendar() {
-            const g=document.getElementById('calendar-grid'), l=document.getElementById('calendar-month-label'); g.innerHTML='';
-            const y=STATE.currentDate.getFullYear(), m=STATE.currentDate.getMonth();
-            l.textContent=new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-            const fd=new Date(y,m,1).getDay()||7, days=new Date(y,m+1,0).getDate();
-            for(let i=1;i<fd;i++) g.appendChild(document.createElement('div'));
-            for(let d=1;d<=days;d++) {
-                const k=new Date(y,m,d,12).toISOString().slice(0,10);
-                const c=document.createElement('div'); c.className="day-cell border border-gray-700/50";
-                if(STATE.dailyData[k]) {
-                    const v=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
-                    const r=STATE.maxVal>0?v/STATE.maxVal:0;
-                    let bg='#374151'; if(v>0) { c.classList.add('has-data'); if(r<0.25) bg='#064e3b'; else if(r<0.5) bg='#713f12'; else if(r<0.75) bg='#7c2d12'; else bg='#7f1d1d'; }
-                    c.style.backgroundColor=bg;
-                    c.innerHTML=`<span class="font-bold text-white z-10">${d}</span><div class="z-10 text-[0.6rem] md:text-xs text-gray-200 mt-1">${STATE.view==='kwh'?Math.round(v):v.toFixed(1)}</div>`;
-                    const b=document.createElement('div'); b.className="intensity-bar";
-                    const f=document.createElement('div'); f.className="intensity-fill"; f.style.width=Math.min(100,r*100)+'%'; f.style.backgroundColor=r>0.5?'#fcd34d':'#34d399';
-                    b.appendChild(f); c.appendChild(b); c.title=`${k}\n${v.toFixed(2)}`;
-                } else c.innerHTML=`<span class="text-gray-600">${d}</span>`;
+            for(let i=1; i<fd; i++) g.appendChild(document.createElement('div'));
+
+            for(let d=1; d<=dim; d++) {
+                const k = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const v = APP.db.computedDays[k];
+                const c = document.createElement('div'); c.className = "day-cell border border-gray-700/50";
+                
+                if(v) {
+                    c.classList.add('has-data');
+                    const val = APP.ui.view==='kwh'?v.kwh:v.cost;
+                    const r = APP.limits.maxD>0 ? val/APP.limits.maxD : 0;
+                    
+                    let bg = '#374151';
+                    if(val>0) { if(r<0.25) bg='#064e3b'; else if(r<0.5) bg='#713f12'; else if(r<0.75) bg='#7c2d12'; else bg='#7f1d1d'; }
+                    c.style.backgroundColor = bg;
+                    if(v.type==='real') c.innerHTML += `<div class="marker-dot bg-real"></div>`;
+                    c.innerHTML += `<span class="font-bold text-white z-10">${d}</span><div class="z-10 day-val text-gray-200">${Math.round(val)}</div>`;
+                    const b = document.createElement('div'); b.className="intensity-bar";
+                    const f = document.createElement('div'); f.className="intensity-fill"; 
+                    f.style.width=`${r*100}%`; f.style.background = r>0.5?'#fcd34d':'#34d399';
+                    b.appendChild(f); c.appendChild(b);
+                    c.title = `${k}\n${v.type}\n${val.toFixed(2)}`;
+                } else { c.innerHTML = `<span class="text-gray-600">${d}</span>`; }
                 g.appendChild(c);
             }
         }
 
-        function changeMonth(d) { STATE.currentDate.setMonth(STATE.currentDate.getMonth()+d); updateApp(); }
-        function setView(v) { STATE.view=v; updateBtnStyles(); updateApp(); }
-        function setChartMode(m) { STATE.chartMode=m; updateBtnStyles(); updateApp(); }
-        function updateBtnStyles() {
-            const act="bg-indigo-600 text-white", ina="text-gray-400 hover:text-white";
-            document.getElementById('btn-view-kwh').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.view==='kwh'?act:ina}`;
-            document.getElementById('btn-view-cost').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.view==='cost'?act:ina}`;
-            document.getElementById('btn-mode-month').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.chartMode==='month'?act:ina}`;
-            document.getElementById('btn-mode-day').className=`px-3 py-1.5 rounded-md transition-colors ${STATE.chartMode==='day'?act:ina}`;
+        function renderHist() {
+            const b = document.getElementById('hist-body'); b.innerHTML='';
+            [...APP.db.indexes].reverse().forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-700/50 transition";
+                const d = new Date(r.date).toLocaleDateString('fr-FR');
+                const cost = r.costPeriod ? `<span class="text-emerald-400 font-bold">${r.costPeriod.toFixed(2)} €</span>` : '-';
+                tr.innerHTML = `<td class="px-5 py-3 text-gray-300">${d}</td><td class="px-5 py-3 text-right font-mono text-white">${r.index}</td><td class="px-5 py-3 text-right">${cost}</td><td class="px-5 py-3 text-center"><button onclick="delIndex(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
+                b.appendChild(tr);
+            });
         }
-        function toggleParams() {
-            const c=document.getElementById('params-content'), i=document.getElementById('chevron-icon');
-            if(c.classList.contains('hidden')) {c.classList.remove('hidden'); i.style.transform='rotate(180deg)';}
-            else {c.classList.add('hidden'); i.style.transform='rotate(0deg)';}
+
+        // Actions
+        function addManualIndex(e, m) {
+            e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
+            const d = document.getElementById('date'+s).value;
+            const v = parseFloat(document.getElementById('index'+s).value);
+            if(!d || isNaN(v)) return;
+            if(APP.db.indexes.some(x=>x.date===d)) return alert("Date existe");
+            APP.db.indexes.push({ id: Date.now(), date: d, index: v });
+            saveDB(); recalc();
+            document.getElementById('index'+s).value='';
+            if(m==='mobile') document.getElementById('mob-modal').classList.add('hidden');
         }
-        function toggleHistory() {
-            const c=document.getElementById('history-content'), i=document.getElementById('history-chevron');
-            if(c.classList.contains('hidden')) {c.classList.remove('hidden'); i.style.transform='rotate(180deg)';}
-            else {c.classList.add('hidden'); i.style.transform='rotate(0deg)';}
-        }
+        function delIndex(id) { if(confirm("Supprimer ?")) { APP.db.indexes = APP.db.indexes.filter(x=>x.id!==id); saveDB(); recalc(); } }
+        function resetAll() { if(confirm("TOUT SUPPRIMER ?")) { localStorage.removeItem('gaz_db_final_v3'); APP.db.indexes=[]; APP.db.realDays={}; recalc(); } }
+        function moveCal(d) { APP.ui.calDate.setMonth(APP.ui.calDate.getMonth()+d); renderCal(); if(APP.ui.chartMode==='day') renderChart(); }
+        function setView(v) { APP.ui.view=v; renderChart(); renderCal(); }
+        function setChart(m) { APP.ui.chartMode=m; renderChart(); }
+        function openMob() { initInputs(); document.getElementById('mob-modal').classList.remove('hidden'); }
+        function getParams() { return { kwh: parseFloat(document.getElementById('p-kwh').value)||0.0777, abo: parseFloat(document.getElementById('p-abo').value)||16.72, coef: parseFloat(document.getElementById('p-coef').value)||11.36, tva1: (parseFloat(document.getElementById('p-tva1').value)||20)/100, tva2: (parseFloat(document.getElementById('p-tva2').value)||5.5)/100 }; }
     </script>
 </body>
 </html>
