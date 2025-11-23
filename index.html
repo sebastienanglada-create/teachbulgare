@@ -6,12 +6,10 @@
     <title>Suivi de Consommation Gaz</title>
     <!-- Chargement de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Police Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         /* --- Styles de Base (Mode Sombre) --- */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: system-ui, sans-serif; /* Utilisation d'une police système pour la stabilité */
             background-color: #111827; /* gray-900 */
             color: #f3f4f6; /* gray-100 */
         }
@@ -49,9 +47,6 @@
             transition: height 0.3s ease-out, background-color 0.3s;
             min-height: 2px;
         }
-        .bar:hover {
-            filter: brightness(1.2);
-        }
         .bar-wrapper:hover::after {
             content: attr(data-tooltip);
             position: absolute;
@@ -69,7 +64,6 @@
             pointer-events: none;
             margin-bottom: 4px;
         }
-
         .bar-label {
             font-size: 0.6rem;
             color: #9ca3af;
@@ -123,7 +117,6 @@
             margin-top: 2px;
             overflow: hidden;
         }
-        .intensity-fill { height: 100%; background-color: #fff; }
 
         @media print {
             .print-hidden { display: none !important; }
@@ -183,8 +176,8 @@
             <!-- COLONNE GAUCHE (INPUTS & STATS) -->
             <div class="lg:col-span-4 space-y-6">
                 
-                <!-- 1. AJOUTER UN RELEVÉ -->
-                <section class="card p-5 print-hidden hidden lg:block">
+                <!-- 1. AJOUTER UN RELEVÉ (Visibilité corrigée) -->
+                <section class="card p-5 print-hidden lg:block">
                     <h2 class="text-lg font-semibold text-white mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Nouveau Relevé
@@ -211,6 +204,7 @@
                         </span>
                         <svg id="chevron-icon" class="w-5 h-5 text-gray-400 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
+                    <!-- Contenu masqué par défaut (hidden) -->
                     <div id="params-content" class="hidden px-5 pb-5 space-y-3 border-t border-gray-700 pt-4">
                         <div class="grid grid-cols-2 gap-3">
                             <div><label class="block text-xs text-gray-400 mb-1">Coef. Gaz</label><input type="number" id="p-coef" value="11.361" step="0.001" onchange="updateApp()" class="w-full bg-gray-700 border border-gray-600 text-white text-xs rounded p-2"></div>
@@ -222,19 +216,37 @@
                     </div>
                 </section>
 
-                <!-- 3. SYNTHÈSE -->
+                <!-- 3. SYNTHÈSE DYNAMIQUE -->
                 <section class="card p-5">
-                    <h2 class="text-lg font-semibold text-white mb-4">Synthèse Totale</h2>
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-2">
+                        <h2 class="text-lg font-semibold text-white">Synthèse</h2>
+                        <!-- Filtres Période -->
+                        <div class="flex bg-gray-700 rounded-lg p-1 text-[0.65rem] md:text-xs">
+                            <button onclick="setSynthMode('global')" id="synth-mode-global" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Global</button>
+                            <button onclick="setSynthMode('year')" id="synth-mode-year" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Année</button>
+                            <button onclick="setSynthMode('month')" id="synth-mode-month" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Mois</button>
+                            <button onclick="setSynthMode('custom')" id="synth-mode-custom" class="px-2 py-1 rounded transition text-gray-300 hover:text-white">Période</button>
+                        </div>
+                    </div>
+
+                    <!-- Inputs Dynamiques (Date/Select) -->
+                    <div id="synth-filters" class="mb-4 text-sm text-gray-400 flex flex-wrap gap-3 items-center hidden">
+                        <!-- Injecté par JS -->
+                    </div>
+
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
                             <div class="text-xs text-gray-400">Consommation</div>
                             <div class="text-xl font-bold text-blue-400" id="total-kwh">0 kWh</div>
                             <div class="text-xs text-gray-500" id="total-m3">0 m³</div>
                         </div>
-                        <div class="bg-gray-700/50 p-3 rounded-lg">
+                        <div class="bg-gray-700/50 p-3 rounded-lg relative">
                             <div class="text-xs text-gray-400">Coût TTC</div>
                             <div class="text-xl font-bold text-emerald-400" id="total-cost">0.00 €</div>
                             <div class="text-xs text-gray-500" id="total-cost-ht">HT: 0.00 €</div>
+                        </div>
+                        <div class="col-span-2 text-[0.65rem] text-center text-gray-500 italic" id="synth-period-label">
+                            Données globales
                         </div>
                     </div>
                 </section>
@@ -354,43 +366,66 @@
 
     <!-- LOGIC JS -->
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initInputs();
+            loadData();
+            // Initialisation de l'état par défaut (Coût / Par Jour)
+            STATE.view = 'cost';
+            STATE.chartMode = 'day';
+            STATE.synthMode = 'global'; // Force la sélection initiale
+            updateApp();
+        });
+
         const STATE = {
             history: [],
             dailyData: {},
             monthlyData: {},
             currentDate: new Date(),
-            view: 'kwh',
-            chartMode: 'month',
+            view: 'cost', // Default to cost
+            chartMode: 'day', // Default to day
+            synthMode: 'global',
+            synthParams: {},
             maxVal: 1,
             maxMonthVal: 1
         };
-
-        window.onload = () => { initInputs(); loadData(); updateApp(); };
 
         function initInputs() {
             const now = new Date();
             now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
             const iso = now.toISOString().slice(0, 16);
-            document.getElementById('input-date-desktop').value = iso;
-            document.getElementById('input-date-mobile').value = iso;
+            
+            // Initialisation des champs de date
+            if (document.getElementById('input-date-desktop')) document.getElementById('input-date-desktop').value = iso;
+            if (document.getElementById('input-date-mobile')) document.getElementById('input-date-mobile').value = iso;
+
+            // Initialisation des paramètres de synthèse pour les filtres dynamiques
+            STATE.synthParams = {
+                year: now.getFullYear(),
+                month: now.toISOString().slice(0,7),
+                start: new Date(now.getFullYear(), 0, 1).toISOString().slice(0,10),
+                end: now.toISOString().slice(0,10)
+            };
+
+            // Mise à jour des styles des boutons au chargement initial
+            updateBtnStyles();
         }
+
         function loadData() { try { const s=localStorage.getItem('gaz_data'); if(s) STATE.history=JSON.parse(s); } catch(e){ STATE.history=[]; } }
         function saveData() { localStorage.setItem('gaz_data', JSON.stringify(STATE.history)); }
-        function resetAll() { if(confirm("Tout effacer ?")) { STATE.history=[]; saveData(); updateApp(); } }
+        function resetAll() { if(confirm("Attention, cette action effacera TOUT l'historique ! Êtes-vous sûr ?")) { STATE.history=[]; saveData(); updateApp(); } }
         function openModal() { initInputs(); document.getElementById('mobile-modal').classList.remove('hidden'); }
         function closeModal() { document.getElementById('mobile-modal').classList.add('hidden'); }
         function handleAdd(e, m) {
             e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
             const d = document.getElementById('input-date'+s).value;
             const i = parseFloat(document.getElementById('input-index'+s).value);
-            if(!d || isNaN(i)) return alert("Invalide");
-            if(STATE.history.some(h=>h.date===d)) return alert("Date existe déjà");
+            if(!d || isNaN(i)) return alert("Date ou Index invalide.");
+            if(STATE.history.some(h=>h.date===d)) return alert("Date existe déjà.");
             STATE.history.push({id:Date.now(), date:d, index:i});
             saveData(); document.getElementById('input-index'+s).value=''; if(m==='mobile') closeModal(); updateApp();
         }
-        function deleteEntry(id) { if(confirm("Supprimer ?")) { STATE.history=STATE.history.filter(h=>h.id!==id); saveData(); updateApp(); } }
+        function deleteEntry(id) { if(confirm("Supprimer ce relevé ?")) { STATE.history=STATE.history.filter(h=>h.id!==id); saveData(); updateApp(); } }
 
-        // --- IMPORT ADAPTÉ POUR GRDF ET CSV STANDARD ---
         function triggerImport() { document.getElementById('import-file').click(); }
         function exportData() {
             const b = new Blob([JSON.stringify(STATE.history, null, 2)], {type:"application/json"});
@@ -401,8 +436,7 @@
             const file = input.files[0]; if(!file) return;
             const reader = new FileReader();
             reader.onload = (e) => {
-                const content = e.target.result;
-                let count = 0;
+                const content = e.target.result; let count = 0;
                 const addItemIfNew = (item) => {
                     if(!item.date || isNaN(item.index)) return;
                     if(!STATE.history.some(h=>h.date===item.date)) {
@@ -410,44 +444,22 @@
                     }
                 };
                 try {
-                    // 1. JSON
                     if(file.name.toLowerCase().endsWith('.json') || content.trim().startsWith('[')) {
                         JSON.parse(content).forEach(addItemIfNew);
                     } else {
-                        // 2. CSV (Standard ou GRDF)
                         const lines = content.split(/\r?\n/);
                         lines.forEach(line => {
-                            const clean = line.trim().replace(/"/g,'');
-                            if(!clean) return;
-                            
-                            let parts = clean.split(';');
-                            if(parts.length < 2) parts = clean.split(',');
-                            if(parts.length < 2) return;
-
-                            // Détection GRDF : Si col 2 est texte "Index transmis...", alors Index est en col 3
-                            // Format GRDF: Date;Type;Index;Coeff
+                            const clean = line.trim().replace(/"/g,''); if(!clean) return;
+                            let parts = clean.split(';'); if(parts.length < 2) parts = clean.split(','); if(parts.length < 2) return;
                             let indexRaw;
-                            if (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) {
-                                // C'est probablement GRDF, index en colonne 3 (indice 2)
-                                indexRaw = parts[2];
-                            } else {
-                                // C'est probablement Standard, index en colonne 2 (indice 1)
-                                indexRaw = parts[1];
-                            }
-                            
-                            // Nettoyage valeur index
+                            if (isNaN(parseFloat(parts[1].replace(',','.'))) && parts.length >= 3) indexRaw = parts[2]; // GRDF
+                            else indexRaw = parts[1]; // Standard
                             const indexVal = parseFloat(indexRaw.replace(',','.').replace(/[^\d.-]/g,''));
-                            if(isNaN(indexVal)) return; // Skip header
+                            if(isNaN(indexVal)) return;
 
-                            // Parsing Date
-                            const dateRaw = parts[0].trim();
-                            let dateObj = null;
-                            if(dateRaw.includes('/')) { // FR JJ/MM/AAAA
-                                const p = dateRaw.split('/');
-                                if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`);
-                            } else if(dateRaw.includes('-')) { // ISO
-                                dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`);
-                            }
+                            const dateRaw = parts[0].trim(); let dateObj = null;
+                            if(dateRaw.includes('/')) { const p = dateRaw.split('/'); if(p.length===3) dateObj = new Date(`${p[2]}-${p[1]}-${p[0]}T12:00:00`); } 
+                            else if(dateRaw.includes('-')) { dateObj = new Date(dateRaw.includes('T')?dateRaw:`${dateRaw}T12:00:00`); }
 
                             if(dateObj && !isNaN(dateObj.getTime())) {
                                 const offset = dateObj.getTimezoneOffset()*60000;
@@ -464,14 +476,17 @@
             reader.readAsText(file);
         }
 
-        // --- UPDATE LOGIC ---
+        // --- CŒUR DE CALCUL ---
         function updateApp() {
             const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
             const coef=getVal('p-coef',11.361), pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72), tvaC=getVal('p-tva-conso',20)/100, tvaA=getVal('p-tva-abo',5.5)/100;
 
             STATE.history.sort((a,b)=>new Date(a.date)-new Date(b.date));
             STATE.dailyData={}; STATE.monthlyData={}; STATE.maxVal=0; STATE.maxMonthVal=0;
-            let tKwh=0, tCost=0, tM3=0, tHT=0;
+            
+            let lastConsumptionRate = { kwh: 0, cost: 0, m3: 0 };
+            const today = new Date();
+            today.setHours(12, 0, 0, 0);
 
             const processed = STATE.history.map((curr, i) => {
                 if(i===0) return {...curr, isStart:true};
@@ -485,40 +500,185 @@
                 const aHT = (pAbo*12/365)*diffDays;
                 const cTTC = (cHT*(1+tvaC)) + (aHT*(1+tvaA));
 
-                tM3+=dM3; tKwh+=dKwh; tCost+=cTTC; tHT+=(cHT+aHT);
+                const kD = dKwh/diffDays, cD = cTTC/diffDays, m3D = dM3/diffDays; 
+                
+                // Mettre à jour le dernier taux connu pour la projection
+                lastConsumptionRate = { kwh: kD, cost: cD, m3: m3D };
 
-                const kD = dKwh/diffDays, cD = cTTC/diffDays;
                 let loop = new Date(prev.date); loop.setHours(12,0,0,0);
                 const stop = new Date(curr.date); stop.setHours(12,0,0,0);
                 
                 while(loop<stop) {
-                    const k = loop.toISOString().slice(0,10);
-                    const m = k.slice(0,7);
-                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0};
-                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD;
+                    const k = loop.toISOString().slice(0,10); const m = k.slice(0,7);
+                    if(!STATE.dailyData[k]) STATE.dailyData[k]={kwh:0,cost:0,m3:0};
+                    STATE.dailyData[k].kwh+=kD; STATE.dailyData[k].cost+=cD; STATE.dailyData[k].m3+=m3D;
                     if(!STATE.monthlyData[m]) STATE.monthlyData[m]={kwh:0,cost:0};
                     STATE.monthlyData[m].kwh+=kD; STATE.monthlyData[m].cost+=cD;
                     
-                    const v = STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
-                    if(v>STATE.maxVal) STATE.maxVal=v;
                     loop.setDate(loop.getDate()+1);
                 }
-                return {...curr, dM3, dKwh, cTTC, days:diffDays.toFixed(1)};
+                return {...curr, dM3, dKwh, cTTC, cHT, aHT, days:diffDays.toFixed(1)};
             });
 
+            // 1. Projection du dernier jour (Fixe l'affichage jusqu'à aujourd'hui)
+            if (processed.length > 0 && processed[processed.length - 1].date) {
+                const lastReleveDate = new Date(processed[processed.length - 1].date);
+                lastReleveDate.setHours(12, 0, 0, 0);
+
+                let loopDate = new Date(lastReleveDate);
+                // On projette à partir du jour du dernier relevé inclusif, jusqu'à AUJOURD'HUI.
+                while(loopDate <= today) {
+                    const k = loopDate.toISOString().slice(0, 10);
+                    const m = k.slice(0, 7);
+
+                    // Utiliser le taux moyen de la dernière période complète
+                    if (STATE.dailyData[k]) {
+                        // Si le jour existe déjà, on vérifie juste le max
+                    } else {
+                        // Jour non encore dans l'historique (projection)
+                        if(!STATE.dailyData[k]) STATE.dailyData[k] = { kwh: 0, cost: 0, m3: 0 };
+
+                        STATE.dailyData[k].kwh = lastConsumptionRate.kwh;
+                        STATE.dailyData[k].cost = lastConsumptionRate.cost;
+                        STATE.dailyData[k].m3 = lastConsumptionRate.m3;
+
+                        if(!STATE.monthlyData[m]) STATE.monthlyData[m] = { kwh: 0, cost: 0 };
+                        STATE.monthlyData[m].kwh += lastConsumptionRate.kwh;
+                        STATE.monthlyData[m].cost += lastConsumptionRate.cost;
+                    }
+                    
+                    const v = STATE.view === 'kwh' ? STATE.dailyData[k].kwh : STATE.dailyData[k].cost;
+                    if(v > STATE.maxVal) STATE.maxVal = v;
+
+                    loopDate.setDate(loopDate.getDate() + 1);
+                }
+            }
+
+            // 2. Mise à jour du Max Mensuel (après projection)
             Object.values(STATE.monthlyData).forEach(d=>{
                 const v=STATE.view==='kwh'?d.kwh:d.cost;
                 if(v>STATE.maxMonthVal) STATE.maxMonthVal=v;
             });
 
-            document.getElementById('total-kwh').textContent=Math.round(tKwh).toLocaleString()+' kWh';
-            document.getElementById('total-m3').textContent=tM3.toFixed(1)+' m³';
-            document.getElementById('total-cost').textContent=tCost.toFixed(2)+' €';
-            document.getElementById('total-cost-ht').textContent='HT: '+tHT.toFixed(2)+' €';
-
-            renderHistory(processed); renderCalendar(); renderChart();
+            // 3. Rendu
+            renderSynthesis();
+            renderHistory(processed); 
+            renderCalendar(); 
+            renderChart();
         }
 
+        // --- SYNTHESIS & FILTERING ---
+        function setSynthMode(m) { 
+            STATE.synthMode = m; 
+            renderSynthesisInputs();
+            renderSynthesis();
+        }
+
+        function updateSynthParam(key, val) {
+            STATE.synthParams[key] = val;
+            renderSynthesis();
+        }
+
+        function renderSynthesisInputs() {
+            const c = document.getElementById('synth-filters');
+            const btns = ['global', 'year', 'month', 'custom'];
+            btns.forEach(b => {
+                const el = document.getElementById('synth-mode-'+b);
+                const active = b === STATE.synthMode;
+                el.className = active 
+                    ? "px-2 py-1 rounded transition bg-indigo-600 text-white shadow" 
+                    : "px-2 py-1 rounded transition text-gray-300 hover:text-white";
+            });
+
+            if (STATE.synthMode === 'global') { c.classList.add('hidden'); return; }
+            c.classList.remove('hidden'); c.innerHTML = '';
+
+            const today = new Date().toISOString().slice(0,10);
+            const now = new Date();
+            const years = new Set();
+            Object.keys(STATE.dailyData).forEach(k => years.add(k.substring(0,4)));
+            if(years.size === 0) years.add(now.getFullYear());
+
+            if (STATE.synthMode === 'year') {
+                const sel = document.createElement('select'); sel.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
+                Array.from(years).sort().reverse().forEach(y => {
+                    const opt = document.createElement('option'); opt.value = y; opt.text = y;
+                    if(y == STATE.synthParams.year) opt.selected = true; sel.appendChild(opt);
+                });
+                sel.onchange = (e) => updateSynthParam('year', e.target.value);
+                c.appendChild(sel);
+            }
+            else if (STATE.synthMode === 'month') {
+                const inp = document.createElement('input'); inp.type = "month";
+                inp.className = "bg-gray-700 border border-gray-600 text-white rounded p-1";
+                inp.value = STATE.synthParams.month;
+                inp.onchange = (e) => updateSynthParam('month', e.target.value);
+                c.appendChild(inp);
+            }
+            else if (STATE.synthMode === 'custom') {
+                const s = document.createElement('input'); s.type="date"; s.value=STATE.synthParams.start; s.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
+                s.onchange=(e)=>updateSynthParam('start', e.target.value);
+                const arrow = document.createElement('span'); arrow.textContent="à";
+                const e = document.createElement('input'); e.type="date"; e.value=STATE.synthParams.end || today; e.className="bg-gray-700 border border-gray-600 text-white rounded p-1";
+                e.onchange=(evt)=>updateSynthParam('end', evt.target.value);
+                c.append(s, arrow, e);
+            }
+        }
+
+        function renderSynthesis() {
+            renderSynthesisInputs();
+            let start=null, end=null;
+            let label = "Données globales";
+
+            if (STATE.synthMode === 'year') {
+                start = new Date(STATE.synthParams.year, 0, 1); 
+                end = new Date(STATE.synthParams.year, 11, 31);
+                label = `Année ${STATE.synthParams.year}`;
+            } else if (STATE.synthMode === 'month') {
+                const [y, m] = STATE.synthParams.month.split('-');
+                start = new Date(y, m-1, 1);
+                end = new Date(y, m, 0); 
+                label = start.toLocaleDateString('fr-FR', {month:'long', year:'numeric', day: undefined});
+            } else if (STATE.synthMode === 'custom') {
+                start = new Date(STATE.synthParams.start);
+                end = new Date(STATE.synthParams.end);
+                label = `Du ${start.toLocaleDateString('fr-FR')} au ${end.toLocaleDateString('fr-FR')}`;
+            }
+
+            let tKwh=0, tCost=0, tM3=0, daysCount=0;
+
+            // Sum daily data within range
+            Object.keys(STATE.dailyData).forEach(k => {
+                const d = new Date(k);
+                if (start && d < start) return;
+                if (end && d > end) return;
+                daysCount++;
+
+                const day = STATE.dailyData[k];
+                tKwh += day.kwh;
+                tCost += day.cost;
+                tM3 += day.m3;
+            });
+            
+            // Recalculer HT basé sur les totaux KWH et Jours
+            const getVal=(id,d)=>{const el=document.getElementById(id); return el?(parseFloat(el.value)||d):d;};
+            const pKwh=getVal('p-prix-kwh',0.0777), pAbo=getVal('p-abo',16.72);
+
+            let tHT = 0;
+            if (daysCount > 0) {
+                const costConsoHT = tKwh * pKwh;
+                const costAboHT = (pAbo * 12 / 365) * daysCount;
+                tHT = costConsoHT + costAboHT;
+            }
+
+            document.getElementById('total-kwh').textContent=Math.round(tKwh).toLocaleString('fr-FR', {maximumFractionDigits: 0})+' kWh';
+            document.getElementById('total-m3').textContent=tM3.toLocaleString('fr-FR', {maximumFractionDigits: 1})+' m³';
+            document.getElementById('total-cost').textContent=tCost.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
+            document.getElementById('total-cost-ht').textContent='HT: '+tHT.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
+            document.getElementById('synth-period-label').textContent = label;
+        }
+
+        // --- RENDERERS ---
         function renderHistory(data) {
             const b=document.getElementById('history-body'), e=document.getElementById('empty-msg');
             b.innerHTML=''; if(data.length===0) {e.classList.remove('hidden'); return;} e.classList.add('hidden');
@@ -526,7 +686,7 @@
                 const tr=document.createElement('tr'); tr.className="hover:bg-gray-700/50 transition";
                 const d=new Date(r.date).toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'2-digit'});
                 const det = r.isStart?'<span class="text-gray-600 text-xs italic">Départ</span>':`<div>${Math.round(r.dKwh)} <span class="text-gray-500 text-xs">kWh</span></div>`;
-                const c = r.isStart?'-':r.cTTC.toFixed(2)+' €';
+                const c = r.isStart?'-':r.cTTC.toLocaleString('fr-FR', {style:'currency', currency:'EUR'});
                 tr.innerHTML=`<td class="px-4 py-3 text-white">${d}</td><td class="px-4 py-3 text-right text-gray-300 font-mono">${r.index}</td><td class="px-4 py-3 text-right">${det}</td><td class="px-4 py-3 text-right text-emerald-400 font-bold">${c}</td><td class="px-4 py-3 text-center print-hidden"><button onclick="deleteEntry(${r.id})" class="text-red-400 hover:text-red-300">×</button></td>`;
                 b.appendChild(tr);
             });
@@ -548,7 +708,7 @@
                     const k=new Date(y,m,d,12).toISOString().slice(0,10);
                     let val=0; if(STATE.dailyData[k]) val=STATE.view==='kwh'?STATE.dailyData[k].kwh:STATE.dailyData[k].cost;
                     const p=(val/lMax)*100;
-                    const div=document.createElement('div'); div.className="bar-wrapper dense"; div.setAttribute("data-tooltip",`${d}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+                    const div=document.createElement('div'); div.className="bar-wrapper dense"; div.setAttribute("data-tooltip",`${d}: ${val.toFixed(1)}${STATE.view==='kwh'?'kWh':'€'}`);
                     const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
                     div.innerHTML=`<div class="bar ${col}" style="height:${Math.max(2,p)}%"></div><div class="bar-label">${d}</div>`;
                     c.appendChild(div);
@@ -562,9 +722,9 @@
                     const val=STATE.view==='kwh'?d.kwh:d.cost;
                     const p=STATE.maxMonthVal>0?(val/STATE.maxMonthVal*100):0;
                     const [y,m]=k.split('-'); const lbl=new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'short',year:'2-digit'});
-                    const div=document.createElement('div'); div.className="bar-wrapper"; div.setAttribute("data-tooltip",`${lbl}: ${Math.round(val)}${STATE.view==='kwh'?'':'€'}`);
+                    const div=document.createElement('div'); div.className="bar-wrapper"; div.setAttribute("data-tooltip",`${lbl}: ${val.toFixed(1)}${STATE.view==='kwh'?'kWh':'€'}`);
                     const col=STATE.view==='cost'?'bg-emerald-600':'bg-indigo-600';
-                    div.innerHTML=`<div class="bar-value">${Math.round(val)}</div><div class="bar ${col}" style="height:${Math.max(5,p)}%"></div><div class="bar-label">${lbl}</div>`;
+                    div.innerHTML=`<div class="bar ${col}" style="height:${Math.max(5,p)}%"></div><div class="bar-label">${lbl}</div>`;
                     c.appendChild(div);
                 });
             }
