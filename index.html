@@ -152,8 +152,14 @@
                 <div class="absolute -top-6 -right-6 text-8xl opacity-5 rotate-12">📝</div>
                 <h2 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 relative z-10">Ajouter un Index</h2>
                 <form onsubmit="addManualIndex(event, 'desktop')" class="space-y-4 relative z-10">
-                    <div><label class="text-xs text-gray-500 mb-1.5 block font-semibold ml-1">Date</label><input type="datetime-local" id="date-desktop" required class="input-field text-sm"></div>
-                    <div><label class="text-xs text-gray-500 mb-1.5 block font-semibold ml-1">Index (m³)</label><input type="number" id="index-desktop" step="0.001" required placeholder="Ex: 5488" class="input-field font-mono text-sm"></div>
+                    <div>
+                        <label class="text-xs text-gray-500 mb-1.5 block font-semibold ml-1">Date du relevé</label>
+                        <input type="datetime-local" id="date-desktop" required class="input-field text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-500 mb-1.5 block font-semibold ml-1">Index Compteur (m³)</label>
+                        <input type="number" id="index-desktop" step="0.001" required placeholder="Ex: 5488" class="input-field font-mono text-sm">
+                    </div>
                     <button type="submit" class="btn-neon-primary w-full py-3 text-sm">Enregistrer l'index</button>
                 </form>
             </section>
@@ -169,11 +175,11 @@
                 </button>
                 <div id="params-box" class="hidden px-5 pb-6 pt-2 border-t border-white/5 space-y-4 bg-black/10">
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block ml-1">Prix kWh HT</label><input id="p-kwh" type="number" step="0.0001" value="0.0777" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
-                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block ml-1">Abo/Mois HT</label><input id="p-abo" type="number" step="0.01" value="16.72" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
-                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block ml-1">TVA Conso %</label><input id="p-tva1" type="number" step="0.1" value="20" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
-                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block ml-1">TVA Abo %</label><input id="p-tva2" type="number" step="0.1" value="5.5" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
-                        <div class="col-span-2"><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1 block ml-1">Coef. Conv.</label><input id="p-coef" type="number" step="0.01" value="11.36" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
+                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1.5 block ml-1">Prix kWh HT (€)</label><input id="p-kwh" type="number" step="0.0001" value="0.0777" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
+                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1.5 block ml-1">Abo/Mois HT (€)</label><input id="p-abo" type="number" step="0.01" value="16.72" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
+                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1.5 block ml-1">TVA Conso %</label><input id="p-tva1" type="number" step="0.1" value="20" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
+                        <div><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1.5 block ml-1">TVA Abo %</label><input id="p-tva2" type="number" step="0.1" value="5.5" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
+                        <div class="col-span-2"><label class="text-[0.65rem] uppercase text-gray-500 font-bold mb-1.5 block ml-1">Coef. Conv. (kWh/m³)</label><input id="p-coef" type="number" step="0.01" value="11.36" onchange="recalc()" class="input-field text-xs font-mono text-indigo-300"></div>
                     </div>
                 </div>
             </section>
@@ -182,9 +188,9 @@
         <!-- === MAIN CONTENT (DROITE) === -->
         <main class="space-y-8">
 
-            <!-- SECTION 1: SYNTHÈSE -->
+            <!-- SECTION 1: SYNTHÈSE (Cartes en haut) -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Contrôles -->
+                <!-- Carte Contrôles Synthèse -->
                 <div class="dashboard-card p-6 md:col-span-3 lg:col-span-1 flex flex-col justify-between">
                     <div>
                         <h2 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="text-xl">📅</span> Période</h2>
@@ -194,63 +200,79 @@
                             <button onclick="setSynth('month')" id="btn-sy-month" class="tab-btn flex-1 text-center">Mois</button>
                             <button onclick="setSynth('custom')" id="btn-sy-custom" class="tab-btn flex-1 text-center">Perso</button>
                         </div>
+                        <!-- Filtres dynamiques -->
                         <div id="synth-controls" class="hidden space-y-3">
                             <select id="synth-year-select" onchange="updateSynth()" class="input-field text-sm hidden"></select>
                             <input type="month" id="synth-month-select" onchange="updateSynth()" class="input-field text-sm hidden">
                             <div id="synth-custom-range" class="hidden flex gap-2">
-                                <input type="date" id="synth-start" onchange="updateSynth()" class="input-field text-sm w-full">
-                                <input type="date" id="synth-end" onchange="updateSynth()" class="input-field text-sm w-full">
+                                <input type="date" id="synth-start" onchange="updateSynth()" class="input-field text-sm">
+                                <input type="date" id="synth-end" onchange="updateSynth()" class="input-field text-sm">
                             </div>
                         </div>
                     </div>
                     <div class="text-xs text-center text-gray-500 italic mt-4 pt-3 border-t border-white/5" id="synth-label">Chargement...</div>
                 </div>
 
-                <!-- Stats Volume -->
+                <!-- Carte Volume -->
                 <div class="dashboard-card p-6 relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-3xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
                     <div class="relative z-10">
                         <div class="flex items-center gap-3 mb-3">
                             <div class="p-2 bg-blue-500/20 rounded-lg"><svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg></div>
-                            <h3 class="text-sm font-bold text-blue-300 uppercase tracking-wider">Volume</h3>
+                            <h3 class="text-sm font-bold text-blue-300 uppercase tracking-wider">Volume Total</h3>
                         </div>
                         <div class="text-3xl font-extrabold text-white tracking-tight" id="disp-m3">0 <span class="text-lg font-semibold text-gray-400">m³</span></div>
-                        <div class="text-sm text-blue-300/70 font-mono mt-2 flex items-center gap-1"><svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg><span id="disp-kwh">0 kWh</span></div>
+                        <div class="text-sm text-blue-300/70 font-mono mt-2 flex items-center gap-1">
+                            <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span id="disp-kwh">0 kWh</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Stats Coût -->
+                <!-- Carte Coût -->
                 <div class="dashboard-card p-6 relative overflow-hidden group">
                     <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
                     <div class="relative z-10">
                          <div class="flex items-center gap-3 mb-3">
                             <div class="p-2 bg-emerald-500/20 rounded-lg"><svg class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-                            <h3 class="text-sm font-bold text-emerald-300 uppercase tracking-wider">Coût TTC</h3>
+                            <h3 class="text-sm font-bold text-emerald-300 uppercase tracking-wider">Coût TTC Estimé</h3>
                         </div>
                         <div class="text-3xl font-extrabold text-white tracking-tight" id="disp-cost">0 €</div>
-                        <div class="text-sm text-emerald-300/70 font-mono mt-2">HT: <span id="disp-cost-ht">0 €</span></div>
+                        <div class="text-sm text-emerald-300/70 font-mono mt-2">
+                            HT: <span id="disp-cost-ht">0 €</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- SECTION 2: GRAPHIQUE -->
+            <!-- SECTION 2: GRAPHIQUE PRINCIPAL -->
             <section class="dashboard-card p-6">
                 <div class="flex flex-wrap gap-4 justify-between items-center mb-8 pb-4 border-b border-white/5">
                     <h2 class="text-2xl font-bold text-white flex items-center gap-3">
                         <div class="p-2 bg-indigo-500/20 rounded-lg"><svg class="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-                        <span id="chart-title">Évolution</span>
+                        <span id="chart-title">Évolution de la Consommation</span>
                     </h2>
                     <div class="flex gap-4">
-                        <div class="tab-group"><button onclick="setChart('day')" id="btn-chart-day" class="tab-btn active-indigo">Jour</button><button onclick="setChart('month')" id="btn-chart-month" class="tab-btn">Mois</button></div>
-                        <div class="tab-group"><button onclick="setView('cost')" id="btn-view-cost" class="tab-btn active-emerald">Coût</button><button onclick="setView('kwh')" id="btn-view-kwh" class="tab-btn">kWh</button></div>
+                        <div class="tab-group">
+                            <button onclick="setChart('day')" id="btn-chart-day" class="tab-btn active-indigo">Jour</button>
+                            <button onclick="setChart('month')" id="btn-chart-month" class="tab-btn">Mois</button>
+                        </div>
+                        <div class="tab-group">
+                            <button onclick="setView('cost')" id="btn-view-cost" class="tab-btn active-emerald">Coût (€)</button>
+                            <button onclick="setView('kwh')" id="btn-view-kwh" class="tab-btn">Énergie (kWh)</button>
+                        </div>
                     </div>
                 </div>
                 <div id="chart-container" class="bar-container px-2"></div>
-                <div id="chart-empty" class="hidden h-64 flex items-center justify-center text-gray-500 italic">Aucune donnée</div>
+                <div id="chart-empty" class="hidden h-64 flex flex-col items-center justify-center text-gray-500 italic opacity-50">
+                    <svg class="w-16 h-16 mb-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"/></svg>
+                    Aucune donnée à afficher pour cette période
+                </div>
             </section>
 
-            <!-- SECTION 3: CALENDRIER & HISTO -->
+            <!-- SECTION 3: CALENDRIER & HISTORIQUE (2 colonnes) -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
                 <!-- CALENDRIER -->
                 <section class="dashboard-card p-6">
                     <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/5">
@@ -264,55 +286,79 @@
                             <button onclick="moveCal(1)" class="p-2 hover:bg-white/10 rounded-md transition text-gray-400 hover:text-white"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></button>
                         </div>
                     </div>
-                    <div class="calendar-grid mb-3 text-center text-[0.65rem] text-gray-500 font-bold uppercase tracking-widest"><div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div></div>
+                    <div class="calendar-grid mb-3 text-center text-[0.65rem] text-gray-500 font-bold uppercase tracking-widest">
+                        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+                    </div>
                     <div id="cal-grid" class="calendar-grid gap-2"></div>
                 </section>
 
-                <!-- HISTORIQUE -->
-                <section class="dashboard-card p-6 flex flex-col max-h-[500px]">
-                    <div class="flex justify-between items-center mb-4 pb-4 border-b border-white/5">
+                <!-- HISTORIQUE DES INDEX -->
+                <section class="dashboard-card p-6 relative overflow-hidden flex flex-col max-h-[450px]">
+                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-white/5 shrink-0">
                         <h2 class="text-xl font-bold text-white flex items-center gap-3">
                             <div class="p-2 bg-gray-700/50 rounded-lg"><svg class="w-6 h-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg></div>
-                            Historique Index
+                            Historique des Index
                         </h2>
                     </div>
-                    <div class="overflow-y-auto flex-1 -mx-4 px-4">
+                    <div class="overflow-y-auto custom-scrollbar grow -mx-6 px-6">
                         <table class="w-full text-left text-sm text-gray-400">
                             <thead class="text-xs uppercase bg-black/20 text-gray-500 sticky top-0 backdrop-blur-md z-10">
-                                <tr><th class="px-4 py-3 font-bold rounded-tl-lg">Date</th><th class="px-4 py-3 text-right font-bold">Index</th><th class="px-4 py-3 text-right font-bold">Coût Période</th><th class="px-4 py-3 text-center font-bold rounded-tr-lg"></th></tr>
+                                <tr>
+                                    <th class="px-4 py-3 font-bold rounded-tl-lg rounded-bl-lg">Date</th>
+                                    <th class="px-4 py-3 text-right font-bold">Index</th>
+                                    <th class="px-4 py-3 text-right font-bold">Coût Période (Est.)</th>
+                                    <th class="px-2 py-3 text-center font-bold rounded-tr-lg rounded-br-lg"></th>
+                                </tr>
                             </thead>
                             <tbody id="hist-body" class="divide-y divide-gray-800/50"></tbody>
                         </table>
                     </div>
                 </section>
+
             </div>
             
-            <!-- Reset -->
-            <div class="flex justify-center pt-4 print-hidden col-span-full opacity-50 hover:opacity-100 transition">
+            <!-- Reset Button Zone -->
+             <div class="flex justify-center pt-8 print-hidden col-span-full opacity-50 hover:opacity-100 transition-opacity">
                 <button onclick="resetAll()" class="text-sm text-red-400/70 hover:text-red-400 transition flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-red-500/10">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg> Réinitialiser
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Réinitialiser toutes les données et repartir à zéro
                 </button>
             </div>
+
         </main>
     </div>
 
-    <!-- MOBILE MODAL -->
+    <!-- MOBILE MODAL (ADD INDEX) -->
     <div id="mob-modal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-6" onclick="if(event.target===this)this.classList.add('hidden')">
-        <div class="dashboard-card w-full max-w-sm p-8 shadow-2xl relative overflow-hidden">
+        <div class="dashboard-card w-full max-w-sm p-8 shadow-2xl transform transition-all scale-100 relative overflow-hidden">
              <div class="absolute top-0 right-0 p-4 opacity-10 text-8xl text-blue-500 -rotate-12 pointer-events-none">📝</div>
             <h2 class="text-2xl font-bold text-white mb-8 flex items-center gap-3 relative z-10">
-                 <div class="p-2 bg-blue-500/20 rounded-lg"><svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></div> Ajouter Index
+                 <div class="p-2 bg-blue-500/20 rounded-lg"><svg class="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></div>
+                Ajouter un Index
             </h2>
             <form onsubmit="addManualIndex(event, 'mobile')" class="space-y-6 relative z-10">
-                <div><label class="text-sm text-gray-400 mb-2 block font-medium ml-1">Date</label><input type="datetime-local" id="date-mobile" required class="input-field text-lg"></div>
-                <div><label class="text-sm text-gray-400 mb-2 block font-medium ml-1">Index (m³)</label><input type="number" id="index-mobile" step="0.001" required placeholder="Ex: 5488" class="input-field text-lg font-mono"></div>
+                <div>
+                    <label class="text-sm text-gray-400 mb-2 block font-medium ml-1">Date du relevé</label>
+                    <input type="datetime-local" id="date-mobile" required class="input-field text-lg">
+                </div>
+                <div>
+                     <label class="text-sm text-gray-400 mb-2 block font-medium ml-1">Index Compteur (m³)</label>
+                    <input type="number" id="index-mobile" step="0.001" required placeholder="Ex: 5488" class="input-field text-lg font-mono">
+                </div>
                 <button class="w-full btn-neon-primary py-4 text-lg shadow-lg mt-4">Sauvegarder</button>
+                 <button type="button" onclick="document.getElementById('mob-modal').classList.add('hidden')" class="w-full btn-glass py-3 mt-2">Annuler</button>
             </form>
         </div>
     </div>
-    <button onclick="openMob()" class="fab print-hidden flex lg:hidden group"><svg class="w-8 h-8 group-active:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></button>
 
-    <!-- SCRIPT -->
+    <!-- MOBILE FAB (ADD BUTTON) -->
+    <button onclick="openMob()" class="fab print-hidden flex lg:hidden group">
+        <svg class="w-8 h-8 group-active:rotate-90 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+    </button>
+
+    <!-- ================================================================================================= -->
+    <!-- JAVASCRIPT LOGIC -->
+    <!-- ================================================================================================= -->
     <script>
         // --- STATE ---
         const APP = {
@@ -321,7 +367,12 @@
             limits: { maxD: 1, maxM: 1 }
         };
 
-        document.addEventListener('DOMContentLoaded', () => { initInputs(); loadDB(); recalc(); });
+        // --- INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initInputs();
+            loadDB();
+            recalc();
+        });
 
         function initInputs() {
             const now = new Date(); now.setMinutes(now.getMinutes()-now.getTimezoneOffset()); const iso = now.toISOString().slice(0,16);
@@ -332,10 +383,18 @@
             APP.ui.synthFilter = { year: y, month: m, start: `${y}-01-01`, end: new Date().toISOString().slice(0,10) };
         }
 
-        function loadDB() { try { const s = localStorage.getItem('gaz_db_final_v5'); if(s) { const d = JSON.parse(s); APP.db.indexes = d.indexes||[]; APP.db.realDays = d.realDays||{}; } } catch(e) { console.error(e); } }
-        function saveDB() { localStorage.setItem('gaz_db_final_v5', JSON.stringify({ indexes: APP.db.indexes, realDays: APP.db.realDays })); }
+        // --- PERSISTENCE ---
+        function loadDB() {
+            try {
+                const s = localStorage.getItem('gaz_db_final_v4');
+                if(s) { const d = JSON.parse(s); APP.db.indexes = d.indexes||[]; APP.db.realDays = d.realDays||{}; }
+            } catch(e) { console.error(e); }
+        }
+        function saveDB() {
+            localStorage.setItem('gaz_db_final_v4', JSON.stringify({ indexes: APP.db.indexes, realDays: APP.db.realDays }));
+        }
 
-        // --- IMPORT ---
+        // --- IMPORT ENGINE ---
         function handleImport(input) {
             const f = input.files[0]; if(!f) return;
             const r = new FileReader();
@@ -395,7 +454,7 @@
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
         }
 
-        // --- CALCULATION ---
+        // --- CALCULATION ENGINE ---
         function recalc() {
             const P = getParams();
             APP.db.computedDays = {}; APP.db.monthly = {}; APP.limits.maxD = 0; APP.limits.maxM = 0;
@@ -413,7 +472,7 @@
                 const p = APP.db.indexes[i-1], c = APP.db.indexes[i];
                 const d1 = new Date(p.date), d2 = new Date(c.date);
                 const days = Math.ceil((d2-d1)/(86400000));
-
+                
                 // Cost Period Calculation for History Table
                 const deltaM3 = c.index - p.index;
                 if(deltaM3 >= 0) {
@@ -460,6 +519,7 @@
         function renderAll() { renderSynth(); renderChart(); renderCal(); renderHist(); }
 
         // --- RENDERERS ---
+        
         function renderSynth() {
             const mode = APP.ui.synthMode;
             const f = document.getElementById('synth-controls');
@@ -578,7 +638,9 @@
             const y = APP.ui.calDate.getFullYear(), m = APP.ui.calDate.getMonth();
             document.getElementById('cal-title').innerText = new Date(y,m,1).toLocaleDateString('fr-FR',{month:'long', year:'numeric'});
             const fd = new Date(y,m,1).getDay()||7, dim = new Date(y,m+1,0).getDate();
+
             for(let i=1; i<fd; i++) g.appendChild(document.createElement('div'));
+
             for(let d=1; d<=dim; d++) {
                 const k = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const v = APP.db.computedDays[k];
@@ -592,6 +654,10 @@
                     c.style.backgroundColor = bg;
                     if(v.type==='real') c.innerHTML += `<div class="marker-dot bg-real"></div>`;
                     c.innerHTML += `<span class="font-bold text-white z-10">${d}</span><div class="z-10 day-val text-gray-200 font-mono">${Math.round(val)}</div>`;
+                    const b = document.createElement('div'); b.className="intensity-bar";
+                    const f = document.createElement('div'); f.className="intensity-fill"; 
+                    f.style.width=`${r*100}%`; f.style.background = r>0.5?'#fcd34d':'#34d399';
+                    b.appendChild(f); c.appendChild(b);
                     c.title = `${k}\n${v.type==='real'?'Réel':'Estimé'}\n${val.toFixed(2)}`;
                 } else { c.innerHTML = `<span class="text-gray-600">${d}</span>`; }
                 g.appendChild(c);
@@ -610,6 +676,7 @@
             });
         }
 
+        // Actions
         function addManualIndex(e, m) {
             e.preventDefault(); const s = m==='mobile'?'-mobile':'-desktop';
             const d = document.getElementById('date'+s).value;
@@ -622,7 +689,7 @@
             if(m==='mobile') document.getElementById('mob-modal').classList.add('hidden');
         }
         function delIndex(id) { if(confirm("Supprimer ?")) { APP.db.indexes = APP.db.indexes.filter(x=>x.id!==id); saveDB(); recalc(); } }
-        function resetAll() { if(confirm("TOUT SUPPRIMER ?")) { localStorage.removeItem('gaz_db_final_v5'); APP.db.indexes=[]; APP.db.realDays={}; recalc(); } }
+        function resetAll() { if(confirm("ATTENTION : TOUT SUPPRIMER ? Cette action est irréversible.")) { localStorage.removeItem('gaz_db_final_v4'); APP.db.indexes=[]; APP.db.realDays={}; recalc(); } }
         function moveCal(d) { APP.ui.calDate.setMonth(APP.ui.calDate.getMonth()+d); renderCal(); if(APP.ui.chartMode==='day') renderChart(); }
         function setView(v) { APP.ui.view=v; renderChart(); renderCal(); }
         function setChart(m) { APP.ui.chartMode=m; renderChart(); }
