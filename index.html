@@ -409,7 +409,6 @@
         </div>
     </div>
     
-    <!-- Settings Modal -->
     <div id="settingsOverlay" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="glass-panel p-6 rounded-xl w-full max-w-sm border border-gray-800 bg-[#0a0c10] shadow-2xl relative">
              <div class="flex justify-between items-center mb-6">
@@ -458,7 +457,6 @@
             document.getElementById('setCoef').value = state.settings.conversionCoef;
             document.getElementById('setLat').value = state.settings.lat || DEFAULT_SETTINGS.lat;
             document.getElementById('setLon').value = state.settings.lon || DEFAULT_SETTINGS.lon;
-
             const today = new Date();
             const lastMonth = new Date();
             lastMonth.setDate(today.getDate() - 30);
@@ -778,6 +776,7 @@
             const avg = days > 0 ? tkwh / days : 0;
             const realCount = data.filter(d => d.type === 'real').length;
             const reliability = days > 0 ? (realCount / days) * 100 : 0;
+
             const temps = data.filter(d => d.temp !== null && d.temp !== undefined).map(d => d.temp);
             const avgTemp = temps.length > 0 ? (temps.reduce((a,b)=>a+b,0) / temps.length).toFixed(1) : '--';
 
@@ -785,6 +784,7 @@
             document.getElementById('kpiCost').innerHTML = ttc.toFixed(2) + ' <span class="text-sm">€</span>';
             const kpiAvgEl = document.getElementById('kpiAvg');
             if(kpiAvgEl) kpiAvgEl.innerText = avg.toFixed(1);
+            
             document.getElementById('kpiAvgTemp').innerText = avgTemp + '°C';
             document.getElementById('kpiReliability').innerText = Math.round(reliability) + '%';
             document.getElementById('reliablityBar').style.width = reliability + '%';
@@ -825,8 +825,9 @@
             const labels = document.getElementById('chartLabels');
             container.innerHTML = ''; labels.innerHTML = '';
             labels.style.position = 'relative'; labels.style.height = '20px';
+
             if (data.length === 0) { container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-700 text-xs">Pas de données</div>'; return; }
-            
+
             let items = data;
             const tooMany = data.length > 60; 
             const unit = state.ui.chartMode === 'kwh' ? 'kWh' : '€';
@@ -852,11 +853,37 @@
             }
 
             const max = Math.max(...items.map(i=>i.val)) || 1;
+            
+            // SVG Overlay for Temp Line & Grid
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svg.setAttribute("class", "absolute inset-0 w-full h-full pointer-events-none z-20");
             svg.setAttribute("preserveAspectRatio", "none");
             let points = "";
             
+            // Add Threshold Lines (0C, 10C, 20C, 30C)
+            const thresholds = [0, 10, 20, 30];
+            thresholds.forEach(t => {
+                const y = 100 - ((t + 5) / 45 * 100);
+                if(y >= 0 && y <= 100) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", "0"); line.setAttribute("x2", "100");
+                    line.setAttribute("y1", y); line.setAttribute("y2", y);
+                    line.setAttribute("stroke", "rgba(249, 115, 22, 0.3)");
+                    line.setAttribute("stroke-width", "0.2"); // Very subtle
+                    line.setAttribute("stroke-dasharray", "2");
+                    // Scale for SVG coords (viewBox 0 0 100 100)
+                    svg.appendChild(line);
+                    
+                    // Label (HTML overlay for easier positioning)
+                    const lbl = document.createElement('div');
+                    lbl.className = "absolute right-0 text-[8px] text-orange-500/50 font-mono pr-1";
+                    lbl.style.top = `${y}%`;
+                    lbl.style.transform = "translateY(-50%)";
+                    lbl.innerText = `${t}°`;
+                    container.appendChild(lbl);
+                }
+            });
+
             const barsContainer = document.createElement('div');
             barsContainer.className = "absolute inset-0 flex items-end justify-between w-full h-full";
             
@@ -875,6 +902,7 @@
 
                 if (item.temp !== null) {
                     const x = (i / (items.length - 1 || 1)) * 100;
+                    // -5C to 40C scale. (temp - (-5)) / (40 - (-5))
                     const y = 100 - ((item.temp + 5) / 45 * 100); 
                     points += `${x},${y} `;
                 }
@@ -886,7 +914,7 @@
                 polyline.setAttribute("points", points);
                 polyline.setAttribute("fill", "none");
                 polyline.setAttribute("stroke", "#f97316");
-                polyline.setAttribute("stroke-width", "2");
+                polyline.setAttribute("stroke-width", "0.5");
                 polyline.setAttribute("class", "temp-line");
                 svg.setAttribute("viewBox", `0 0 100 100`);
                 svg.appendChild(polyline);
