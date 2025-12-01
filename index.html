@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NÉO-GAZ | Terminal de Contrôle</title>
+    <title>NÉO-ENERGIE | Terminal de Contrôle</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <script>
@@ -22,17 +23,10 @@
                             bg: '#05070a',
                             card: '#0f1219',
                             border: '#1e293b',
-                            primary: '#06b6d4',
-                            secondary: '#8b5cf6',
-                            success: '#10b981',
-                            danger: '#ef4444',
-                            warning: '#f97316',
+                            gas: '#06b6d4',   // Cyan for Gas
+                            elec: '#f59e0b',  // Amber for Elec
                             text: '#94a3b8'
                         }
-                    },
-                    boxShadow: {
-                        'neon-cyan': '0 0 5px theme("colors.cyan.500"), 0 0 20px theme("colors.cyan.900")',
-                        'neon-blue': '0 0 5px theme("colors.blue.500"), 0 0 20px theme("colors.blue.900")',
                     },
                     animation: {
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
@@ -49,6 +43,7 @@
             overflow-x: hidden;
             height: 100dvh;
             max-height: 100dvh;
+            touch-action: manipulation; /* Improves touch response */
         }
         
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -56,7 +51,6 @@
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
 
-        /* Specific scrollbar for modal content */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
@@ -64,61 +58,43 @@
         .glass-panel {
             background: rgba(15, 18, 25, 0.85);
             backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
-        }
-
-        .hud-border {
-            position: relative;
-            border: 1px solid rgba(6, 182, 212, 0.5);
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.2), inset 0 0 20px rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
         }
         
+        /* Dynamic Theme Borders based on Energy Mode */
+        body[data-mode="gas"] .theme-border { border-color: rgba(6, 182, 212, 0.3); }
+        body[data-mode="elec"] .theme-border { border-color: rgba(245, 158, 11, 0.3); }
+        
+        body[data-mode="gas"] .theme-text { color: #06b6d4; }
+        body[data-mode="elec"] .theme-text { color: #f59e0b; }
+        
+        body[data-mode="gas"] .theme-bg { background-color: #06b6d4; }
+        body[data-mode="elec"] .theme-bg { background-color: #f59e0b; }
+
+        body[data-mode="gas"] .theme-shadow { box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+        body[data-mode="elec"] .theme-shadow { box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+
         .hud-input {
             background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(6, 182, 212, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: #fff;
             font-family: 'Outfit', sans-serif;
             transition: all 0.3s ease;
         }
-        .hud-input:focus {
-            outline: none;
-            border-color: #06b6d4;
-            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
-        }
-
-        .weather-btn {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(75, 85, 99, 0.4);
-            transition: all 0.2s;
-        }
-        .weather-btn.active {
-            background: rgba(249, 115, 22, 0.2);
-            border-color: #f97316;
-            color: #f97316;
-            box-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
-        }
+        .hud-input:focus { outline: none; border-color: currentColor; }
+        .hud-input.active-input { border-color: #fff; background: rgba(255,255,255,0.05); box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
 
         .numpad-btn {
             background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            color: #06b6d4;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: inherit;
             font-size: 1.25rem;
             font-weight: bold;
             transition: all 0.1s;
+            user-select: none;
         }
-        .numpad-btn:active {
-            transform: scale(0.95);
-            background: rgba(6, 182, 212, 0.2);
-            box-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
-        }
-
-        .bar-grow {
-            transform-origin: bottom;
-            animation: grow 0.8s ease-out forwards;
-        }
-        @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        .numpad-btn:active { transform: scale(0.95); background: rgba(255, 255, 255, 0.05); }
 
         .temp-line {
             stroke-dasharray: 2000;
@@ -128,13 +104,6 @@
         }
         @keyframes drawLine { to { stroke-dashoffset: 0; } }
 
-        input[type="date"]::-webkit-calendar-picker-indicator,
-        input[type="time"]::-webkit-calendar-picker-indicator {
-            filter: invert(1) sepia(100%) saturate(1000%) hue-rotate(180deg) brightness(1.2);
-            opacity: 0.8;
-            cursor: pointer;
-        }
-        
         #mainSidebar { transition: width 0.3s ease; }
         .sidebar-text { transition: opacity 0.2s ease; opacity: 1; }
         .sidebar-collapsed .sidebar-text { opacity: 0; display: none; }
@@ -142,24 +111,38 @@
         .sidebar-collapsed .nav-btn { justify-content: center; }
         .sidebar-collapsed .nav-btn span { display: none; }
         .sidebar-collapsed #sidebarLegend { display: none; }
+        .sidebar-collapsed #energySwitcher { flex-direction: column; gap: 10px; }
+        
+        .weather-btn.active { color: white; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
     </style>
 </head>
-<body class="flex h-[100dvh] overflow-hidden selection:bg-cyan-500 selection:text-black font-sans">
+<body class="flex h-[100dvh] overflow-hidden selection:bg-white selection:text-black font-sans" data-mode="gas">
 
     <!-- SIDEBAR -->
-    <aside id="mainSidebar" class="hidden md:flex w-64 flex-col border-r border-cyber-border bg-cyber-bg/95 backdrop-blur z-20 relative">
-        <!-- CLICK TO RELOAD ADDED HERE -->
-        <div onclick="location.reload()" class="h-16 flex items-center justify-start px-6 border-b border-cyber-border logo-container transition-all cursor-pointer hover:bg-cyan-500/5 group">
-            <div class="w-8 h-8 rounded bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center shadow-[0_0_10px_rgba(6,182,212,0.5)] shrink-0 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.8)] transition-all">
-                <i data-lucide="flame" class="w-5 h-5 text-cyan-400 group-hover:text-white"></i>
+    <aside id="mainSidebar" class="hidden md:flex w-64 flex-col border-r border-cyber-border bg-cyber-bg/95 backdrop-blur z-20 relative theme-border">
+        <div class="h-16 flex items-center justify-start px-6 border-b border-cyber-border logo-container transition-all theme-border">
+            <div class="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center theme-shadow shrink-0">
+                <i data-lucide="zap" class="w-5 h-5 theme-text"></i>
             </div>
-            <span class="ml-3 font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 sidebar-text whitespace-nowrap group-hover:to-cyan-300">
-                NÉO-GAZ
+            <span class="ml-3 font-bold tracking-widest theme-text sidebar-text whitespace-nowrap">
+                NÉO-ENERGIE
             </span>
         </div>
 
+        <!-- Energy Switcher -->
+        <div class="p-4 border-b border-cyber-border theme-border">
+            <div id="energySwitcher" class="flex bg-black/40 rounded-lg p-1 border border-white/5">
+                <button onclick="switchMode('gas')" class="flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 mode-btn" id="btn-gas">
+                    <i data-lucide="flame" class="w-4 h-4"></i> <span class="sidebar-text">Gaz</span>
+                </button>
+                <button onclick="switchMode('elec')" class="flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 mode-btn" id="btn-elec">
+                    <i data-lucide="zap" class="w-4 h-4"></i> <span class="sidebar-text">Élec</span>
+                </button>
+            </div>
+        </div>
+
         <nav class="flex-1 py-6 space-y-2 px-2">
-            <button onclick="openModule()" class="nav-btn w-full flex items-center justify-start p-3 rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/20 hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] transition-all group whitespace-nowrap">
+            <button onclick="openModule()" class="nav-btn w-full flex items-center justify-start p-3 rounded-lg bg-white/5 border border-white/10 theme-text hover:bg-white/10 theme-shadow transition-all group whitespace-nowrap">
                 <i data-lucide="plus-square" class="w-6 h-6 shrink-0"></i>
                 <span class="ml-3 font-semibold sidebar-text">Saisie / Import</span>
             </button>
@@ -167,15 +150,15 @@
             <div class="h-px bg-cyber-border my-4 mx-2"></div>
 
             <div id="sidebarLegend" class="px-4 py-2">
-                <h3 class="text-xs font-semibold text-cyber-text uppercase tracking-wider mb-3 whitespace-nowrap">Légende</h3>
+                <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 whitespace-nowrap">Légende</h3>
                 <div class="space-y-3">
                     <div class="flex items-center gap-3">
                         <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] shrink-0"></div>
-                        <span class="text-xs text-gray-400">Réel</span>
+                        <span class="text-xs text-gray-400">Réel (Relevé/Import)</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)] shrink-0"></div>
-                        <span class="text-xs text-gray-400">Estimé</span>
+                        <div class="w-2 h-2 rounded-full theme-bg theme-shadow shrink-0"></div>
+                        <span class="text-xs text-gray-400">Estimé (Calculé)</span>
                     </div>
                     <div class="flex items-center gap-3 mt-2 pt-2 border-t border-gray-800">
                         <div class="w-2 h-0.5 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] shrink-0"></div>
@@ -185,112 +168,98 @@
             </div>
         </nav>
 
-        <button onclick="toggleSidebar()" class="absolute bottom-4 right-[-12px] md:static md:w-full md:p-4 flex justify-end md:justify-center text-gray-500 hover:text-cyan-400 transition-colors focus:outline-none">
+        <button onclick="toggleSidebar()" class="absolute bottom-4 right-[-12px] md:static md:w-full md:p-4 flex justify-end md:justify-center text-gray-500 hover:text-white transition-colors focus:outline-none">
             <i id="collapseIcon" data-lucide="chevrons-left" class="w-5 h-5"></i>
         </button>
-
-        <div class="p-4 border-t border-cyber-border text-[10px] text-center text-cyber-text opacity-50 sidebar-text whitespace-nowrap">
-            SYS.READY
-        </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col h-full overflow-hidden relative">
         <!-- Header -->
-        <header class="h-auto md:h-16 py-2 border-b border-cyber-border bg-cyber-bg/80 backdrop-blur flex flex-wrap items-center justify-between px-4 md:px-8 z-10 gap-2 shrink-0">
-            <!-- CLICK TO RELOAD ADDED HERE (MOBILE) -->
-            <div onclick="location.reload()" class="md:hidden flex items-center gap-2 cursor-pointer active:scale-95 transition-transform">
-                 <div class="w-8 h-8 rounded bg-cyan-500/10 border border-cyan-500/50 flex items-center justify-center">
-                    <i data-lucide="flame" class="w-4 h-4 text-cyan-400"></i>
-                </div>
-                 <h1 class="text-lg font-bold text-gray-200">NÉO-GAZ</h1>
+        <header class="h-auto md:h-16 py-2 border-b border-cyber-border bg-cyber-bg/80 backdrop-blur flex flex-wrap items-center justify-between px-4 md:px-8 z-10 gap-2 shrink-0 theme-border">
+            <div class="md:hidden flex items-center gap-2">
+                 <div class="w-8 h-8 rounded bg-white/5 border border-white/10 flex items-center justify-center"><i data-lucide="activity" class="w-4 h-4 theme-text"></i></div>
+                 <h1 class="text-lg font-bold text-gray-200">NÉO-<span class="theme-text" id="mobileTitle">GAZ</span></h1>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 ml-auto">
                 <div class="flex bg-cyber-card rounded-lg p-1 border border-cyber-border">
                     <button onclick="setFilter('global')" class="filter-btn px-3 py-1 text-xs rounded transition-all text-gray-400 hover:text-white" data-period="global">Global</button>
                     <button onclick="setFilter('year')" class="filter-btn px-3 py-1 text-xs rounded text-gray-400 hover:text-white transition-all" data-period="year">Année</button>
-                    <button onclick="setFilter('month')" class="filter-btn px-3 py-1 text-xs rounded transition-all text-white bg-cyan-500/20 active-filter" data-period="month">Mois</button>
-                    <button onclick="setFilter('custom')" class="filter-btn px-3 py-1 text-xs rounded text-gray-400 hover:text-white transition-all" data-period="custom">Perso</button>
+                    <button onclick="setFilter('month')" class="filter-btn px-3 py-1 text-xs rounded transition-all text-white theme-bg active-filter" data-period="month">Mois</button>
                 </div>
                 
                 <div id="dateNavigator" class="hidden flex items-center gap-1 border border-cyber-border rounded-lg p-1 bg-cyber-card">
-                     <button onclick="changePeriod(-1)" class="p-1 hover:text-cyan-400 transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                     <span id="currentPeriodLabel" class="text-xs font-mono text-cyan-400 min-w-[80px] text-center">...</span>
-                     <button onclick="changePeriod(1)" class="p-1 hover:text-cyan-400 transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                </div>
-
-                <div id="customRangeSelector" class="hidden flex items-center gap-2">
-                    <input type="date" id="customStart" onchange="applyCustomFilter()" class="bg-cyber-card border border-cyber-border rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-cyan-500 w-28">
-                    <span class="text-gray-500 text-xs">-</span>
-                    <input type="date" id="customEnd" onchange="applyCustomFilter()" class="bg-cyber-card border border-cyber-border rounded px-2 py-1 text-xs text-gray-300 focus:outline-none focus:border-cyan-500 w-28">
+                     <button onclick="changePeriod(-1)" class="p-1 theme-text hover:text-white transition-colors"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                     <span id="currentPeriodLabel" class="text-xs font-mono theme-text min-w-[80px] text-center">...</span>
+                     <button onclick="changePeriod(1)" class="p-1 theme-text hover:text-white transition-colors"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
                 </div>
             </div>
         </header>
 
         <!-- Dashboard Content -->
-        <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-40 md:pb-12 scroll-smooth">
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-40 md:pb-12 scroll-smooth custom-scroll">
             
             <!-- KPIs -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group">
+                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group theme-border">
                     <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <i data-lucide="zap" class="w-24 h-24 text-cyan-500"></i>
+                        <i data-lucide="zap" class="w-24 h-24 theme-text"></i>
                     </div>
-                    <p class="text-[10px] text-cyan-400 uppercase tracking-widest mb-1">Volume Total</p>
+                    <p class="text-[10px] theme-text uppercase tracking-widest mb-1">Conso Totale</p>
                     <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiKwh">0</h2>
-                    <p class="text-xs text-gray-500 mt-1">Moy. <span id="kpiAvg" class="text-gray-300 font-bold">0</span> kWh/j</p>
+                    <p class="text-xs text-gray-500 mt-1">kWh</p>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group">
+                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group theme-border">
                     <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <i data-lucide="banknote" class="w-24 h-24 text-emerald-500"></i>
+                        <i data-lucide="euro" class="w-24 h-24 text-emerald-500"></i>
                     </div>
                     <p class="text-[10px] text-emerald-400 uppercase tracking-widest mb-1">Coût Estimé</p>
                     <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiCost">0 <span class="text-sm">€</span></h2>
                     <p class="text-xs text-gray-500 mt-1">TTC (Abo. inclus)</p>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group">
+                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group theme-border">
                     <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <i data-lucide="thermometer" class="w-24 h-24 text-orange-500"></i>
+                        <i data-lucide="bar-chart-3" class="w-24 h-24 text-violet-500"></i>
                     </div>
-                    <p class="text-[10px] text-orange-400 uppercase tracking-widest mb-1">Temp. Moyenne</p>
-                    <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiAvgTemp">--°C</h2>
-                    <p class="text-xs text-gray-500 mt-1">Sur la période</p>
+                    <p class="text-[10px] text-violet-400 uppercase tracking-widest mb-1">Moyenne Jour</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiAvg">0</h2>
+                    <p class="text-xs text-gray-500 mt-1">kWh / Jour</p>
                </div>
                
                <div class="glass-panel rounded-xl p-4 relative overflow-hidden group border-dashed border-gray-700">
-                    <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Fiabilité Données</p>
-                    <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiReliability">0%</h2>
-                    <div class="w-full bg-gray-800 h-1 mt-2 rounded-full overflow-hidden">
-                        <div id="reliablityBar" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
+                   <div class="absolute -right-4 -top-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                        <i data-lucide="thermometer" class="w-24 h-24 text-orange-500"></i>
                     </div>
+                    <p class="text-[10px] text-orange-400 uppercase tracking-widest mb-1">Temp. Moy.</p>
+                    <h2 class="text-2xl md:text-3xl font-bold text-white font-mono" id="kpiAvgTemp">--°C</h2>
+                    <p class="text-xs text-gray-500 mt-1">Extérieur</p>
                 </div>
             </div>
 
             <!-- Main Chart -->
-            <div class="glass-panel rounded-xl p-6">
+            <div class="glass-panel rounded-xl p-6 theme-border">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
-                        <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i>
+                        <i data-lucide="activity" class="w-4 h-4 theme-text"></i>
                         Flux & Météo
                     </h3>
                     <div class="flex bg-cyber-bg rounded p-0.5 border border-cyber-border">
-                         <button onclick="setChartMode('kwh')" class="chart-mode-btn px-3 py-1 text-[10px] rounded hover:text-white transition-all active-chart-mode" data-mode="kwh">kWh</button>
+                         <button onclick="setChartMode('kwh')" class="chart-mode-btn px-3 py-1 text-[10px] rounded hover:text-white transition-all active-chart-mode theme-bg" data-mode="kwh">kWh</button>
                          <button onclick="setChartMode('cost')" class="chart-mode-btn px-3 py-1 text-[10px] rounded text-gray-400 hover:text-white transition-all" data-mode="cost">€</button>
                     </div>
                 </div>
                 <div class="relative h-64 w-full" id="chartContainer">
                     <div class="absolute inset-0 flex items-center justify-center text-gray-600 text-sm animate-pulse">En attente de données...</div>
                 </div>
-                <!-- Labels Container -->
                 <div class="relative h-6 w-full mt-2" id="chartLabels"></div>
             </div>
 
             <!-- Heatmap & History -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 glass-panel rounded-xl p-6 relative">
+                <div class="lg:col-span-2 glass-panel rounded-xl p-6 relative theme-border">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                             <i data-lucide="layout-grid" class="w-4 h-4 text-violet-400"></i>
@@ -302,12 +271,11 @@
                                 <span class="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Réel</span>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <div class="w-2 h-2 rounded-sm bg-cyan-500/80 shadow-[0_0_5px_rgba(6,182,212,0.5)]"></div>
+                                <div class="w-2 h-2 rounded-sm theme-bg theme-shadow"></div>
                                 <span class="text-[9px] text-gray-500 uppercase tracking-wider font-bold">Estimé</span>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="grid grid-cols-7 gap-1 md:gap-2 mb-2">
                         <div class="text-center text-[10px] text-gray-500">L</div>
                         <div class="text-center text-[10px] text-gray-500">M</div>
@@ -320,14 +288,14 @@
                     <div id="heatmapGrid" class="grid grid-cols-7 gap-1 md:gap-2"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col h-full max-h-[400px]">
+                <div class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col h-full max-h-[400px] theme-border">
                     <div class="p-4 border-b border-gray-800 bg-black/20">
                         <h3 class="text-sm font-bold text-white flex items-center gap-2 uppercase tracking-wider">
                             <i data-lucide="database" class="w-4 h-4 text-emerald-400"></i>
                             Logs Index
                         </h3>
                     </div>
-                    <div class="overflow-y-auto flex-1 p-2 space-y-1" id="historyList"></div>
+                    <div class="overflow-y-auto flex-1 p-2 space-y-1 custom-scroll" id="historyList"></div>
                 </div>
             </div>
             
@@ -336,44 +304,40 @@
     </main>
 
     <!-- FAB -->
-    <button onclick="openModule()" class="md:hidden fixed bottom-6 right-6 w-14 h-14 bg-cyan-600 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(8,145,178,0.6)] z-40 hover:scale-110 transition-transform border border-cyan-400">
+    <button onclick="openModule()" class="md:hidden fixed bottom-6 right-6 w-14 h-14 theme-bg rounded-full flex items-center justify-center theme-shadow z-40 hover:scale-110 transition-transform border border-white/20">
         <i data-lucide="plus" class="w-6 h-6 text-white"></i>
     </button>
 
     <!-- HUD MODAL -->
     <div id="hudOverlay" class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0">
-        <div id="hudContent" class="hud-border bg-[#0a0c10] w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 relative flex flex-col max-h-[95dvh]">
+        <div id="hudContent" class="hud-border bg-[#0a0c10] w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 relative flex flex-col max-h-[95dvh] theme-border">
             <div class="p-4 md:p-6 border-b border-gray-800 text-center relative overflow-hidden shrink-0">
-                <button onclick="closeModule()" class="absolute top-4 right-4 text-cyan-600 hover:text-cyan-400 z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
-                <h2 class="text-lg md:text-xl font-bold text-white tracking-[0.2em] uppercase neon-text-cyan">Entrée Manuelle</h2>
-                <p class="text-[10px] text-cyan-700 uppercase mt-1">Relevé, Importation & Météo</p>
+                <button onclick="closeModule()" class="absolute top-4 right-4 theme-text hover:text-white z-10"><i data-lucide="x" class="w-6 h-6"></i></button>
+                <h2 class="text-lg md:text-xl font-bold text-white tracking-[0.2em] uppercase theme-text">Entrée Manuelle</h2>
+                <p class="text-[10px] text-gray-500 uppercase mt-1" id="hudSubtitle">Relevé & Météo</p>
             </div>
             <div class="overflow-y-auto custom-scroll">
                 <div class="grid grid-cols-1 md:grid-cols-2">
-                    <!-- LEFT COLUMN: Data Inputs -->
                     <div class="p-4 md:p-6 space-y-4 md:space-y-6 border-b md:border-b-0 md:border-r border-gray-800 relative">
-                        <!-- Date & Time -->
                         <div class="space-y-2">
-                            <label class="text-[10px] text-cyan-500 uppercase tracking-wider font-bold block">Date & Heure</label>
+                            <label class="text-[10px] theme-text uppercase tracking-wider font-bold block">Date & Heure</label>
                             <div class="flex gap-2">
-                                <div class="relative flex-1"><input type="date" id="hudDate" class="hud-input w-full px-3 py-2 rounded text-center text-sm md:text-base" onfocus="setActiveInput('none')"></div>
-                                <div class="relative w-24 md:w-28"><input type="time" id="hudTime" class="hud-input w-full px-2 py-2 rounded text-center text-sm md:text-base" onfocus="setActiveInput('none')"></div>
+                                <div class="relative flex-1"><input type="date" id="hudDate" class="hud-input w-full px-3 py-2 rounded text-center text-sm md:text-base cursor-pointer"></div>
+                                <div class="relative w-24 md:w-28"><input type="time" id="hudTime" class="hud-input w-full px-2 py-2 rounded text-center text-sm md:text-base cursor-pointer"></div>
                             </div>
                         </div>
-
-                        <!-- Index -->
                         <div class="space-y-2">
-                            <label class="text-[10px] text-cyan-500 uppercase tracking-wider font-bold block">Index Compteur (m³)</label>
-                            <div class="relative"><input type="number" id="hudIndex" step="0.001" placeholder="00000.0" class="hud-input w-full px-4 py-3 rounded-lg text-xl md:text-2xl font-mono text-cyan-400 tracking-widest text-center" onfocus="setActiveInput('hudIndex')" readonly><div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs">m³</div></div>
+                            <label class="text-[10px] theme-text uppercase tracking-wider font-bold block" id="hudIndexLabel">Index Compteur</label>
+                            <div class="relative">
+                                <input type="number" id="hudIndex" step="0.001" placeholder="00000.0" class="hud-input w-full px-4 py-3 rounded-lg text-xl md:text-2xl font-mono theme-text tracking-widest text-center" onfocus="setActiveInput('hudIndex')" readonly>
+                                <div class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 text-xs" id="hudUnit">m³</div>
+                            </div>
                         </div>
-
-                        <!-- Weather Module -->
                         <div class="space-y-2 pt-2 border-t border-gray-800">
                             <label class="text-[10px] text-orange-500 uppercase tracking-wider font-bold block">Conditions Météo</label>
                             <div class="flex gap-2 items-center">
-                                 <div class="relative w-20 md:w-24">
-                                    <input type="number" id="hudTemp" placeholder="°C" class="hud-input w-full px-2 py-2 rounded text-center text-orange-400 font-bold" onfocus="setActiveInput('hudTemp')">
+                                 <div class="relative w-24">
+                                    <input type="number" id="hudTemp" placeholder="°C" class="hud-input w-full px-2 py-2 rounded text-center text-orange-400 font-bold" onfocus="setActiveInput('hudTemp')" readonly>
                                     <span class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-600 text-xs">°C</span>
                                  </div>
                                  <div class="flex-1 flex justify-between gap-1" id="weatherIcons">
@@ -385,14 +349,12 @@
                             </div>
                         </div>
                     </div>
-
-                    <!-- RIGHT COLUMN: Numpad -->
                     <div class="p-4 md:p-6 bg-[#050608]">
                         <div class="grid grid-cols-3 gap-2 md:gap-3 h-full">
-                            <button onclick="numpadPress('1')" class="numpad-btn rounded py-3 md:py-0">1</button><button onclick="numpadPress('2')" class="numpad-btn rounded py-3 md:py-0">2</button><button onclick="numpadPress('3')" class="numpad-btn rounded py-3 md:py-0">3</button>
-                            <button onclick="numpadPress('4')" class="numpad-btn rounded py-3 md:py-0">4</button><button onclick="numpadPress('5')" class="numpad-btn rounded py-3 md:py-0">5</button><button onclick="numpadPress('6')" class="numpad-btn rounded py-3 md:py-0">6</button>
-                            <button onclick="numpadPress('7')" class="numpad-btn rounded py-3 md:py-0">7</button><button onclick="numpadPress('8')" class="numpad-btn rounded py-3 md:py-0">8</button><button onclick="numpadPress('9')" class="numpad-btn rounded py-3 md:py-0">9</button>
-                            <button onclick="numpadPress('.')" class="numpad-btn rounded text-2xl py-3 md:py-0">.</button><button onclick="numpadPress('0')" class="numpad-btn rounded py-3 md:py-0">0</button><button onclick="numpadPress('DEL')" class="numpad-btn rounded text-red-400 border-red-900/30 hover:bg-red-900/20 py-3 md:py-0"><i data-lucide="delete" class="w-6 h-6 mx-auto"></i></button>
+                            <button onclick="numpadPress('1')" class="numpad-btn rounded py-3 theme-text">1</button><button onclick="numpadPress('2')" class="numpad-btn rounded py-3 theme-text">2</button><button onclick="numpadPress('3')" class="numpad-btn rounded py-3 theme-text">3</button>
+                            <button onclick="numpadPress('4')" class="numpad-btn rounded py-3 theme-text">4</button><button onclick="numpadPress('5')" class="numpad-btn rounded py-3 theme-text">5</button><button onclick="numpadPress('6')" class="numpad-btn rounded py-3 theme-text">6</button>
+                            <button onclick="numpadPress('7')" class="numpad-btn rounded py-3 theme-text">7</button><button onclick="numpadPress('8')" class="numpad-btn rounded py-3 theme-text">8</button><button onclick="numpadPress('9')" class="numpad-btn rounded py-3 theme-text">9</button>
+                            <button onclick="numpadPress('.')" class="numpad-btn rounded text-2xl py-3 theme-text">.</button><button onclick="numpadPress('0')" class="numpad-btn rounded py-3 theme-text">0</button><button onclick="numpadPress('DEL')" class="numpad-btn rounded text-red-400 border-red-900/30 hover:bg-red-900/20 py-3"><i data-lucide="delete" class="w-6 h-6 mx-auto"></i></button>
                             <button onclick="numpadPress('-')" class="numpad-btn rounded text-orange-400 border-orange-900/30 text-xs md:text-sm py-2 md:py-0 col-span-3 mt-2">NEGATIF (Temp)</button>
                         </div>
                     </div>
@@ -400,311 +362,197 @@
             </div>
             <div class="p-4 bg-[#0f1219] border-t border-gray-800 flex flex-col md:flex-row items-center justify-between gap-4 shrink-0">
                 <div class="flex gap-2 w-full md:w-auto">
-                    <button onclick="document.getElementById('fileImport').click()" class="flex-1 md:flex-none px-3 py-2 rounded border border-gray-700 hover:border-emerald-500 text-xs text-gray-400 hover:text-emerald-400 transition-colors flex items-center justify-center gap-1"><i data-lucide="upload" class="w-3 h-3"></i> Import</button>
-                    <button onclick="exportData()" class="flex-1 md:flex-none px-3 py-2 rounded border border-gray-700 hover:border-violet-500 text-xs text-gray-400 hover:text-violet-400 transition-colors flex items-center justify-center gap-1"><i data-lucide="save" class="w-3 h-3"></i> Backup</button>
-                    <button onclick="fetchWeatherData()" class="px-3 py-2 rounded border border-gray-700 hover:border-orange-500 text-orange-400 transition-colors" title="Sync Météo"><i data-lucide="cloud-lightning" class="w-4 h-4"></i></button>
+                    <button onclick="document.getElementById('fileImport').click()" class="flex-1 md:flex-none px-3 py-2 rounded border border-gray-700 hover:border-white text-xs text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-1"><i data-lucide="upload" class="w-3 h-3"></i> Import</button>
+                    <button onclick="exportData()" class="flex-1 md:flex-none px-3 py-2 rounded border border-gray-700 hover:border-violet-500 text-xs text-gray-400 hover:text-violet-400 transition-colors flex items-center justify-center gap-1"><i data-lucide="save" class="w-3 h-3"></i> Sauvegarder</button>
+                    <button onclick="fetchWeatherData()" class="px-3 py-2 rounded border border-gray-700 hover:border-orange-500 text-orange-400 transition-colors" title="Sync Météo" id="weatherSyncBtn"><i data-lucide="cloud-lightning" class="w-4 h-4"></i></button>
                     <button onclick="toggleSettings()" class="px-3 py-2 rounded border border-gray-700 hover:border-gray-500 text-gray-400 transition-colors"><i data-lucide="settings" class="w-4 h-4"></i></button>
                 </div>
-                <button onclick="submitHudForm()" class="w-full md:w-auto px-8 py-3 bg-cyan-600 hover:bg-cyan-500 text-white font-bold tracking-wider rounded shadow-[0_0_20px_rgba(8,145,178,0.4)] transition-all transform hover:scale-[1.02]">VALIDER</button>
+                <button onclick="submitHudForm()" class="w-full md:w-auto px-8 py-3 text-white font-bold tracking-wider rounded shadow-lg transition-all transform hover:scale-[1.02] theme-bg theme-shadow">VALIDER</button>
             </div>
             <input type="file" id="fileImport" class="hidden" accept=".json,.csv">
         </div>
     </div>
     
-    <div id="settingsOverlay" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="glass-panel p-6 rounded-xl w-full max-w-sm border border-gray-800 bg-[#0a0c10] shadow-2xl relative">
+    <!-- Settings Modal -->
+    <div id="settingsOverlay" class="fixed inset-0 bg-black/90 z-[60] hidden flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-300">
+        <div class="glass-panel p-6 rounded-xl w-full max-w-sm border border-gray-800 bg-[#0a0c10] shadow-2xl relative theme-border transform transition-transform">
              <div class="flex justify-between items-center mb-6">
-                <h3 class="text-white font-bold uppercase tracking-wider text-sm flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 text-cyan-400"></i> Configuration</h3>
-                <button onclick="document.getElementById('settingsOverlay').classList.add('hidden')" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
+                <h3 class="text-white font-bold uppercase tracking-wider text-sm flex items-center gap-2"><i data-lucide="settings" class="w-4 h-4 theme-text"></i> Configuration <span id="confMode" class="text-xs text-gray-500">(Gaz)</span></h3>
+                <button onclick="toggleSettings()" class="text-gray-500 hover:text-white transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
              </div>
              <div class="space-y-4">
-                <div><label class="text-[10px] text-cyan-600 uppercase tracking-wider font-bold mb-1 block">Prix kWh HT (€)</label><input type="number" id="setPrice" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 focus:outline-none transition-colors"></div>
-                <div><label class="text-[10px] text-cyan-600 uppercase tracking-wider font-bold mb-1 block">Abonnement Annuel HT (€)</label><input type="number" id="setSub" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 focus:outline-none transition-colors"></div>
-                <div><label class="text-[10px] text-cyan-600 uppercase tracking-wider font-bold mb-1 block">Coef. Conversion (m³ -> kWh)</label><input type="number" id="setCoef" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-cyan-500 focus:outline-none transition-colors"></div>
+                <div><label class="text-[10px] theme-text uppercase tracking-wider font-bold mb-1 block">Prix kWh HT (€)</label><input type="number" id="setPrice" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-white focus:outline-none transition-colors"></div>
+                <div><label class="text-[10px] theme-text uppercase tracking-wider font-bold mb-1 block">Abonnement Annuel HT (€)</label><input type="number" id="setSub" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-white focus:outline-none transition-colors"></div>
+                <div id="coefContainer"><label class="text-[10px] theme-text uppercase tracking-wider font-bold mb-1 block">Coef. Conversion (m³ -> kWh)</label><input type="number" id="setCoef" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white focus:border-white focus:outline-none transition-colors"></div>
                 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-800">
                     <div><label class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1 block">Latitude</label><input type="number" id="setLat" step="0.0001" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white text-xs"></div>
                     <div><label class="text-[10px] text-gray-500 uppercase tracking-wider font-bold mb-1 block">Longitude</label><input type="number" id="setLon" step="0.0001" class="w-full bg-black/50 border border-gray-700 rounded p-2 text-white text-xs"></div>
                 </div>
-                <button onclick="saveSettings()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 rounded shadow-[0_0_15px_rgba(8,145,178,0.4)] mt-2 transition-all tracking-wider text-sm">ENREGISTRER</button>
+                <button onclick="saveSettings()" class="w-full text-white font-bold py-3 rounded shadow-lg mt-2 transition-all tracking-wider text-sm theme-bg theme-shadow">ENREGISTRER</button>
                 <div class="pt-4 mt-4 border-t border-gray-800">
                     <button onclick="resetData()" class="w-full py-3 rounded border border-red-900/50 text-red-500 hover:bg-red-900/20 hover:border-red-500 flex items-center justify-center gap-2 transition-all group"><i data-lucide="trash-2" class="w-4 h-4 group-hover:animate-bounce"></i><span class="font-bold text-xs uppercase tracking-widest">EFFACER TOUTES LES DONNÉES</span></button>
-                    <p class="text-[9px] text-gray-600 text-center mt-2">Action irréversible. Supprime tout l'historique local.</p>
                 </div>
              </div>
         </div>
     </div>
 
     <script>
-        // --- LOGIC ---
-        const DEFAULT_SETTINGS = { kwhPrice: 0.1045, subscription: 245.50, tva: 0.20, conversionCoef: 11.2, lat: 48.8566, lon: 2.3522 };
+        // --- DATA STRUCTURE ---
+        const DEFAULT_SETTINGS_GAS = { kwhPrice: 0.1045, subscription: 245.50, tva: 0.20, conversionCoef: 11.2 };
+        const DEFAULT_SETTINGS_ELEC = { kwhPrice: 0.2276, subscription: 150.00, tva: 0.20, conversionCoef: 1 }; // 1 for Elec
+        const LOC_SETTINGS = { lat: 48.8566, lon: 2.3522 };
+
         let state = {
-            settings: { ...DEFAULT_SETTINGS },
-            readings: [], 
-            importedData: {}, 
-            dailyWeather: {}, 
-            computedDaily: [],
-            ui: { periodFilter: 'month', currentDate: new Date(), chartMode: 'kwh' }
+            mode: 'gas', // 'gas' or 'elec'
+            gas: { settings: {...DEFAULT_SETTINGS_GAS}, readings: [], importedData: {}, computed: [] },
+            elec: { settings: {...DEFAULT_SETTINGS_ELEC}, readings: [], importedData: {}, computed: [] },
+            dailyWeather: {}, // Shared
+            ui: { periodFilter: 'month', currentDate: new Date(), chartMode: 'kwh' },
+            loc: {...LOC_SETTINGS}
         };
 
+        // --- HUD State ---
+        let hudState = { activeInput: 'hudIndex', selectedWeather: null };
+
+        // --- INIT ---
         function init() {
-            if (window.lucide) lucide.createIcons();
             loadData();
-            if (state.readings.length > 0) {
-                const last = state.readings[state.readings.length-1];
-                if(last) state.ui.currentDate = new Date(last.date);
+            switchMode(state.mode);
+            initDateInputs();
+            
+            // Sidebar mobile toggle
+            window.toggleSidebar = function() {
+                const sb = document.getElementById('mainSidebar');
+                sb.classList.toggle('w-64');
+                sb.classList.toggle('w-0');
+                sb.classList.toggle('overflow-hidden'); // Hide content when collapsed
+                document.getElementById('collapseIcon').classList.toggle('rotate-180');
             }
-            recalcEngine();
-            document.getElementById('setPrice').value = state.settings.kwhPrice;
-            document.getElementById('setSub').value = state.settings.subscription;
-            document.getElementById('setCoef').value = state.settings.conversionCoef;
-            document.getElementById('setLat').value = state.settings.lat || DEFAULT_SETTINGS.lat;
-            document.getElementById('setLon').value = state.settings.lon || DEFAULT_SETTINGS.lon;
-            const today = new Date();
-            const lastMonth = new Date();
-            lastMonth.setDate(today.getDate() - 30);
-            document.getElementById('customStart').valueAsDate = lastMonth;
-            document.getElementById('customEnd').valueAsDate = today;
-        }
-
-        function loadData() {
-            const s = localStorage.getItem('gt_settings');
-            const r = localStorage.getItem('gt_readings');
-            const i = localStorage.getItem('gt_imports');
-            const w = localStorage.getItem('gt_weather');
-            if (s) state.settings = { ...DEFAULT_SETTINGS, ...JSON.parse(s) };
-            if (r) state.readings = JSON.parse(r);
-            if (i) state.importedData = JSON.parse(i);
-            if (w) state.dailyWeather = JSON.parse(w);
-        }
-        function saveData() {
-            localStorage.setItem('gt_settings', JSON.stringify(state.settings));
-            localStorage.setItem('gt_readings', JSON.stringify(state.readings));
-            localStorage.setItem('gt_imports', JSON.stringify(state.importedData));
-            localStorage.setItem('gt_weather', JSON.stringify(state.dailyWeather));
-        }
-
-        async function fetchWeatherData() {
-            if (!state.readings.length && Object.keys(state.importedData).length === 0) { alert("Aucune donnée de consommation pour définir la période météo."); return; }
-            let dates = [...state.readings.map(r => r.date), ...Object.keys(state.importedData)];
-            dates.sort();
-            const startDate = dates[0];
-            const endDate = new Date().toISOString().split('T')[0];
-            const lat = state.settings.lat;
-            const lon = state.settings.lon;
-            const btn = document.querySelector('button[onclick="fetchWeatherData()"]');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader" class="w-4 h-4 animate-spin"></i>';
             if(window.lucide) lucide.createIcons();
-            try {
-                const url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDate}&end_date=${endDate}&daily=temperature_2m_mean,weathercode&timezone=auto`;
-                const response = await fetch(url);
-                if (!response.ok) throw new Error("Erreur API Météo");
-                const data = await response.json();
-                if (data.daily && data.daily.time) {
-                    data.daily.time.forEach((date, i) => {
-                        const temp = data.daily.temperature_2m_mean[i];
-                        const code = data.daily.weathercode[i];
-                        let weatherType = 'cloud';
-                        if (code === 0 || code === 1) weatherType = 'sun';
-                        else if (code >= 51 && code <= 67 || code >= 80 && code <= 82) weatherType = 'rain';
-                        else if (code >= 71 && code <= 77 || code >= 85 && code <= 86) weatherType = 'snow';
-                        state.dailyWeather[date] = { temp, weather: weatherType };
-                    });
-                    saveData(); recalcEngine(); alert(`Météo synchronisée.`);
-                }
-            } catch (e) { console.error(e); alert("Erreur récupération météo."); } finally { btn.innerHTML = originalHtml; if(window.lucide) lucide.createIcons(); }
         }
 
-        let activeInput = 'hudIndex'; 
-        let selectedWeather = null;
-        function selectWeather(type) { selectedWeather = type; document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active')); const btn = document.querySelector(`.weather-btn[data-weather="${type}"]`); if(btn) btn.classList.add('active'); }
-        function openModule() {
-            const overlay = document.getElementById('hudOverlay');
-            const content = document.getElementById('hudContent');
-            overlay.classList.remove('hidden');
-            setTimeout(() => { overlay.classList.remove('opacity-0'); content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        function initDateInputs() {
             const now = new Date();
             document.getElementById('hudDate').valueAsDate = now;
-            document.getElementById('hudTime').value = now.toTimeString().substring(0, 5);
-            document.getElementById('hudIndex').value = '';
-            document.getElementById('hudTemp').value = '';
-            selectedWeather = null;
-            document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
-            activeInput = 'hudIndex'; 
+            document.getElementById('hudTime').value = now.toTimeString().substring(0,5);
         }
-        function closeModule() {
-            const overlay = document.getElementById('hudOverlay');
-            const content = document.getElementById('hudContent');
-            overlay.classList.add('opacity-0'); content.classList.remove('scale-100'); content.classList.add('scale-95');
-            setTimeout(() => overlay.classList.add('hidden'), 300);
-        }
-        function setActiveInput(id) { if(id !== 'none') activeInput = id; }
-        function numpadPress(key) {
-            const input = document.getElementById(activeInput);
-            if (!input) return;
-            if (key === 'DEL') input.value = input.value.slice(0, -1);
-            else if (key === '-') { if(input.value.startsWith('-')) input.value = input.value.substring(1); else input.value = '-' + input.value; }
-            else { if (key === '.' && input.value.includes('.')) return; input.value += key; }
-        }
-        function submitHudForm() {
-            const date = document.getElementById('hudDate').value;
-            const time = document.getElementById('hudTime').value || "00:00";
-            const val = parseFloat(document.getElementById('hudIndex').value);
-            const temp = document.getElementById('hudTemp').value ? parseFloat(document.getElementById('hudTemp').value) : null;
-            if (!date || isNaN(val)) { alert("Veuillez entrer une date et un index valide."); return; }
-            const exists = state.readings.find(r => r.date === date && (r.time || "00:00") === time);
-            const entry = { date, time, value: val, temp, weather: selectedWeather };
-            if (exists) { if(!confirm("Index existant pour cet horaire. Écraser ?")) return; Object.assign(exists, entry); } 
-            else state.readings.push(entry);
-            saveData(); recalcEngine(); closeModule();
-        }
-        function toggleSidebar() {
-            const sidebar = document.getElementById('mainSidebar');
-            const icon = document.getElementById('collapseIcon');
-            const isCollapsed = sidebar.classList.contains('w-20');
-            if(isCollapsed) { sidebar.classList.remove('w-20', 'sidebar-collapsed'); sidebar.classList.add('w-64'); icon.setAttribute('data-lucide', 'chevrons-left'); } 
-            else { sidebar.classList.remove('w-64'); sidebar.classList.add('w-20', 'sidebar-collapsed'); icon.setAttribute('data-lucide', 'chevrons-right'); }
+
+        function switchMode(mode) {
+            state.mode = mode;
+            document.body.setAttribute('data-mode', mode);
+            
+            // Buttons UI
+            document.getElementById('btn-gas').className = `flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 mode-btn ${mode==='gas'?'bg-[#06b6d4] text-white shadow-[0_0_10px_rgba(6,182,212,0.5)]':'text-gray-500 hover:text-white'}`;
+            document.getElementById('btn-elec').className = `flex-1 py-2 rounded-md text-xs font-bold uppercase transition-all flex items-center justify-center gap-2 mode-btn ${mode==='elec'?'bg-[#f59e0b] text-white shadow-[0_0_10px_rgba(245,158,11,0.5)]':'text-gray-500 hover:text-white'}`;
+            
+            // Texts
+            document.getElementById('mobileTitle').innerText = mode === 'gas' ? 'GAZ' : 'ELEC';
+            document.getElementById('hudUnit').innerText = mode === 'gas' ? 'm³' : 'kWh';
+            document.getElementById('hudIndexLabel').innerText = `Index Compteur (${mode === 'gas' ? 'm³' : 'kWh'})`;
+            
+            // Settings Inputs
+            const s = state[mode].settings;
+            document.getElementById('setPrice').value = s.kwhPrice;
+            document.getElementById('setSub').value = s.subscription;
+            document.getElementById('setCoef').value = s.conversionCoef;
+            document.getElementById('coefContainer').style.display = mode === 'gas' ? 'block' : 'none';
+            document.getElementById('confMode').innerText = mode === 'gas' ? '(Gaz)' : '(Élec)';
+            document.getElementById('setLat').value = state.loc.lat;
+            document.getElementById('setLon').value = state.loc.lon;
+
+            // Jump to last date
+            const readings = state[mode].readings;
+            if (readings.length > 0) {
+                const last = readings[readings.length-1];
+                if(last) state.ui.currentDate = new Date(last.date);
+            }
+
+            recalcEngine();
             if(window.lucide) lucide.createIcons();
         }
 
-        document.getElementById('fileImport').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const rawText = e.target.result.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
-                let processed = false;
+        // --- STORAGE ---
+        function loadData() {
+            const saved = localStorage.getItem('neogaz_db');
+            if(saved) {
                 try {
-                    const json = JSON.parse(rawText);
-                    if (json.readings || json.indexes) {
-                        if(json.readings) {
-                            state.readings = json.readings;
-                            state.settings = json.settings || state.settings;
-                            state.importedData = json.importedData || state.importedData;
-                            state.dailyWeather = json.dailyWeather || state.dailyWeather; 
-                        } else if(json.indexes) {
-                             json.indexes.forEach(idx => {
-                                if(idx.date && idx.index !== undefined) {
-                                    const parts = idx.date.split('T');
-                                    const dateStr = parts[0]; 
-                                    const timeStr = parts[1] ? parts[1].substring(0,5) : "00:00";
-                                    if(!state.readings.some(r=>r.date===dateStr && (r.time||"00:00")===timeStr)) {
-                                        state.readings.push({ date: dateStr, time: timeStr, value: idx.index });
-                                    }
-                                }
-                            });
-                            Object.keys(json).forEach(key => {
-                                if(/^\d{4}-\d{2}-\d{2}$/.test(key) && json[key].m3 !== undefined) {
-                                    state.importedData[key] = json[key].m3;
-                                }
-                            });
-                        }
-                        processed = true;
-                        alert("Sauvegarde JSON importée avec succès !");
+                    const parsed = JSON.parse(saved);
+                    // Minimal migration check
+                    if(parsed.settings && !parsed.gas) { // Old format
+                        state.gas.settings = parsed.settings;
+                        state.gas.readings = parsed.readings || [];
+                        state.gas.importedData = parsed.importedData || {};
+                        state.dailyWeather = parsed.dailyWeather || {};
+                    } else {
+                        state = parsed;
                     }
-                } catch(e) { }
-                if (!processed) {
-                    let type = 'unknown';
-                    if (rawText.indexOf("Index (m3)") > -1 || rawText.indexOf("Type d'index") > -1) type = 'index';
-                    else if (rawText.indexOf("Date de consommation") > -1 && rawText.indexOf("Consommation (m3)") > -1) type = 'daily';
-                    else if (rawText.indexOf("riode de consommation") > -1) type = 'monthly'; 
-                    if (type === 'unknown') { alert("Format non reconnu."); e.target.value = ''; return; }
-                    let count = 0;
-                    const lines = rawText.split('\n');
-                    lines.forEach(line => {
-                        const cleanLine = line.trim();
-                        if(!cleanLine || cleanLine.startsWith('Année') || cleanLine.startsWith('Total')) return;
-                        const parts = cleanLine.split(';');
-                        if (parts.length < 2) return;
-                        const cols = parts.map(p => p.replace(/"/g, '').trim());
-                        if (type === 'monthly') {
-                            const period = cols[0];
-                            if (!period.match(/^\d{2}\/\d{4}$/)) return; 
-                            const [m, y] = period.split('/');
-                            const val = parseFloat(cols[1].replace(/\s/g, '').replace(/\u00A0/g, '').replace(',', '.'));
-                            if (!isNaN(val)) {
-                                const daysInMonth = new Date(parseInt(y), parseInt(m), 0).getDate();
-                                const dailyM3 = val / daysInMonth;
-                                for(let d=1; d<=daysInMonth; d++) {
-                                    const isoDate = `${y}-${m}-${String(d).padStart(2,'0')}`;
-                                    if(state.importedData[isoDate] === undefined) state.importedData[isoDate] = dailyM3;
-                                }
-                                count++;
-                            }
-                        } else {
-                            const dateStr = cols[0];
-                            if (!dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/)) return; 
-                            const [day, month, year] = dateStr.split('/');
-                            const isoDate = `${year}-${month}-${day}`;
-                            let valStr = (type === 'daily') ? cols[1] : cols[2];
-                            if(!valStr) return;
-                            const val = parseFloat(valStr.replace(/\s/g, '').replace(/\u00A0/g, '').replace(',', '.'));
-                            if (!isNaN(val)) {
-                                if (type === 'daily') state.importedData[isoDate] = val;
-                                else if (type === 'index') {
-                                    const exists = state.readings.find(r => r.date === isoDate);
-                                    if (exists) exists.value = val;
-                                    else state.readings.push({ date: isoDate, time: "00:00", value: val });
-                                }
-                                count++;
-                            }
-                        }
-                    });
-                    if (count > 0) alert(`${count} entrées importées.`); else alert("Aucune donnée valide.");
-                }
-                saveData(); recalcEngine(); e.target.value = '';
-            };
-            reader.readAsText(file);
-        });
+                    // Ensure deep structure exists
+                    if(!state.elec) state.elec = { settings: {...DEFAULT_SETTINGS_ELEC}, readings: [], importedData: {}, computed: [] };
+                    if(!state.loc) state.loc = {...LOC_SETTINGS};
+                } catch(e) { console.error("Corrupt data", e); }
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('neogaz_db', JSON.stringify(state));
+        }
+        
         function exportData() {
-            const now = new Date();
-            const dateStr = now.toISOString().split('T')[0];
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
-            const anchor = document.createElement('a');
-            anchor.setAttribute("href", dataStr);
-            anchor.setAttribute("download", `gaz_backup_${dateStr}.json`);
-            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "neo_energie_backup.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
         }
-        function toggleSettings() { document.getElementById('settingsOverlay').classList.remove('hidden'); }
-        function saveSettings() {
-            state.settings.kwhPrice = parseFloat(document.getElementById('setPrice').value);
-            state.settings.subscription = parseFloat(document.getElementById('setSub').value);
-            state.settings.conversionCoef = parseFloat(document.getElementById('setCoef').value);
-            state.settings.lat = parseFloat(document.getElementById('setLat').value);
-            state.settings.lon = parseFloat(document.getElementById('setLon').value);
-            saveData(); recalcEngine(); document.getElementById('settingsOverlay').classList.add('hidden');
-        }
-        function resetData() { if(confirm("Tout effacer ?")) { localStorage.clear(); location.reload(); } }
 
+        function resetData() {
+            if(confirm("ATTENTION : Cela va effacer TOUTES vos données (Gaz et Élec). Confirmer ?")) {
+                localStorage.removeItem('neogaz_db');
+                location.reload();
+            }
+        }
+
+        // --- CALCULATION ENGINE ---
         function recalcEngine() {
-            state.readings.sort((a, b) => {
-                const da = new Date(a.date + 'T' + (a.time || '00:00'));
-                const db = new Date(b.date + 'T' + (b.time || '00:00'));
-                return da - db;
-            });
+            const mode = state.mode;
+            const currentData = state[mode];
+            const readings = currentData.readings;
+            const imported = currentData.importedData;
+            const settings = currentData.settings;
+            
+            readings.sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
+            
             const dailyMap = new Map(); 
-            if (state.readings.length < 2) { state.computedDaily = []; updateUI(); return; }
+            
+            // 1. Process Imported Daily Data (Orphaned)
+            Object.keys(imported).forEach(date => {
+                const t = state.dailyWeather[date] ? state.dailyWeather[date].temp : null;
+                dailyMap.set(date, { val: imported[date], type: 'real', temp: t });
+            });
 
-            for (let i = 0; i < state.readings.length - 1; i++) {
-                const start = state.readings[i];
-                const end = state.readings[i+1];
+            // 2. Process Readings Intervals
+            for (let i = 0; i < readings.length - 1; i++) {
+                const start = readings[i];
+                const end = readings[i+1];
                 const dStart = new Date(start.date);
                 const dEnd = new Date(end.date);
-                const totalDelta = end.value - start.value;
-                const getTempForDate = (d) => { if (state.dailyWeather[d]) return state.dailyWeather[d].temp; return null; };
-                const startTemp = getTempForDate(start.date) !== null ? getTempForDate(start.date) : (start.temp !== undefined ? start.temp : null);
-                const endTemp = getTempForDate(end.date) !== null ? getTempForDate(end.date) : (end.temp !== undefined ? end.temp : null);
+                
+                // Value difference
+                let delta = end.value - start.value;
+                if(delta < 0) delta = 0; // Prevent negative if meter loop or error
 
+                // Same day reading?
                 if (start.date === end.date) {
-                    const k = start.date;
-                    if(!dailyMap.has(k)) dailyMap.set(k, { m3: 0, kwh: 0, type: 'real', temp: startTemp });
-                    const entry = dailyMap.get(k);
-                    entry.m3 += totalDelta;
-                    entry.kwh += totalDelta * state.settings.conversionCoef;
-                    if(endTemp !== null) entry.temp = endTemp;
-                    continue;
+                    // Update only if no imported data exists for this day, or accumulate? 
+                    // Strategy: Readings override everything.
+                    // But if multiple readings same day, delta is 0 usually unless consumption.
+                    // Let's assume daily map already populated by imports. We just update temp.
+                    continue; 
                 }
 
+                // Days between
                 const days = [];
                 let current = new Date(dStart);
                 while (current < dEnd) {
@@ -713,47 +561,57 @@
                 }
                 if (days.length === 0) continue;
 
+                // Subtract known imported volume from interval total
                 let knownVol = 0;
                 let knownCount = 0;
-                days.forEach(d => { if (state.importedData[d] !== undefined) { knownVol += state.importedData[d]; knownCount++; } });
-
-                const remainingVol = totalDelta - knownVol;
-                const remainingDays = days.length - knownCount;
-                const avg = remainingDays > 0 ? remainingVol / remainingDays : 0;
-
-                days.forEach((d, idx) => {
-                    let val = 0;
-                    let type = 'estimated';
-                    if (state.importedData[d] !== undefined) { val = state.importedData[d]; type = 'real'; } 
-                    else { val = avg; }
-                    if (val < 0) val = 0;
-                    
-                    let dailyTemp = getTempForDate(d);
-                    if (dailyTemp === null && startTemp !== null && endTemp !== null) {
-                         const progress = idx / days.length;
-                         dailyTemp = startTemp + (endTemp - startTemp) * progress;
-                    }
-
-                    if(!dailyMap.has(d)) dailyMap.set(d, { m3: 0, kwh: 0, type: type, temp: dailyTemp });
-                    const entry = dailyMap.get(d);
-                    entry.m3 += val; 
-                    entry.kwh += val * state.settings.conversionCoef;
-                    if(type === 'real') entry.type = 'real'; 
+                days.forEach(d => { 
+                    if (dailyMap.has(d) && dailyMap.get(d).type === 'real') { 
+                        knownVol += dailyMap.get(d).val; 
+                        knownCount++; 
+                    } 
                 });
+
+                let remainingVol = delta - knownVol;
+                if(remainingVol < 0) remainingVol = 0; // Imported data exceeds meter diff?
+                const remainingDays = days.length - knownCount;
+                
+                // Distribute remainder
+                if(remainingDays > 0) {
+                    const avg = remainingVol / remainingDays;
+                    days.forEach(d => {
+                        if (!dailyMap.has(d) || dailyMap.get(d).type !== 'real') {
+                            const t = state.dailyWeather[d] ? state.dailyWeather[d].temp : null;
+                            dailyMap.set(d, { val: avg, type: 'estimated', temp: t });
+                        }
+                    });
+                }
             }
-            state.computedDaily = Array.from(dailyMap.entries()).map(([date, data]) => ({ date, m3: data.m3, kwh: data.kwh, type: data.type, temp: data.temp })).sort((a,b) => new Date(a.date) - new Date(b.date));
+            
+            // Convert to array
+            currentData.computed = Array.from(dailyMap.entries()).map(([date, data]) => {
+                const m3 = mode === 'gas' ? data.val : 0; // Purely indicative for gas
+                // For Elec, data.val is kWh. For Gas, data.val is m3.
+                // Final kWh calculation:
+                const kwh = mode === 'gas' ? (data.val * settings.conversionCoef) : data.val;
+                return { date, m3, kwh, type: data.type, temp: data.temp };
+            }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
             updateUI();
         }
 
+        // --- UI UPDATES ---
         function updateUI() {
-            let data = state.computedDaily;
+            const mode = state.mode;
+            const dataFull = state[mode].computed;
+            const settings = state[mode].settings;
+            
+            // Filter
+            let data = dataFull;
             const target = state.ui.currentDate;
             const nav = document.getElementById('dateNavigator');
-            const customNav = document.getElementById('customRangeSelector');
             const periodLabel = document.getElementById('currentPeriodLabel');
 
             nav.classList.add('hidden');
-            customNav.classList.add('hidden');
 
             if (state.ui.periodFilter === 'year') {
                 data = data.filter(d => new Date(d.date).getFullYear() === target.getFullYear());
@@ -762,234 +620,461 @@
             } else if (state.ui.periodFilter === 'month') {
                 const m = target.getMonth(), y = target.getFullYear();
                 data = data.filter(d => { const x = new Date(d.date); return x.getMonth() === m && x.getFullYear() === y; });
-                periodLabel.innerText = target.toLocaleDateString('fr-FR', {month:'short', year:'numeric'});
+                periodLabel.innerText = target.toLocaleDateString('fr-FR', {month:'long', year:'numeric'});
                 nav.classList.remove('hidden');
-            } else if (state.ui.periodFilter === 'custom') {
-                customNav.classList.remove('hidden');
-                const s = new Date(document.getElementById('customStart').value);
-                const e = new Date(document.getElementById('customEnd').value);
-                if(s && e) { data = data.filter(d => { const x = new Date(d.date); return x >= s && x <= e; }); }
             }
 
+            // KPIs
             const tkwh = data.reduce((a, b) => a + b.kwh, 0);
-            const days = data.length;
-            const cost = (tkwh * state.settings.kwhPrice) + (state.settings.subscription * (days/365));
-            const ttc = cost * (1 + state.settings.tva);
-            const avg = days > 0 ? tkwh / days : 0;
-            const realCount = data.filter(d => d.type === 'real').length;
-            const reliability = days > 0 ? (realCount / days) * 100 : 0;
+            const days = data.length || 1;
+            // Cost: (Conso * Price) + (Sub / 365 * days)
+            const energyCost = tkwh * settings.kwhPrice;
+            const subCost = (settings.subscription / 365) * days;
+            const totalHT = energyCost + subCost;
+            const ttc = totalHT * (1 + settings.tva);
+            
+            const avg = tkwh / days;
             const temps = data.filter(d => d.temp !== null && d.temp !== undefined).map(d => d.temp);
             const avgTemp = temps.length > 0 ? (temps.reduce((a,b)=>a+b,0) / temps.length).toFixed(1) : '--';
 
             document.getElementById('kpiKwh').innerText = Math.round(tkwh).toLocaleString();
             document.getElementById('kpiCost').innerHTML = ttc.toFixed(2) + ' <span class="text-sm">€</span>';
-            const kpiAvgEl = document.getElementById('kpiAvg');
-            if(kpiAvgEl) kpiAvgEl.innerText = avg.toFixed(1);
+            document.getElementById('kpiAvg').innerText = avg.toFixed(1);
             document.getElementById('kpiAvgTemp').innerText = avgTemp + '°C';
-            document.getElementById('kpiReliability').innerText = Math.round(reliability) + '%';
-            document.getElementById('reliablityBar').style.width = reliability + '%';
-
+            
             renderChart(data);
             renderHeatmap(data);
+            renderHistory();
+        }
 
+        // --- RENDERERS ---
+        function renderChart(data) {
+             const container = document.getElementById('chartContainer');
+             const labels = document.getElementById('chartLabels');
+             container.innerHTML = ''; labels.innerHTML = '';
+             
+             if (data.length === 0) { 
+                 container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-700 text-xs">Pas de données pour cette période</div>'; 
+                 return; 
+             }
+
+             // Downsample for chart if too many points
+             let items = data;
+             const isKwh = state.ui.chartMode === 'kwh';
+             const settings = state[state.mode].settings;
+
+             const maxVal = Math.max(...items.map(i => isKwh ? i.kwh : (i.kwh * settings.kwhPrice))) || 1;
+             
+             const barsContainer = document.createElement('div');
+             barsContainer.className = "absolute inset-0 flex items-end justify-between w-full h-full gap-[1px]";
+             
+             // SVG for Temp
+             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+             svg.setAttribute("class", "absolute inset-0 w-full h-full pointer-events-none z-20");
+             svg.setAttribute("preserveAspectRatio", "none");
+             let points = "";
+
+             items.forEach((item, i) => {
+                const val = isKwh ? item.kwh : (item.kwh * settings.kwhPrice);
+                const h = (val / maxVal) * 100;
+                const isReal = item.type === 'real';
+                
+                // Dynamic Color
+                let bgClass = isReal ? 'bg-emerald-500' : (state.mode === 'gas' ? 'bg-[#06b6d4]' : 'bg-[#f59e0b]');
+                
+                const el = document.createElement('div');
+                el.className = `flex-1 rounded-t-sm ${bgClass} opacity-80 hover:opacity-100 transition-all relative group`;
+                el.style.height = `${Math.max(h, 0.5)}%`; 
+                
+                // Tooltip
+                 const dateStr = new Date(item.date).toLocaleDateString('fr-FR');
+                 el.innerHTML = `
+                    <div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#0f1219] text-gray-200 text-[10px] p-2 rounded border border-gray-700 whitespace-nowrap z-50 shadow-xl pointer-events-none">
+                        <div class="font-bold text-white mb-1 border-b border-gray-800 pb-1">${dateStr}</div>
+                        <div class="flex justify-between gap-4">
+                            <span>${item.type === 'real' ? 'Relevé' : 'Estimé'}</span>
+                            <span class="font-bold text-white">${val.toFixed(2)} ${isKwh ? 'kWh' : '€'}</span>
+                        </div>
+                        ${item.temp !== null ? `<div class="mt-1 text-orange-400 font-bold text-center pt-1 border-t border-gray-800">${item.temp.toFixed(1)}°C</div>` : ''}
+                    </div>`;
+                
+                barsContainer.appendChild(el);
+                
+                // Temp Line Points
+                if (item.temp !== null && item.temp !== undefined) {
+                    const x = (i / (items.length - 1 || 1)) * 100;
+                    // Map temp -5°C to 40°C to 0-100% height. Inverted for SVG y.
+                    // Let's say range is -10 to 40 (delta 50).
+                    const y = 100 - ((item.temp + 10) / 50 * 100); 
+                    points += `${x},${y} `;
+                }
+             });
+             container.appendChild(barsContainer);
+             
+             if(points) {
+                const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                polyline.setAttribute("points", points);
+                polyline.setAttribute("fill", "none");
+                polyline.setAttribute("stroke", "#f97316"); // Orange-500
+                polyline.setAttribute("stroke-width", "2");
+                polyline.setAttribute("vector-effect", "non-scaling-stroke");
+                polyline.setAttribute("class", "temp-line");
+                svg.setAttribute("viewBox", `0 0 100 100`);
+                svg.appendChild(polyline);
+                container.appendChild(svg);
+             }
+        }
+        
+        function renderHeatmap(data) {
+             const grid = document.getElementById("heatmapGrid");
+             grid.innerHTML = '';
+             
+             let target = state.ui.currentDate;
+             if(state.ui.periodFilter === 'global') target = new Date(); 
+             
+             const year = target.getFullYear(); const month = target.getMonth();
+             const daysInMonth = new Date(year, month + 1, 0).getDate();
+             const startDay = new Date(year, month, 1).getDay(); 
+             const offset = startDay === 0 ? 6 : startDay - 1; // Mon=0
+             
+             for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
+             
+             const relevant = data.filter(d => new Date(d.date).getMonth() === month && new Date(d.date).getFullYear() === year);
+             const max = Math.max(...relevant.map(d=>d.kwh), 1);
+
+             for(let d=1; d<=daysInMonth; d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const found = relevant.find(x => x.date === dateStr);
+                const el = document.createElement('div');
+                el.className = "aspect-square rounded flex items-center justify-center text-[9px] text-gray-500 relative group cursor-default transition-transform hover:scale-110 hover:z-10";
+                el.innerText = d;
+                
+                if(found) {
+                    const alpha = 0.3 + (found.kwh/max)*0.7;
+                    const isReal = found.type === 'real';
+                    let col = isReal ? `rgba(16,185,129,${alpha})` : (state.mode==='gas' ? `rgba(6,182,212,${alpha})` : `rgba(245, 158, 11,${alpha})`);
+                    
+                    el.style.backgroundColor = col; el.style.color = '#fff';
+                    const tempHtml = found.temp ? `<span class="text-orange-400 block mt-1 font-bold">${found.temp.toFixed(1)}°</span>` : '';
+                    el.innerHTML += `<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-black p-2 rounded border border-gray-700 whitespace-nowrap shadow-xl"><div class="font-bold text-white text-xs mb-1">${new Date(found.date).toLocaleDateString()}</div><div class="flex flex-col gap-1 text-[10px]"><div class="flex justify-between gap-3"><span class="theme-text font-bold">${found.kwh.toFixed(1)} kWh</span></div>${tempHtml}</div></div>`;
+                } else { 
+                    el.style.backgroundColor = 'rgba(255,255,255,0.05)'; 
+                }
+                grid.appendChild(el);
+             }
+        }
+        
+        function renderHistory() {
             const histContainer = document.getElementById('historyList');
             histContainer.innerHTML = '';
-            const sorted = [...state.readings].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00')));
+            const readings = state[state.mode].readings;
+            // Display latest first
+            const sorted = [...readings].sort((a,b) => new Date(b.date + 'T' + (b.time||'00:00')) - new Date(a.date + 'T' + (a.time||'00:00')));
+            
             sorted.forEach((r, i) => {
                 let detailsHtml = '';
-                if (i < sorted.length - 1) {
+                // Calculate consumption since previous reading (which is i+1 in descending sort)
+                 if (i < sorted.length - 1) {
                     const prev = sorted[i+1];
-                    const diffM3 = r.value - prev.value;
-                    const d1 = new Date(r.date + 'T' + (r.time||'00:00'));
-                    const d2 = new Date(prev.date + 'T' + (prev.time||'00:00'));
-                    const diffTime = Math.abs(d1 - d2);
-                    const daysDiff = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    const periodKwh = diffM3 * state.settings.conversionCoef;
-                    const totalPeriodCost = ((periodKwh * state.settings.kwhPrice) + ((state.settings.subscription / 365) * (diffTime / (1000 * 60 * 60 * 24)))) * (1 + state.settings.tva);
-                    let timeLabel = daysDiff + 'j';
-                    if (daysDiff < 1) { timeLabel = Math.round(diffTime / (1000*60*60)) + 'h'; }
-                    if (diffM3 >= 0) { detailsHtml = `<div class="text-[10px] text-gray-500 mt-1 flex justify-between"><span>+${diffM3.toFixed(1)} m³ en ${timeLabel}</span><span class="text-emerald-400 font-bold">${totalPeriodCost.toFixed(2)} €</span></div>`; }
+                    const diffVal = r.value - prev.value;
+                    const d1 = new Date(r.date); const d2 = new Date(prev.date);
+                    const daysDiff = Math.max(1, Math.ceil(Math.abs(d1 - d2) / (1000 * 60 * 60 * 24)));
+                    
+                    let unit = state.mode === 'gas' ? 'm³' : 'kWh';
+                    
+                    if (diffVal >= 0) {
+                        detailsHtml = `<div class="text-[10px] text-gray-500 mt-1 flex justify-between border-t border-gray-800 pt-1"><span>Conso: +${diffVal.toFixed(0)} ${unit}</span><span>${daysDiff} jours</span></div>`;
+                    }
                 }
-                let displayTemp = r.temp;
-                if (displayTemp === undefined || displayTemp === null) { if (state.dailyWeather[r.date]) displayTemp = state.dailyWeather[r.date].temp; }
+                
+                const unit = state.mode === 'gas' ? 'm³' : 'kWh';
+                
                 const div = document.createElement('div');
-                div.className = "bg-gray-900/50 p-3 rounded border border-gray-800 hover:border-gray-700 transition-colors";
-                div.innerHTML = `<div class="flex justify-between items-center mb-1"><div class="flex items-center gap-2"><span class="text-xs text-gray-400 font-mono flex flex-col"><span>${new Date(r.date).toLocaleDateString()}</span><span class="text-[9px] text-gray-600">${r.time || '00:00'}</span></span>${displayTemp ? `<span class="text-[9px] text-orange-400 font-bold">${displayTemp.toFixed(1)}°</span>` : ''}</div><div class="flex items-center gap-2"><span class="text-sm font-bold text-cyan-400 font-mono">${r.value.toLocaleString()} <span class="text-[10px] text-gray-600">m³</span></span><button onclick="delReading('${r.date}', '${r.time||''}')" class="text-red-900 hover:text-red-500"><i data-lucide="trash" class="w-3 h-3"></i></button></div></div>${detailsHtml}`;
+                div.className = "bg-gray-900/50 p-3 rounded border border-gray-800 hover:border-gray-700 transition-colors group";
+                div.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-gray-400 font-mono flex flex-col">
+                                <span>${new Date(r.date).toLocaleDateString()}</span>
+                                <span class="text-[9px] text-gray-600">${r.time || '--:--'}</span>
+                            </span>
+                            ${r.weather ? `<i data-lucide="${getWeatherIcon(r.weather)}" class="w-3 h-3 text-gray-500"></i>` : ''}
+                            ${r.temp ? `<span class="text-[9px] text-orange-400 font-bold">${r.temp}°</span>` : ''}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold theme-text font-mono">${r.value.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 1})} <span class="text-[10px] text-gray-600">${unit}</span></span>
+                            <button onclick="delReading('${r.date}', '${r.time||''}')" class="text-red-900 opacity-0 group-hover:opacity-100 hover:text-red-500 transition-all"><i data-lucide="trash" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                    ${detailsHtml}`;
                 histContainer.appendChild(div);
             });
             if(window.lucide) lucide.createIcons();
         }
 
-        function renderChart(data) {
-            const container = document.getElementById('chartContainer');
-            const labels = document.getElementById('chartLabels');
-            container.innerHTML = ''; labels.innerHTML = '';
-            labels.style.position = 'relative'; labels.style.height = '20px';
+        // --- HUD / INTERACTION LOGIC ---
+        function openModule() {
+            document.getElementById('hudOverlay').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('hudOverlay').classList.remove('opacity-0');
+                document.getElementById('hudContent').classList.remove('scale-95');
+            }, 10);
+            setActiveInput('hudIndex'); // Default focus
+        }
 
-            if (data.length === 0) { container.innerHTML = '<div class="absolute inset-0 flex items-center justify-center text-gray-700 text-xs">Pas de données</div>'; return; }
+        function closeModule() {
+            document.getElementById('hudOverlay').classList.add('opacity-0');
+            document.getElementById('hudContent').classList.add('scale-95');
+            setTimeout(() => {
+                document.getElementById('hudOverlay').classList.add('hidden');
+            }, 300);
+            // Clear inputs
+            document.getElementById('hudIndex').value = '';
+            document.getElementById('hudTemp').value = '';
+            selectWeather(null);
+        }
 
-            let items = data;
-            const tooMany = data.length > 60; 
-            const unit = state.ui.chartMode === 'kwh' ? 'kWh' : '€';
-
-            if(tooMany) {
-                const grouped = {};
-                data.forEach(d => {
-                    const k = d.date.substring(0, 7); 
-                    if(!grouped[k]) grouped[k] = {val:0, date:d.date, type:d.type, count:0, realCount:0, tempSum:0, tempCount:0};
-                    grouped[k].val += (state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice));
-                    grouped[k].count++;
-                    if(d.type === 'real') grouped[k].realCount++;
-                    if(d.temp !== null) { grouped[k].tempSum += d.temp; grouped[k].tempCount++; }
-                });
-                items = Object.keys(grouped).sort().map(k => {
-                    const g = grouped[k];
-                    const type = (g.realCount / g.count) > 0.5 ? 'real' : 'estimated';
-                    const avgTemp = g.tempCount > 0 ? g.tempSum / g.tempCount : null;
-                    return { val: g.val, date: k + "-01", type: type, temp: avgTemp }; 
-                });
+        function toggleSettings() {
+            const ol = document.getElementById('settingsOverlay');
+            if(ol.classList.contains('hidden')) {
+                ol.classList.remove('hidden');
+                // Fill current loc
+                document.getElementById('setLat').value = state.loc.lat;
+                document.getElementById('setLon').value = state.loc.lon;
             } else {
-                items = data.map(d => ({ val: state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice), date: d.date, type: d.type, temp: d.temp }));
+                ol.classList.add('hidden');
+            }
+        }
+        
+        function saveSettings() {
+             const m = state.mode;
+             state[m].settings.kwhPrice = parseFloat(document.getElementById('setPrice').value);
+             state[m].settings.subscription = parseFloat(document.getElementById('setSub').value);
+             state[m].settings.conversionCoef = parseFloat(document.getElementById('setCoef').value);
+             
+             state.loc.lat = parseFloat(document.getElementById('setLat').value);
+             state.loc.lon = parseFloat(document.getElementById('setLon').value);
+
+             saveData();
+             recalcEngine();
+             toggleSettings();
+             alert("Configuration sauvegardée !");
+        }
+
+        function setActiveInput(id) {
+            if(id === 'none') {
+                document.querySelectorAll('.hud-input').forEach(e => e.classList.remove('active-input'));
+                hudState.activeInput = null;
+                return;
+            }
+            hudState.activeInput = id;
+            document.querySelectorAll('.hud-input').forEach(e => e.classList.remove('active-input'));
+            document.getElementById(id).classList.add('active-input');
+        }
+
+        function numpadPress(key) {
+            if(!hudState.activeInput) return;
+            const el = document.getElementById(hudState.activeInput);
+            if(key === 'DEL') {
+                el.value = el.value.slice(0, -1);
+            } else if (key === '-') {
+                if(el.value.startsWith('-')) el.value = el.value.substring(1);
+                else el.value = '-' + el.value;
+            } else {
+                el.value += key;
+            }
+        }
+
+        function selectWeather(w) {
+            hudState.selectedWeather = w;
+            document.querySelectorAll('.weather-btn').forEach(b => {
+                if(b.dataset.weather === w) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+        }
+        
+        function getWeatherIcon(w) {
+            if(w==='sun') return 'sun';
+            if(w==='cloud') return 'cloud';
+            if(w==='rain') return 'cloud-rain';
+            if(w==='snow') return 'snowflake';
+            return 'cloud';
+        }
+
+        function submitHudForm() {
+            const date = document.getElementById('hudDate').value;
+            const time = document.getElementById('hudTime').value;
+            const idxStr = document.getElementById('hudIndex').value;
+            const tempStr = document.getElementById('hudTemp').value;
+            
+            if(!date || !idxStr) { alert("Date et Index requis."); return; }
+            
+            const val = parseFloat(idxStr);
+            const temp = tempStr ? parseFloat(tempStr) : null;
+            
+            // Add Reading
+            state[state.mode].readings.push({
+                date: date,
+                time: time || '12:00',
+                value: val,
+                temp: temp,
+                weather: hudState.selectedWeather
+            });
+            
+            // If temp provided, save to dailyWeather too for interpolation
+            if(temp !== null) {
+                state.dailyWeather[date] = { temp: temp, icon: hudState.selectedWeather };
             }
 
-            const max = Math.max(...items.map(i=>i.val)) || 1;
-            
-            // SVG Overlay for Temp Line & Grid
-            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svg.setAttribute("class", "absolute inset-0 w-full h-full pointer-events-none z-20");
-            svg.setAttribute("preserveAspectRatio", "none");
-            let points = "";
-            
-            // Add Threshold Lines (0C, 10C, 20C, 30C)
-            const thresholds = [0, 10, 20, 30];
-            thresholds.forEach(t => {
-                const y = 100 - ((t + 5) / 45 * 100);
-                if(y >= 0 && y <= 100) {
-                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-                    line.setAttribute("x1", "0"); line.setAttribute("x2", "100");
-                    line.setAttribute("y1", y); line.setAttribute("y2", y);
-                    line.setAttribute("stroke", "rgba(249, 115, 22, 0.3)");
-                    line.setAttribute("stroke-width", "0.2"); // Very subtle
-                    line.setAttribute("stroke-dasharray", "2");
-                    // Scale for SVG coords (viewBox 0 0 100 100)
-                    svg.appendChild(line);
-                    
-                    // Label (HTML overlay for easier positioning)
-                    const lbl = document.createElement('div');
-                    lbl.className = "absolute right-0 text-[8px] text-orange-500/50 font-mono pr-1";
-                    lbl.style.top = `${y}%`;
-                    lbl.style.transform = "translateY(-50%)";
-                    lbl.innerText = `${t}°`;
-                    container.appendChild(lbl);
-                }
-            });
+            saveData();
+            recalcEngine();
+            closeModule();
+        }
 
-            const barsContainer = document.createElement('div');
-            barsContainer.className = "absolute inset-0 flex items-end justify-between w-full h-full";
+        // --- WEATHER FETCH (Open-Meteo) ---
+        async function fetchWeatherData() {
+            const btn = document.getElementById('weatherSyncBtn');
+            btn.classList.add('animate-spin');
             
-            items.forEach((item, i) => {
-                const h = (item.val / max) * 100;
-                const color = item.type === 'real' ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]';
-                const el = document.createElement('div');
-                el.className = `flex-1 rounded-t-sm ${color} opacity-80 hover:opacity-100 transition-all relative group`;
-                if (!tooMany) el.style.margin = "0 1px"; 
-                el.style.height = `${Math.max(h, 1)}%`; 
+            try {
+                const lat = state.loc.lat;
+                const lon = state.loc.lon;
                 
-                const dateObj = new Date(item.date);
-                const dateStr = tooMany ? dateObj.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase() : dateObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }).toUpperCase();
-                el.innerHTML = `<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-[#0f1219] text-gray-200 text-[10px] p-2 rounded border border-gray-700 whitespace-nowrap z-50 shadow-xl"><div class="font-bold text-white mb-1 border-b border-gray-800 pb-1">${dateStr}</div><div class="flex justify-between gap-4"><span>${item.type === 'real' ? 'Réel' : 'Est.'}</span><span class="font-bold text-white">${item.val.toFixed(1)} ${unit}</span></div>${item.temp !== null ? `<div class="mt-1 text-orange-400 font-bold text-center pt-1 border-t border-gray-800">${item.temp.toFixed(1)}°C</div>` : ''}</div>`;
-                barsContainer.appendChild(el);
+                // Fetch last 60 days
+                const today = new Date();
+                const past = new Date(); past.setDate(today.getDate() - 90);
+                const startStr = past.toISOString().split('T')[0];
+                const endStr = today.toISOString().split('T')[0];
 
-                if (item.temp !== null) {
-                    const x = (i / (items.length - 1 || 1)) * 100;
-                    // -5C to 40C scale. (temp - (-5)) / (40 - (-5))
-                    const y = 100 - ((item.temp + 5) / 45 * 100); 
-                    points += `${x},${y} `;
+                const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_mean&start_date=${startStr}&end_date=${endStr}&timezone=auto`;
+                
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                if(data.daily && data.daily.time) {
+                    let count = 0;
+                    data.daily.time.forEach((t, i) => {
+                        const temp = data.daily.temperature_2m_mean[i];
+                        if(temp !== null) {
+                            state.dailyWeather[t] = { temp: temp };
+                            count++;
+                        }
+                    });
+                    saveData();
+                    recalcEngine();
+                    alert(`${count} températures synchronisées avec succès !`);
                 }
-            });
-            container.appendChild(barsContainer);
-
-            if(points) {
-                const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-                polyline.setAttribute("points", points);
-                polyline.setAttribute("fill", "none");
-                polyline.setAttribute("stroke", "#f97316");
-                polyline.setAttribute("stroke-width", "0.5");
-                polyline.setAttribute("class", "temp-line");
-                svg.setAttribute("viewBox", `0 0 100 100`);
-                svg.appendChild(polyline);
-                container.appendChild(svg);
-            }
-
-            const step = Math.ceil(items.length / 6);
-            items.forEach((item, i) => {
-                 if (i % step === 0 || i === 0 || i === items.length - 1) {
-                    const date = new Date(item.date);
-                    const labelDiv = document.createElement('div');
-                    const pct = (i / (items.length - 1)) * 100;
-                    labelDiv.className = `absolute text-[9px] font-mono transform -translate-x-1/2 text-gray-500`;
-                    labelDiv.style.left = `${pct}%`;
-                    labelDiv.innerText = tooMany ? date.getFullYear() : date.getDate().toString().padStart(2, '0');
-                    if(pct < 5) labelDiv.style.transform = 'translateX(0)';
-                    if(pct > 95) labelDiv.style.transform = 'translateX(-100%)';
-                    labels.appendChild(labelDiv);
-                 }
-            });
-        }
-
-        function renderHeatmap(data) {
-             const grid = document.getElementById("heatmapGrid");
-            grid.innerHTML = '';
-            let target = state.ui.currentDate;
-            if(state.ui.periodFilter === 'global') target = new Date(); 
-            const year = target.getFullYear(); const month = target.getMonth();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const startDay = new Date(year, month, 1).getDay(); 
-            const offset = startDay === 0 ? 6 : startDay - 1;
-            for(let i=0; i<offset; i++) grid.innerHTML += '<div></div>';
-            const relevant = state.computedDaily.filter(d => new Date(d.date).getMonth() === month && new Date(d.date).getFullYear() === year);
-            const max = Math.max(...relevant.map(d=>d.m3), 1);
-            for(let d=1; d<=daysInMonth; d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const found = relevant.find(x => x.date === dateStr);
-                const el = document.createElement('div');
-                el.className = "aspect-square rounded flex items-center justify-center text-[9px] text-gray-500 relative group cursor-default";
-                el.innerText = d;
-                if(found) {
-                    const alpha = 0.2 + (found.m3/max)*0.8;
-                    const col = found.type === 'real' ? `rgba(16,185,129,${alpha})` : `rgba(6,182,212,${alpha})`;
-                    el.style.backgroundColor = col; el.style.color = '#fff'; el.style.boxShadow = `0 0 ${found.m3}px ${col}`;
-                    const costDay = found.kwh * state.settings.kwhPrice * (1 + state.settings.tva); 
-                    const tempHtml = found.temp ? `<span class="text-orange-400 block mt-1 font-bold">${found.temp.toFixed(1)}°</span>` : '';
-                    el.innerHTML += `<div class="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-30 bg-black p-2 rounded border border-gray-700 whitespace-nowrap shadow-xl"><div class="font-bold text-white text-xs mb-1">${new Date(found.date).toLocaleDateString()}</div><div class="flex flex-col gap-1 text-[10px]"><div class="flex justify-between gap-3"><span class="text-cyan-400">${found.m3.toFixed(1)} m³</span><span class="text-emerald-400 font-bold">${costDay.toFixed(2)} €</span></div>${tempHtml}</div></div>`;
-                } else { el.style.backgroundColor = 'rgba(255,255,255,0.05)'; }
-                grid.appendChild(el);
+            } catch(e) {
+                console.error(e);
+                alert("Erreur de synchronisation météo. Vérifiez votre connexion.");
+            } finally {
+                btn.classList.remove('animate-spin');
             }
         }
 
-        function setFilter(p) { state.ui.periodFilter = p; updateUI(); 
+        // --- HELPERS ---
+        function setFilter(p){ state.ui.periodFilter = p; updateUI(); updateBtnStyles(); }
+        function setChartMode(m){ state.ui.chartMode=m; updateUI(); updateBtnStyles(); }
+        function updateBtnStyles() {
             document.querySelectorAll('.filter-btn').forEach(b => {
-                b.classList.remove('text-white', 'bg-cyan-500/20'); b.classList.add('text-gray-400');
-                if(b.dataset.period===p) { b.classList.add('text-white', 'bg-cyan-500/20'); b.classList.remove('text-gray-400'); }
+                b.className = `filter-btn px-3 py-1 text-xs rounded transition-all ${b.dataset.period===state.ui.periodFilter ? 'text-white theme-bg active-filter' : 'text-gray-400 hover:text-white'}`;
             });
-        }
-        function applyCustomFilter() { if(state.ui.periodFilter === 'custom') updateUI(); }
-        function setChartMode(m) { state.ui.chartMode = m; updateUI(); 
              document.querySelectorAll('.chart-mode-btn').forEach(b => {
-                b.classList.remove('text-white', 'bg-cyan-500/20'); b.classList.add('text-gray-400');
-                if(b.dataset.mode===m) { b.classList.add('text-white', 'bg-cyan-500/20'); b.classList.remove('text-gray-400'); }
+                b.className = `chart-mode-btn px-3 py-1 text-[10px] rounded transition-all ${b.dataset.mode===state.ui.chartMode ? 'text-white theme-bg' : 'text-gray-400 hover:text-white'}`;
             });
         }
-        function changePeriod(d) {
-            const dt = state.ui.currentDate;
-            if(state.ui.periodFilter === 'year') dt.setFullYear(dt.getFullYear()+d);
-            else dt.setMonth(dt.getMonth()+d);
-            state.ui.currentDate = new Date(dt);
-            updateUI();
+        function changePeriod(d){ 
+            const dt = state.ui.currentDate; 
+            if(state.ui.periodFilter==='year') dt.setFullYear(dt.getFullYear()+d); 
+            else dt.setMonth(dt.getMonth()+d); 
+            state.ui.currentDate = new Date(dt); updateUI(); 
         }
-        function delReading(d, t) {
-            if(confirm('Supprimer ?')) { state.readings = state.readings.filter(r => !(r.date === d && (r.time || '00:00') === (t || '00:00'))); saveData(); recalcEngine(); }
+        function delReading(d, t) { 
+            if(confirm('Supprimer ce relevé ?')) { 
+                state[state.mode].readings = state[state.mode].readings.filter(r => !(r.date === d && (r.time||'00:00') === (t||'00:00'))); 
+                saveData(); recalcEngine(); 
+            } 
         }
+
+        // --- IMPORT CSV LOGIC ---
+        document.getElementById('fileImport').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rawText = e.target.result.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
+                const mode = state.mode; 
+                
+                // JSON Check
+                try {
+                    const json = JSON.parse(rawText);
+                    if (json.gas && json.elec) {
+                        state = json; 
+                        alert("Base de données complète restaurée !");
+                        saveData(); recalcEngine(); return;
+                    }
+                } catch(e){}
+
+                // CSV Parse
+                const lines = rawText.split('\n');
+                let count = 0;
+                let type = 'unknown';
+
+                if (rawText.indexOf("Index (m3)") > -1) type = 'gas_index';
+                else if (rawText.indexOf("Date de consommation") > -1 && rawText.indexOf("(m3)") > -1) type = 'gas_daily';
+                else if (rawText.indexOf("Index Heures") > -1 || rawText.indexOf("Index (kWh)") > -1) type = 'elec_index'; // Linky
+                else if (rawText.indexOf("Date de consommation") > -1 && rawText.indexOf("(kWh)") > -1) type = 'elec_daily';
+                
+                if(type.startsWith('gas') && mode !== 'gas') { alert("Attention: Fichier Gaz détecté alors que vous êtes en mode Élec."); }
+                if(type.startsWith('elec') && mode !== 'elec') { alert("Attention: Fichier Élec détecté alors que vous êtes en mode Gaz."); }
+
+                const currentData = state[mode];
+                lines.forEach(line => {
+                     const clean = line.trim();
+                     if(!clean || clean.startsWith('Année') || clean.startsWith('Date') || clean.startsWith('Période') || clean.startsWith('Identifiant')) return;
+                     const parts = clean.split(';');
+                     if(parts.length < 2) return;
+                     const cols = parts.map(p => p.replace(/"/g, '').trim());
+                     
+                     // GRDF Daily / ENEDIS Daily
+                     if(type.includes('daily')) {
+                         const dStr = cols[0];
+                         const [d,m,y] = dStr.split(/[-\/]/); // Handle / or -
+                         if(!y || y.length !== 4) return;
+                         const iso = `${y}-${m}-${d}`;
+                         const val = parseFloat(cols[1].replace(/\s/g, '').replace(',', '.'));
+                         if(!isNaN(val)) { currentData.importedData[iso] = val; count++; }
+                     } 
+                     // Indexes (Manual or Export)
+                     else if (type.includes('index')) {
+                         const dStr = cols[0];
+                         const [d,m,y] = dStr.split(/[-\/]/);
+                         if(!y) return;
+                         const iso = `${y}-${m}-${d}`;
+                         let val = 0;
+                         if (mode === 'gas') {
+                             val = parseFloat(cols[2].replace(/\s/g, '').replace(',', '.'));
+                         } else {
+                             // Linky simplistic sum
+                             for(let k=2; k<cols.length; k++) {
+                                 const v = parseFloat(cols[k].replace(/\s/g, ''));
+                                 if(!isNaN(v)) val += v;
+                             }
+                         }
+                         if(!isNaN(val) && val > 0) {
+                              const exists = currentData.readings.find(r=>r.date === iso);
+                              if(exists) exists.value = val;
+                              else currentData.readings.push({ date: iso, time: "00:00", value: val });
+                              count++;
+                         }
+                     }
+                });
+                
+                alert(`${count} points de données importés.`);
+                saveData(); recalcEngine(); e.target.value = '';
+            };
+            reader.readAsText(file);
+        });
 
         init();
     </script>
