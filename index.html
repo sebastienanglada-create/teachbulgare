@@ -392,6 +392,7 @@
             resizeObserver.observe(document.getElementById('chartContainer'));
 
             recalcEngine();
+            setFilter(state.ui.periodFilter);
         }
 
         function loadData() {
@@ -924,19 +925,21 @@
             const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
             let importedCount = 0;
 
-            // Detection Logic
-            const isIndexFile = lines.some(l => l.includes("Date de relevé de l'index") && l.includes("Index (m3)"));
-            const isDailyFile = lines.some(l => l.includes("Date de consommation") && l.includes("Consommation (m3)"));
-            const isMonthlyFile = lines.some(l => l.includes("Période de consommation") && l.includes("Consommation (m3)"));
+            // Normalize headers for robust detection (accents, case)
+            const normalizedLines = lines.slice(0, 10).map(l => l.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            
+            const isIndexFile = normalizedLines.some(l => l.includes("date de releve") && l.includes("index (m3)"));
+            const isDailyFile = normalizedLines.some(l => l.includes("date de consommation") && l.includes("consommation (m3)"));
+            const isMonthlyFile = normalizedLines.some(l => l.includes("periode de consommation") && l.includes("consommation (m3)"));
 
             if (isIndexFile) {
                 // Format: Date;Type;Index;Coef
                 lines.forEach(line => {
-                    if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return; // Skip headers
+                    if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return; 
                     const cols = line.split(';');
                     if (cols.length < 3) return;
 
-                    const dateParts = cols[0].split('/'); // DD/MM/YYYY
+                    const dateParts = cols[0].split('/'); 
                     if (dateParts.length !== 3) return;
                     const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                     
@@ -968,7 +971,7 @@
                     const val = parseFloat(valStr);
 
                     if (!isNaN(val)) {
-                        state.importedData[dateISO] = val; // Store exact daily usage
+                        state.importedData[dateISO] = val; 
                         importedCount++;
                     }
                 });
@@ -978,7 +981,6 @@
                  // Format: Période;Conso;Coef;Type (MM/YYYY)
                  let distributedCount = 0;
                  lines.forEach(line => {
-                    // Match MM/YYYY only (exclude "Année XXXX")
                     const match = line.match(/^(\d{2})\/(\d{4});/);
                     if (!match) return;
 
@@ -992,13 +994,11 @@
                     const val = parseFloat(valStr);
 
                     if (!isNaN(val) && val > 0) {
-                        // Get number of days in this month
                         const daysInMonth = new Date(year, month, 0).getDate();
                         const dailyAvg = val / daysInMonth;
 
                         for(let d=1; d<=daysInMonth; d++) {
                              const dayStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                             // Only fill if not present
                              if (state.importedData[dayStr] === undefined) {
                                   state.importedData[dayStr] = dailyAvg;
                              }
@@ -1006,9 +1006,9 @@
                         distributedCount++;
                     }
                  });
-                 alert(`${distributedCount} mois importés et lissés sur les jours manquants.`);
+                 alert(`${distributedCount} mois importés et lissés.`);
             } else {
-                alert("Format CSV non reconnu. Fichiers supportés: mes-index, ma-conso-quotidienne, ma-conso-mensuelle.");
+                alert("Format CSV non reconnu. Vérifiez l'entête du fichier.");
                 return;
             }
 
