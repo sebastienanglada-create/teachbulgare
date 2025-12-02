@@ -117,7 +117,7 @@
                 <div class="space-y-3">
                     <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div><span class="text-xs text-gray-400">Réel</span></div>
                     <div class="flex items-center gap-3"><div class="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.8)]"></div><span class="text-xs text-gray-400">Estimé</span></div>
-                    <div class="flex items-center gap-3 pt-2 border-t border-gray-800"><div class="w-4 h-0.5 bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)]"></div><span class="text-xs text-gray-400">Température</span></div>
+                    <div class="flex items-center gap-3 pt-2 border-t border-gray-800"><div class="w-4 h-0.5 bg-orange-500/50"></div><span class="text-xs text-gray-400">Température</span></div>
                 </div>
             </div>
         </nav>
@@ -421,7 +421,6 @@
             state.readings.sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
             
             const dailyMap = new Map(); 
-            // Allow processing even if just imported data exists
             if (state.readings.length < 2 && Object.keys(state.importedData).length === 0) { state.computedDaily = []; updateUI(); return; }
 
             // 1. Process explicit readings gaps
@@ -515,14 +514,13 @@
                 return;
             }
 
-            // Aggregation for global/yearly view
             let items = data;
             const tooMany = state.ui.periodFilter === 'year' || state.ui.periodFilter === 'global';
             
             if(tooMany) {
                 const grouped = {};
                 data.forEach(d => {
-                    const k = d.date.substring(0, 7); // YYYY-MM
+                    const k = d.date.substring(0, 7); 
                     if (!grouped[k]) grouped[k] = { val:0, kwh:0, count:0, tempSum:0, tempCount:0, date: k+"-01", type: 'aggregate' };
                     grouped[k].val += (state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice));
                     grouped[k].kwh += d.kwh;
@@ -544,12 +542,11 @@
             const gap = Math.max(1, barWidth * 0.2);
             const trueBarWidth = barWidth - gap;
 
-            // Draw Y-Axis (Left - Values)
+            // Draw Axes
             ctx.strokeStyle = '#374151';
             ctx.lineWidth = 1;
             ctx.fillStyle = '#9ca3af';
             ctx.font = "10px 'JetBrains Mono'";
-            ctx.textAlign = "right";
             
             const steps = 5;
             for(let i=0; i<=steps; i++) {
@@ -559,39 +556,44 @@
                 ctx.moveTo(padding.left, y);
                 ctx.lineTo(rect.width - padding.right, y);
                 ctx.stroke();
+                ctx.textAlign = "right";
                 ctx.fillText(val.toFixed(0), padding.left - 5, y + 3);
+                
+                // Temp Labels (Right)
+                const minTemp = -5, maxTemp = 35;
+                const tempVal = minTemp + (((maxTemp-minTemp)/steps)*i);
+                ctx.fillStyle = '#f97316';
+                ctx.textAlign = "left";
+                ctx.fillText(tempVal.toFixed(0) + "°", rect.width - padding.right + 5, y + 3);
+                ctx.fillStyle = '#9ca3af';
             }
 
-            // Draw Y-Axis (Right - Temp)
+            // Temp Line (Bezier - Discrete)
             const minTemp = -5, maxTemp = 35;
             const tempRange = maxTemp - minTemp;
-            ctx.textAlign = "left";
-            ctx.fillStyle = '#f97316';
-            for(let i=0; i<=steps; i++) {
-                const y = padding.top + chartHeight - (i * (chartHeight/steps));
-                const val = minTemp + ((tempRange / steps) * i);
-                ctx.fillText(val.toFixed(0) + "°", rect.width - padding.right + 5, y + 3);
-            }
-
-            // Temp Line
             ctx.beginPath();
-            let hasTemp = false;
+            let firstPoint = true;
+            
             items.forEach((item, i) => {
                 if(item.temp !== null) {
                     const x = padding.left + (i * barWidth) + (barWidth/2);
-                    const tempY = padding.top + chartHeight - ((Math.max(minTemp, Math.min(maxTemp, item.temp)) - minTemp) / tempRange) * chartHeight;
-                    if(!hasTemp) { ctx.moveTo(x, tempY); hasTemp = true; } else ctx.lineTo(x, tempY);
+                    const y = padding.top + chartHeight - ((Math.max(minTemp, Math.min(maxTemp, item.temp)) - minTemp) / tempRange) * chartHeight;
+                    
+                    if(firstPoint) { ctx.moveTo(x, y); firstPoint = false; }
+                    else {
+                        const prevX = padding.left + ((i-1) * barWidth) + (barWidth/2);
+                        const prevY = padding.top + chartHeight - ((Math.max(minTemp, Math.min(maxTemp, items[i-1].temp)) - minTemp) / tempRange) * chartHeight;
+                        const cp1x = prevX + (x - prevX) / 2;
+                        const cp1y = prevY;
+                        const cp2x = prevX + (x - prevX) / 2;
+                        const cp2y = y;
+                        ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+                    }
                 }
             });
-            if(hasTemp) {
-                ctx.lineJoin = 'round';
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = '#f97316';
-                ctx.shadowColor = '#f97316';
-                ctx.shadowBlur = 10;
-                ctx.stroke();
-                ctx.shadowBlur = 0;
-            }
+            ctx.strokeStyle = 'rgba(249, 115, 22, 0.4)'; // Orange with low opacity
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
             // Bars
             items.forEach((item, i) => {
@@ -616,18 +618,16 @@
                 ctx.shadowBlur = 0;
                 ctx.fillRect(x, y, trueBarWidth, 2);
 
-                // X-Axis Labels
-                ctx.fillStyle = '#6b7280';
-                ctx.textAlign = 'center';
-                const d = new Date(item.date);
-                
-                // Show Month Name if aggregating, else Day
                 if (tooMany) {
-                    const label = d.toLocaleDateString('fr-FR', {month:'short'});
+                    const label = new Date(item.date).toLocaleDateString('fr-FR', {month:'short'});
+                    ctx.fillStyle = '#6b7280';
+                    ctx.textAlign = 'center';
                     ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
                 } else {
                     if (items.length < 20 || i % Math.ceil(items.length/6) === 0) {
-                        const label = d.toLocaleDateString('fr-FR', {day:'2-digit'});
+                        const label = new Date(item.date).toLocaleDateString('fr-FR', {day:'2-digit'});
+                        ctx.fillStyle = '#6b7280';
+                        ctx.textAlign = 'center';
                         ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
                     }
                 }
@@ -873,6 +873,7 @@
 
         function exportData() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], {type:"application/json"})); a.download = `NEOGAZ_${new Date().toISOString().split('T')[0]}.json`; a.click(); }
         
+        // --- IMPROVED IMPORT LOGIC ---
         document.getElementById('fileImport').addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
@@ -912,32 +913,37 @@
                     parseCSVImport(content);
                 }
             };
-            reader.readAsText(file);
+            reader.readAsText(file); // Default UTF-8, robust parsing handles accents by ignoring them
         });
 
         function parseCSVImport(csvText) {
+            // Robust Detection Logic (Accent-agnostic)
+            const isIndex = csvText.indexOf('Type d\'index') > -1 || csvText.indexOf('Index (m3)') > -1;
+            const isDaily = csvText.indexOf('Nature de la donn') > -1 && csvText.indexOf('Date de consommation') > -1;
+            // Monthly files often have "Période" but might be encoded weirdly. Look for other markers.
+            const isMonthly = (csvText.indexOf('riode de consommation') > -1 || csvText.indexOf('Période') > -1) && csvText.indexOf('Consommation (m3)') > -1;
+
             const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
             let importedCount = 0;
 
-            const normalizedLines = lines.slice(0, 10).map(l => l.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-            const isIndexFile = normalizedLines.some(l => l.includes("date de releve") && l.includes("index (m3)"));
-            const isDailyFile = normalizedLines.some(l => l.includes("date de consommation") && l.includes("consommation (m3)"));
-            const isMonthlyFile = normalizedLines.some(l => l.includes("periode de consommation") && l.includes("consommation (m3)"));
-
             const parseFrFloat = (str) => {
                 if(!str) return 0;
-                return parseFloat(str.replace(/\s/g, '').replace(',', '.').replace(/"/g, ''));
+                // remove quotes, replace spaces (thousands), replace comma with dot
+                return parseFloat(str.replace(/"/g, '').replace(/\s/g, '').replace(',', '.'));
             };
 
-            if (isIndexFile) {
+            if (isIndex) {
+                // Format: Date;Type;Index;Coef
                 lines.forEach(line => {
-                    if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return; 
+                    if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return; // Skip headers
                     const cols = line.split(';');
                     if (cols.length < 3) return;
-                    const dateParts = cols[0].split('/'); 
+
+                    const dateParts = cols[0].split('/'); // DD/MM/YYYY
                     if (dateParts.length !== 3) return;
                     const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                     const val = parseFrFloat(cols[2]);
+
                     if (!isNaN(val)) {
                         const exists = state.readings.find(r => r.date === dateISO);
                         if (!exists) {
@@ -947,40 +953,48 @@
                     }
                 });
                 alert(`${importedCount} relevés d'index importés.`);
-            } else if (isDailyFile) {
+
+            } else if (isDaily) {
+                // Format: Date;Conso;Coef;Type
                 lines.forEach(line => {
                     if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return;
                     const cols = line.split(';');
                     if (cols.length < 2) return;
+
                     const dateParts = cols[0].split('/');
                     if (dateParts.length !== 3) return;
                     const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
                     const val = parseFrFloat(cols[1]);
+
                     if (!isNaN(val)) {
                         state.importedData[dateISO] = val; 
                         importedCount++;
                     }
                 });
                 alert(`${importedCount} jours de consommation importés.`);
-            } else if (isMonthlyFile) {
+
+            } else if (isMonthly) {
+                 // Format: Période;Conso;Coef;Type (MM/YYYY)
+                 // Lines like "Année 2025" exist, ignore them.
                  let distributedCount = 0;
                  lines.forEach(line => {
-                    // Ignore summary lines starting with "Année"
-                    if(line.toLowerCase().startsWith('année') || line.toLowerCase().startsWith('annee')) return;
-
-                    const match = line.match(/^(\d{2})\/(\d{4});/);
+                    const match = line.match(/^(\d{2})\/(\d{4});/); // Strict start check
                     if (!match) return;
+
                     const cols = line.split(';');
                     if (cols.length < 2) return;
+
                     const month = parseInt(match[1]);
                     const year = parseInt(match[2]);
                     const val = parseFrFloat(cols[1]);
 
                     if (!isNaN(val) && val > 0) {
-                        const daysInMonth = new Date(year, month, 0).getDate();
+                        const daysInMonth = new Date(year, month, 0).getDate(); // month is 1-based here
                         const dailyAvg = val / daysInMonth;
+
                         for(let d=1; d<=daysInMonth; d++) {
                              const dayStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                             // Only fill if not present (don't overwrite exact daily data)
                              if (state.importedData[dayStr] === undefined) {
                                   state.importedData[dayStr] = dailyAvg;
                              }
@@ -990,9 +1004,10 @@
                  });
                  alert(`${distributedCount} mois importés et lissés.`);
             } else {
-                alert("Format CSV non reconnu. Vérifiez l'entête du fichier.");
+                alert("Format CSV non reconnu. Fichiers supportés: mes-index, ma-conso-quotidienne, ma-conso-mensuelle.");
                 return;
             }
+
             saveData();
             recalcEngine();
         }
