@@ -364,13 +364,11 @@
             if (window.lucide) lucide.createIcons();
             loadData();
             
-            // Set default date to last reading or today
             if (state.readings.length > 0) {
                 const last = state.readings[state.readings.length-1];
                 state.ui.currentDate = new Date(last.date);
             }
 
-            // Populate Settings
             document.getElementById('setPrice').value = state.settings.kwhPrice;
             document.getElementById('setSub').value = state.settings.subscription;
             document.getElementById('setCoef').value = state.settings.conversionCoef;
@@ -378,21 +376,19 @@
             document.getElementById('setLon').value = state.settings.lon;
             document.getElementById('setApiKey').value = state.settings.apiKey || "";
 
-            // Custom Range Default
             const today = new Date();
             const lastMonth = new Date();
             lastMonth.setDate(today.getDate() - 30);
             document.getElementById('customStart').valueAsDate = lastMonth;
             document.getElementById('customEnd').valueAsDate = today;
 
-            // Canvas Resizer
             const resizeObserver = new ResizeObserver(() => {
                 if(state.computedDaily.length > 0) renderChart(state.computedDaily);
             });
             resizeObserver.observe(document.getElementById('chartContainer'));
 
             recalcEngine();
-            setFilter(state.ui.periodFilter); // Initialize button state
+            setFilter(state.ui.periodFilter);
         }
 
         function loadData() {
@@ -422,10 +418,10 @@
 
         // --- CALCULATION ENGINE ---
         function recalcEngine() {
-            // Sort
             state.readings.sort((a, b) => new Date(a.date + 'T' + (a.time || '00:00')) - new Date(b.date + 'T' + (b.time || '00:00')));
             
             const dailyMap = new Map(); 
+            // Allow processing even if just imported data exists
             if (state.readings.length < 2 && Object.keys(state.importedData).length === 0) { state.computedDaily = []; updateUI(); return; }
 
             // 1. Process explicit readings gaps
@@ -437,7 +433,6 @@
                 const totalDelta = Math.max(0, end.value - start.value);
                 const loopEnd = new Date(end.date);
                 
-                // Same day logic
                 if(start.date === end.date) {
                     const k = start.date;
                     if(!dailyMap.has(k)) dailyMap.set(k, { m3: 0, kwh: 0, type: 'real', temp: null });
@@ -477,7 +472,7 @@
                 });
             }
 
-            // 2. Process orphaned imported data (data outside of reading ranges)
+            // 2. Process orphaned imported data
             Object.keys(state.importedData).forEach(d => {
                  if(!dailyMap.has(d)) {
                       let val = state.importedData[d];
@@ -520,13 +515,14 @@
                 return;
             }
 
-            // Aggregation logic
+            // Aggregation for global/yearly view
             let items = data;
-            const tooMany = data.length > 100;
+            const tooMany = state.ui.periodFilter === 'year' || state.ui.periodFilter === 'global';
+            
             if(tooMany) {
                 const grouped = {};
                 data.forEach(d => {
-                    const k = d.date.substring(0, 7);
+                    const k = d.date.substring(0, 7); // YYYY-MM
                     if (!grouped[k]) grouped[k] = { val:0, kwh:0, count:0, tempSum:0, tempCount:0, date: k+"-01", type: 'aggregate' };
                     grouped[k].val += (state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice));
                     grouped[k].kwh += d.kwh;
@@ -540,7 +536,6 @@
                 items = data.map(d => ({ ...d, val: state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice) }));
             }
 
-            // Enhanced Metrics for Axes
             const padding = { top: 20, bottom: 30, left: 40, right: 40 };
             const chartHeight = rect.height - padding.top - padding.bottom;
             const chartWidth = rect.width - padding.left - padding.right;
@@ -549,7 +544,7 @@
             const gap = Math.max(1, barWidth * 0.2);
             const trueBarWidth = barWidth - gap;
 
-            // Draw Y-Axis (Values)
+            // Draw Y-Axis (Left - Values)
             ctx.strokeStyle = '#374151';
             ctx.lineWidth = 1;
             ctx.fillStyle = '#9ca3af';
@@ -567,7 +562,7 @@
                 ctx.fillText(val.toFixed(0), padding.left - 5, y + 3);
             }
 
-            // Draw Y-Axis (Temperature) - Right Side
+            // Draw Y-Axis (Right - Temp)
             const minTemp = -5, maxTemp = 35;
             const tempRange = maxTemp - minTemp;
             ctx.textAlign = "left";
@@ -621,18 +616,16 @@
                 ctx.shadowBlur = 0;
                 ctx.fillRect(x, y, trueBarWidth, 2);
 
-                // X-Axis Labels (Dates)
-                // If aggregated (items < 20), show Month names. Else show sparse Day numbers.
+                // X-Axis Labels
                 ctx.fillStyle = '#6b7280';
                 ctx.textAlign = 'center';
                 const d = new Date(item.date);
                 
-                if (item.type === 'aggregate') {
-                    // Always show month for aggregated view
+                // Show Month Name if aggregating, else Day
+                if (tooMany) {
                     const label = d.toLocaleDateString('fr-FR', {month:'short'});
                     ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
                 } else {
-                    // Sparse labels for daily view
                     if (items.length < 20 || i % Math.ceil(items.length/6) === 0) {
                         const label = d.toLocaleDateString('fr-FR', {day:'2-digit'});
                         ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
@@ -640,16 +633,15 @@
                 }
             });
 
-            canvas.chartData = { items, barWidth, rect, maxVal, padding };
+            canvas.chartData = { items, barWidth, rect, maxVal, padding, tooMany };
         }
 
         // Canvas Interaction
         document.getElementById('mainCanvas').addEventListener('mousemove', function(e) {
             const canvas = e.target;
             if(!canvas.chartData) return;
-            const { items, barWidth, padding } = canvas.chartData;
+            const { items, barWidth, padding, tooMany } = canvas.chartData;
             
-            // Adjust for padding
             const relX = e.offsetX - padding.left;
             if(relX < 0) return;
 
@@ -659,7 +651,7 @@
             if(index >= 0 && index < items.length) {
                 const item = items[index];
                 let dateStr;
-                if(item.type === 'aggregate') {
+                if(tooMany) {
                      dateStr = new Date(item.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
                 } else {
                      dateStr = new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
@@ -750,7 +742,6 @@
                     el.style.backgroundColor = col; el.style.color = '#fff';
                     if(found.m3 > max*0.8) el.style.boxShadow = `0 0 8px ${col}`;
                     
-                    // Calculate daily cost for tooltip
                     const dailyCost = ((found.kwh * state.settings.kwhPrice) + (state.settings.subscription / 365)) * (1 + state.settings.tva);
                     el.title = `${dailyCost.toFixed(2)} € (${found.m3.toFixed(1)} m³)`;
                 } else { el.style.backgroundColor = 'rgba(255,255,255,0.05)'; }
@@ -761,21 +752,15 @@
         function renderHistory() {
             const list = document.getElementById('historyList');
             list.innerHTML = '';
-            
-            // Sort descending by date/time
-            const sorted = [...state.readings].sort((a,b) => {
-                return new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00'));
-            });
+            const sorted = [...state.readings].sort((a,b) => new Date(b.date + 'T' + (b.time || '00:00')) - new Date(a.date + 'T' + (a.time || '00:00')));
 
             sorted.forEach((r, i) => {
-                // Calculate Delta Cost & Volume
                 let costHtml = '';
                 let volHtml = '';
                 if (i < sorted.length - 1) {
                     const prev = sorted[i+1];
                     const deltaM3 = r.value - prev.value;
                     if (deltaM3 >= 0) {
-                        // Estimate duration for subscription prorata
                         const d1 = new Date(prev.date + 'T' + (prev.time || '00:00'));
                         const d2 = new Date(r.date + 'T' + (r.time || '00:00'));
                         const diffTime = Math.abs(d2 - d1);
@@ -815,7 +800,6 @@
             if(window.lucide) lucide.createIcons();
         }
 
-        // --- GEMINI AI ---
         async function callGeminiAnalysis() {
             const div = document.getElementById('aiContent');
             const key = state.settings.apiKey;
@@ -845,7 +829,6 @@
             } catch (e) { div.innerHTML = `<p class="text-red-400 text-xs">Erreur de connexion neurale: ${e.message}</p>`; }
         }
 
-        // --- EVENTS ---
         function setFilter(p) { state.ui.periodFilter = p; updateUI(); document.querySelectorAll('.filter-btn').forEach(b => b.className = `filter-btn px-3 py-1 text-xs rounded transition-all ${b.dataset.period === p ? 'text-white bg-cyan-500/20 shadow-[0_0_10px_rgba(6,182,212,0.2)]' : 'text-gray-400 hover:text-white'}`); }
         function changePeriod(d) { const dt = state.ui.currentDate; state.ui.periodFilter === 'year' ? dt.setFullYear(dt.getFullYear()+d) : dt.setMonth(dt.getMonth()+d); state.ui.currentDate = new Date(dt); updateUI(); }
         function setChartMode(m) { state.ui.chartMode = m; updateUI(); document.querySelectorAll('.chart-mode-btn').forEach(b => b.className = `chart-mode-btn px-3 py-1 text-[10px] rounded transition-all ${b.dataset.mode === m ? 'text-white bg-cyan-500/20' : 'text-gray-400 hover:text-white'}`); }
@@ -890,7 +873,6 @@
 
         function exportData() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], {type:"application/json"})); a.download = `NEOGAZ_${new Date().toISOString().split('T')[0]}.json`; a.click(); }
         
-        // --- NEW IMPORT LOGIC ---
         document.getElementById('fileImport').addEventListener('change', e => {
             const file = e.target.files[0];
             if (!file) return;
@@ -937,27 +919,25 @@
             const lines = csvText.split(/\r?\n/).filter(l => l.trim() !== '');
             let importedCount = 0;
 
-            // Normalize headers for robust detection (accents, case)
             const normalizedLines = lines.slice(0, 10).map(l => l.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-            
             const isIndexFile = normalizedLines.some(l => l.includes("date de releve") && l.includes("index (m3)"));
             const isDailyFile = normalizedLines.some(l => l.includes("date de consommation") && l.includes("consommation (m3)"));
             const isMonthlyFile = normalizedLines.some(l => l.includes("periode de consommation") && l.includes("consommation (m3)"));
 
+            const parseFrFloat = (str) => {
+                if(!str) return 0;
+                return parseFloat(str.replace(/\s/g, '').replace(',', '.').replace(/"/g, ''));
+            };
+
             if (isIndexFile) {
-                // Format: Date;Type;Index;Coef
                 lines.forEach(line => {
                     if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return; 
                     const cols = line.split(';');
                     if (cols.length < 3) return;
-
                     const dateParts = cols[0].split('/'); 
                     if (dateParts.length !== 3) return;
                     const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-                    
-                    const valStr = cols[2].replace(/"/g, '').replace(',', '.').replace(/\s/g, '');
-                    const val = parseFloat(valStr);
-
+                    const val = parseFrFloat(cols[2]);
                     if (!isNaN(val)) {
                         const exists = state.readings.find(r => r.date === dateISO);
                         if (!exists) {
@@ -967,48 +947,38 @@
                     }
                 });
                 alert(`${importedCount} relevés d'index importés.`);
-
             } else if (isDailyFile) {
-                // Format: Date;Conso;Coef;Type
                 lines.forEach(line => {
                     if (!line.match(/^\d{2}\/\d{2}\/\d{4}/)) return;
                     const cols = line.split(';');
                     if (cols.length < 2) return;
-
                     const dateParts = cols[0].split('/');
                     if (dateParts.length !== 3) return;
                     const dateISO = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-
-                    const valStr = cols[1].replace(/"/g, '').replace(',', '.').replace(/\s/g, '');
-                    const val = parseFloat(valStr);
-
+                    const val = parseFrFloat(cols[1]);
                     if (!isNaN(val)) {
                         state.importedData[dateISO] = val; 
                         importedCount++;
                     }
                 });
                 alert(`${importedCount} jours de consommation importés.`);
-
             } else if (isMonthlyFile) {
-                 // Format: Période;Conso;Coef;Type (MM/YYYY)
                  let distributedCount = 0;
                  lines.forEach(line => {
+                    // Ignore summary lines starting with "Année"
+                    if(line.toLowerCase().startsWith('année') || line.toLowerCase().startsWith('annee')) return;
+
                     const match = line.match(/^(\d{2})\/(\d{4});/);
                     if (!match) return;
-
                     const cols = line.split(';');
                     if (cols.length < 2) return;
-
                     const month = parseInt(match[1]);
                     const year = parseInt(match[2]);
-                    
-                    const valStr = cols[1].replace(/"/g, '').replace(',', '.').replace(/\s/g, '');
-                    const val = parseFloat(valStr);
+                    const val = parseFrFloat(cols[1]);
 
                     if (!isNaN(val) && val > 0) {
                         const daysInMonth = new Date(year, month, 0).getDate();
                         const dailyAvg = val / daysInMonth;
-
                         for(let d=1; d<=daysInMonth; d++) {
                              const dayStr = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                              if (state.importedData[dayStr] === undefined) {
@@ -1023,7 +993,6 @@
                 alert("Format CSV non reconnu. Vérifiez l'entête du fichier.");
                 return;
             }
-
             saveData();
             recalcEngine();
         }
