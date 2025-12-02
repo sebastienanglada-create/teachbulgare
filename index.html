@@ -467,10 +467,8 @@
 
                     if (!dailyMap.has(d)) dailyMap.set(d, { m3: 0, kwh: 0, type: type, temp: temp });
                     const entry = dailyMap.get(d);
-                    // Only add if we haven't processed this day via imports already in a better way?
-                    // The map ensures uniqueness. We sum if we overlap (shouldn't happen often with sort).
-                    if(state.importedData[d] === undefined) { // Only estimate if no explicit data
-                         entry.m3 = val; // Overwrite or Set? Set for now.
+                    if(state.importedData[d] === undefined) { 
+                         entry.m3 = val;
                          entry.kwh = val * state.settings.conversionCoef;
                     }
                     if(type === 'real') entry.type = 'real';
@@ -485,7 +483,6 @@
                       let temp = state.dailyWeather[d] ? state.dailyWeather[d].temp : null;
                       dailyMap.set(d, { m3: val, kwh: val * state.settings.conversionCoef, type: 'real', temp: temp });
                  } else {
-                     // Ensure real data overwrites estimates
                      const entry = dailyMap.get(d);
                      entry.m3 = state.importedData[d];
                      entry.kwh = state.importedData[d] * state.settings.conversionCoef;
@@ -542,21 +539,51 @@
                 items = data.map(d => ({ ...d, val: state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice) }));
             }
 
-            const padding = { top: 20, bottom: 20, left: 0, right: 0 };
+            // Enhanced Metrics for Axes
+            const padding = { top: 20, bottom: 30, left: 40, right: 40 };
             const chartHeight = rect.height - padding.top - padding.bottom;
-            const chartWidth = rect.width;
+            const chartWidth = rect.width - padding.left - padding.right;
             const maxVal = Math.max(...items.map(i => i.val)) || 10;
             const barWidth = (chartWidth / items.length);
             const gap = Math.max(1, barWidth * 0.2);
             const trueBarWidth = barWidth - gap;
+
+            // Draw Y-Axis (Values)
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 1;
+            ctx.fillStyle = '#9ca3af';
+            ctx.font = "10px 'JetBrains Mono'";
+            ctx.textAlign = "right";
+            
+            const steps = 5;
+            for(let i=0; i<=steps; i++) {
+                const y = padding.top + chartHeight - (i * (chartHeight/steps));
+                const val = (maxVal / steps) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(rect.width - padding.right, y);
+                ctx.stroke();
+                ctx.fillText(val.toFixed(0), padding.left - 5, y + 3);
+            }
+
+            // Draw Y-Axis (Temperature) - Right Side
+            const minTemp = -5, maxTemp = 35;
+            const tempRange = maxTemp - minTemp;
+            ctx.textAlign = "left";
+            ctx.fillStyle = '#f97316';
+            for(let i=0; i<=steps; i++) {
+                const y = padding.top + chartHeight - (i * (chartHeight/steps));
+                const val = minTemp + ((tempRange / steps) * i);
+                ctx.fillText(val.toFixed(0) + "°", rect.width - padding.right + 5, y + 3);
+            }
 
             // Temp Line
             ctx.beginPath();
             let hasTemp = false;
             items.forEach((item, i) => {
                 if(item.temp !== null) {
-                    const x = (i * barWidth) + (barWidth/2);
-                    const tempY = padding.top + chartHeight - ((Math.max(-5, Math.min(35, item.temp)) + 5) / 40) * chartHeight;
+                    const x = padding.left + (i * barWidth) + (barWidth/2);
+                    const tempY = padding.top + chartHeight - ((Math.max(minTemp, Math.min(maxTemp, item.temp)) - minTemp) / tempRange) * chartHeight;
                     if(!hasTemp) { ctx.moveTo(x, tempY); hasTemp = true; } else ctx.lineTo(x, tempY);
                 }
             });
@@ -573,7 +600,7 @@
             // Bars
             items.forEach((item, i) => {
                 const h = (item.val / maxVal) * chartHeight;
-                const x = (i * barWidth) + (gap/2);
+                const x = padding.left + (i * barWidth) + (gap/2);
                 const y = padding.top + chartHeight - h;
 
                 let color = '#06b6d4';
@@ -592,25 +619,33 @@
                 ctx.fillStyle = '#fff';
                 ctx.shadowBlur = 0;
                 ctx.fillRect(x, y, trueBarWidth, 2);
+
+                // X-Axis Labels (Dates) - selective
+                if (items.length < 20 || i % Math.ceil(items.length/6) === 0) {
+                    ctx.fillStyle = '#6b7280';
+                    ctx.textAlign = 'center';
+                    const d = new Date(item.date);
+                    const label = items.length > 20 
+                        ? d.toLocaleDateString('fr-FR', {month:'short'}) 
+                        : d.toLocaleDateString('fr-FR', {day:'2-digit'});
+                    ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
+                }
             });
 
-            // Grid
-            ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-            ctx.lineWidth = 1;
-            [0, 0.5, 1].forEach(p => {
-                const y = padding.top + (chartHeight * p);
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(chartWidth, y); ctx.stroke();
-            });
-
-            canvas.chartData = { items, barWidth, rect, maxVal };
+            canvas.chartData = { items, barWidth, rect, maxVal, padding };
         }
 
         // Canvas Interaction
         document.getElementById('mainCanvas').addEventListener('mousemove', function(e) {
             const canvas = e.target;
             if(!canvas.chartData) return;
-            const { items, barWidth } = canvas.chartData;
-            const index = Math.floor(e.offsetX / barWidth);
+            const { items, barWidth, padding } = canvas.chartData;
+            
+            // Adjust for padding
+            const relX = e.offsetX - padding.left;
+            if(relX < 0) return;
+
+            const index = Math.floor(relX / barWidth);
             const tooltip = document.getElementById('canvasTooltip');
 
             if(index >= 0 && index < items.length) {
@@ -702,7 +737,7 @@
                     el.style.backgroundColor = col; el.style.color = '#fff';
                     if(found.m3 > max*0.8) el.style.boxShadow = `0 0 8px ${col}`;
                     
-                    // NEW: Calculate daily cost for tooltip
+                    // Calculate daily cost for tooltip
                     const dailyCost = ((found.kwh * state.settings.kwhPrice) + (state.settings.subscription / 365)) * (1 + state.settings.tva);
                     el.title = `${dailyCost.toFixed(2)} € (${found.m3.toFixed(1)} m³)`;
                 } else { el.style.backgroundColor = 'rgba(255,255,255,0.05)'; }
@@ -720,8 +755,9 @@
             });
 
             sorted.forEach((r, i) => {
-                // Calculate Delta Cost
+                // Calculate Delta Cost & Volume
                 let costHtml = '';
+                let volHtml = '';
                 if (i < sorted.length - 1) {
                     const prev = sorted[i+1];
                     const deltaM3 = r.value - prev.value;
@@ -736,7 +772,8 @@
                         const costHT = (kwh * state.settings.kwhPrice) + (state.settings.subscription * (diffDays/365));
                         const costTTC = costHT * (1 + state.settings.tva);
                         
-                        costHtml = `<div class="text-[10px] text-emerald-400 font-mono mt-1">+${costTTC.toFixed(2)} €</div>`;
+                        volHtml = `<div class="text-[10px] text-gray-400 font-mono">+${deltaM3.toFixed(1)} m³</div>`;
+                        costHtml = `<div class="text-[10px] text-emerald-400 font-mono">+${costTTC.toFixed(2)} €</div>`;
                     }
                 }
 
@@ -753,6 +790,7 @@
                         </div>
                         <div class="text-right">
                             <div class="text-sm font-mono text-cyan-300 font-bold">${r.value.toLocaleString()}</div>
+                            ${volHtml}
                             ${costHtml}
                             ${r.temp ? `<div class="text-[9px] text-orange-400 font-bold mt-0.5">${r.temp}°C</div>` : ''}
                         </div>
@@ -850,11 +888,9 @@
                 if (file.name.endsWith('.json')) {
                     try {
                         const json = JSON.parse(content);
-                        // Check if it's a valid backup structure (has settings and readings)
                         if (json.settings || json.readings) {
                             if(json.settings) state.settings = { ...state.settings, ...json.settings };
                             if(json.readings && Array.isArray(json.readings)) {
-                                // Merge readings avoiding duplicates based on date
                                 const newReadings = json.readings;
                                 const currentMap = new Map(state.readings.map(r => [r.date + r.time, r]));
                                 newReadings.forEach(r => currentMap.set(r.date + (r.time || '00:00'), r));
@@ -864,7 +900,6 @@
                             if(json.dailyWeather) state.dailyWeather = { ...state.dailyWeather, ...json.dailyWeather };
                             
                             saveData();
-                            // Refresh settings inputs in UI
                             document.getElementById('setPrice').value = state.settings.kwhPrice;
                             document.getElementById('setSub').value = state.settings.subscription;
                             document.getElementById('setCoef').value = state.settings.conversionCoef;
