@@ -392,7 +392,7 @@
             resizeObserver.observe(document.getElementById('chartContainer'));
 
             recalcEngine();
-            setFilter(state.ui.periodFilter);
+            setFilter(state.ui.periodFilter); // Initialize button state
         }
 
         function loadData() {
@@ -527,14 +527,14 @@
                 const grouped = {};
                 data.forEach(d => {
                     const k = d.date.substring(0, 7);
-                    if (!grouped[k]) grouped[k] = { val:0, kwh:0, count:0, tempSum:0, tempCount:0, date: k+"-01" };
+                    if (!grouped[k]) grouped[k] = { val:0, kwh:0, count:0, tempSum:0, tempCount:0, date: k+"-01", type: 'aggregate' };
                     grouped[k].val += (state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice));
                     grouped[k].kwh += d.kwh;
                     grouped[k].count++;
                     if(d.temp) { grouped[k].tempSum += d.temp; grouped[k].tempCount++; }
                 });
                 items = Object.values(grouped).sort((a,b) => a.date.localeCompare(b.date)).map(g => ({
-                    ...g, val: g.val, temp: g.tempCount ? g.tempSum/g.tempCount : null, type: 'aggregate'
+                    ...g, val: g.val, temp: g.tempCount ? g.tempSum/g.tempCount : null
                 }));
             } else {
                 items = data.map(d => ({ ...d, val: state.ui.chartMode === 'kwh' ? d.kwh : (d.kwh * state.settings.kwhPrice) }));
@@ -621,15 +621,22 @@
                 ctx.shadowBlur = 0;
                 ctx.fillRect(x, y, trueBarWidth, 2);
 
-                // X-Axis Labels (Dates) - selective
-                if (items.length < 20 || i % Math.ceil(items.length/6) === 0) {
-                    ctx.fillStyle = '#6b7280';
-                    ctx.textAlign = 'center';
-                    const d = new Date(item.date);
-                    const label = items.length > 20 
-                        ? d.toLocaleDateString('fr-FR', {month:'short'}) 
-                        : d.toLocaleDateString('fr-FR', {day:'2-digit'});
+                // X-Axis Labels (Dates)
+                // If aggregated (items < 20), show Month names. Else show sparse Day numbers.
+                ctx.fillStyle = '#6b7280';
+                ctx.textAlign = 'center';
+                const d = new Date(item.date);
+                
+                if (item.type === 'aggregate') {
+                    // Always show month for aggregated view
+                    const label = d.toLocaleDateString('fr-FR', {month:'short'});
                     ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
+                } else {
+                    // Sparse labels for daily view
+                    if (items.length < 20 || i % Math.ceil(items.length/6) === 0) {
+                        const label = d.toLocaleDateString('fr-FR', {day:'2-digit'});
+                        ctx.fillText(label, x + trueBarWidth/2, rect.height - 10);
+                    }
                 }
             });
 
@@ -651,7 +658,12 @@
 
             if(index >= 0 && index < items.length) {
                 const item = items[index];
-                const dateStr = new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                let dateStr;
+                if(item.type === 'aggregate') {
+                     dateStr = new Date(item.date).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+                } else {
+                     dateStr = new Date(item.date).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                }
                 const valUnit = state.ui.chartMode === 'kwh' ? 'kWh' : '€';
                 
                 tooltip.style.display = 'block';
